@@ -4,6 +4,8 @@
 
 Caiman is an open-source, self-hosted personal billing management system. It allows a single admin to track and collect informal recurring or one-time shared expenses from a small group of people.
 
+**This repository is the backend API server only.** It exposes REST endpoints consumed by external clients (web app, Telegram bot, AI agent, etc.). Each client lives in its own repository. This project has no frontend, no HTML, no template rendering.
+
 Core use cases:
 
 - **Rotating shared subscription**: one person pays per cycle in a defined order (e.g. a shared YouTube Premium plan where each member pays one month per turn).  
@@ -14,21 +16,66 @@ Payment is confirmed by the debtor uploading a receipt (PIX, bank transfer, Venm
 ## Stack
 
 - **Backend**: Java 25, Spring Boot 4, Spring Data JPA, Hibernate, Spring Mail  
-- **Frontend**: Spring Boot 4 serving a React SPA  
 - **Database**: PostgreSQL (primary), SQLite (fallback)  
 - **Migrations**: Liquibase (YAML changelogs)  
 - **AI**: Anthropic API (claude-sonnet model) for payment proof analysis  
+- **Build**: Gradle (multi-project, Kotlin DSL)  
 - **Deployment**: Docker Compose
 
 ## Project structure
 
-caiman-backend/     Spring Boot REST API, schedulers (Odin \+ Huginn), AI integration
+```
+caiman-server/                        ← Gradle root project
+  caiman-shared/                      ← Domain events, cross-module gateway interfaces, common types
+  caiman-debtor/                      ← Bounded context: Debtor management
+    core/                             ← Domain model, port interfaces (no Spring)
+    entrypoint/                       ← Adapters/in: REST controllers
+    infrastructure/                   ← Adapters/out: JPA repositories
+  caiman-billing/                     ← Bounded context: ChargePlan, Member, Invoice, Odin scheduler
+    core/                             ← Domain model, port interfaces (no Spring)
+    entrypoint/                       ← Adapters/in: REST controllers, OdinJob (@Scheduled)
+    infrastructure/                   ← Adapters/out: JPA repositories, event publisher
+  caiman-payment/                     ← Bounded context: PaymentProof, Payment, AI analysis
+    core/                             ← Domain model, port interfaces (no Spring)
+    entrypoint/                       ← Adapters/in: REST controllers (public proof upload)
+    infrastructure/                   ← Adapters/out: JPA repositories, Anthropic API client
+  caiman-notification/                ← Bounded context: NotificationOutbox, NotificationLog, Huginn
+    core/                             ← Domain model, port interfaces (no Spring)
+    entrypoint/                       ← Adapters/in: HuginnJob (@Scheduled), domain event listeners
+    infrastructure/                   ← Adapters/out: JPA repositories, SMTP email sender
+  caiman-app/                         ← Spring Boot main class, security config, composition root
+  db/                                 ← Liquibase changelog files
+  docs/                               ← Project documentation (always consult before implementing)
+```
 
-caiman-frontend/    Spring Boot app serving the React admin UI and public proof upload pages
+### Module dependency rules
 
-db/                 Liquibase changelog files
+**No cross-module Maven/Gradle dependencies between bounded contexts.** All cross-context communication goes through `caiman-shared`.
 
-docs/               Project documentation (always consult before implementing)
+```
+caiman-shared
+  └── no dependencies on other modules
+
+caiman-debtor:core         → caiman-shared
+caiman-debtor:entrypoint   → caiman-debtor:core
+caiman-debtor:infrastructure → caiman-debtor:core, caiman-shared
+
+caiman-billing:core        → caiman-shared
+caiman-billing:entrypoint  → caiman-billing:core
+caiman-billing:infrastructure → caiman-billing:core, caiman-shared
+
+caiman-payment:core        → caiman-shared
+caiman-payment:entrypoint  → caiman-payment:core
+caiman-payment:infrastructure → caiman-payment:core, caiman-shared
+
+caiman-notification:core   → caiman-shared
+caiman-notification:entrypoint → caiman-notification:core, caiman-shared
+caiman-notification:infrastructure → caiman-notification:core, caiman-shared
+
+caiman-app → all :entrypoint and :infrastructure modules (composition root — wires everything)
+```
+
+Cross-context data access (e.g. billing needing debtor info) uses gateway interfaces defined in `caiman-shared`, implemented in the providing context's `:infrastructure` module, and wired by `caiman-app`.
 
 ## Documentation — always read before implementing
 
