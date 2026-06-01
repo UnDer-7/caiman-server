@@ -77,6 +77,145 @@ caiman-app → all :entrypoint and :infrastructure modules (composition root —
 
 Cross-context data access (e.g. billing needing debtor info) uses gateway interfaces defined in `caiman-shared`, implemented in the providing context's `:infrastructure` module, and wired by `caiman-app`.
 
+## Module responsibilities
+
+Detailed description of each Gradle module: business purpose, owned DB tables, events produced/consumed, and REST endpoints exposed.
+
+---
+
+### `caiman-shared`
+
+**Purpose:** Shared kernel. No business logic. Contains only contracts that cross module boundaries.
+
+- **Domain events** (POJOs, no Spring): `InvoiceGeneratedEvent`, `InvoiceOverdueDetectedEvent`, `PendingReminderDueEvent`, `PaymentProofApprovedEvent`, `PaymentProofRejectedEvent`
+- **Gateway interfaces** consumed cross-context: `DebtorGateway` (provides debtor info to billing), `InvoiceGateway` (provides invoice info to payment)
+- **Common types**: `Money`, pagination wrappers, shared enums (`CycleUnit`, `InvoiceStatus`, `TriggerType`, etc.)
+- **Owns no DB tables**
+- **Exposes no endpoints**
+
+---
+
+### `caiman-debtor`
+
+**Purpose:** Manages the lifecycle of debtors — the people who owe money. No billing logic here, only identity and contact data.
+
+**Owned tables:**
+- `debtor` — `id`, `name`, `email`, `phone`, `telegram_handle`, `notes`, `notifications_enabled`, `is_active`, `created_at`, `updated_at`
+
+**Events produced:** none
+
+**Events consumed:** none
+
+**Endpoints exposed:**
+- `POST /debtors` — create debtor
+- `GET /debtors` — list (active by default, `?includeInactive=true` for all)
+- `GET /debtors/{id}` — get by id
+- `PATCH /debtors/{id}` — update / deactivate
+
+---
+
+### `caiman-billing`
+
+**Purpose:** Core billing engine. Manages charge plans, memberships, and invoice lifecycle. Runs **Odin** (daily scheduler at 00:00 UTC) which generates invoices, detects overdue status, and schedules reminder notifications via domain events.
+
+**Owned tables:**
+- `charge_plan` — `id`, `name`, `description`, `type`, `status`, `proof_validation_mode`, `total_amount`, `due_tolerance_days`, `cycle_interval`, `cycle_unit`, `cycle_anchor_date`, `notifications_enabled`, `notification_time`, `notification_timezone`, `starts_at`, `ends_at`, `end_when_recovered`, `created_at`, `updated_at`
+- `charge_plan_notification_config` — `id`, `charge_plan_id`, `trigger_type`, `reminder_interval`, `reminder_unit`, `max_attempts`, `created_at`, `updated_at`
+- `charge_plan_member` — `id`, `charge_plan_id`, `debtor_id`, `amount_override`, `rotation_order`, `status`, `credit_balance`, `joined_at`, `left_at`
+- `invoice` — `id`, `charge_plan_id`, `charge_plan_member_id`, `cycle_index`, `amount_due`, `amount_paid`, `status`, `due_date`, `cancellation_reason`, `cancelled_at`, `paid_at`, `created_at`, `updated_at`
+
+**Events produced:**
+- `InvoiceGeneratedEvent` — after each invoice is created by Odin (one event per invoice)
+- `InvoiceOverdueDetectedEvent` — when Odin transitions an invoice to `OVERDUE`
+- `PendingReminderDueEvent` — when Odin calculates a pending reminder should be sent today
+
+**Events consumed:**
+- `PaymentProofApprovedEvent` — updates `invoice.amount_paid`, transitions invoice to `PAID` or `PARTIALLY_PAID`, cancels scheduled reminder outbox entries if fully paid
+
+**Endpoints exposed:**
+- `POST /charge-plans` — create plan
+- `GET /charge-plans` — list plans
+- `GET /charge-plans/{id}` — get plan
+- `PATCH /charge-plans/{id}` — update plan
+- `POST /charge-plans/{id}/pause`
+- `POST /charge-plans/{id}/resume`
+- `POST /charge-plans/{id}/finish`
+- `PUT /charge-plans/{id}/notification-config` — upsert notification config per trigger type
+- `POST /charge-plans/{id}/members` — add member
+- `PUT /charge-plans/{id}/members/reorder` — reorder rotation (ROTATING only)
+- `PATCH /charge-plans/{id}/members/{memberId}` — update member (leave, etc.)
+- `POST /charge-plans/{id}/members/{memberId}/credit` — add credit balance
+- `GET /invoices` — list invoices (filterable by plan, status)
+- `GET /invoices/{id}` — get invoice
+- `POST /admin/invoices/{id}/cancel` — cancel invoice
+- `POST /admin/invoices/{id}/resend-link` — re-enqueue notification link (creates outbox entry via notification gateway)
+
+---
+
+### `caiman-payment`
+
+**Purpose:** Handles payment proof upload, AI-assisted validation, and payment registration. Runs proof analysis asynchronously in a background thread.
+
+**Owned tables:**
+- `payment_proof` — `id`, `invoice_id`, `file_path`, `upload_token`, `token_expires_at`, `ai_extracted_value`, `final_value`, `requires_manual_review`, `ai_raw_response`, `status`, `created_at`
+- `payment` — `id`, `invoice_id`, `payment_proof_id`, `amount`, `method`, `approved_manually`, `paid_at`, `created_at`
+
+**Events produced:**
+- `PaymentProofApprovedEvent` — when proof status transitions to `APPROVED` (via AI or admin)
+- `PaymentProofRejectedEvent` — when proof status transitions to `REJECTED`
+
+**Events consumed:** none (triggered by HTTP upload; invoice data fetched via `InvoiceGateway` from `caiman-shared`)
+
+**Endpoints exposed:**
+- `POST /public/invoices/{id}/proof` — unauthenticated, JWT upload token required; debtor submits proof file
+- `GET /admin/proofs/pending-review` — list proofs awaiting manual review
+- `POST /admin/proofs/{id}/resolve` — admin approves or rejects proof (`{ decision, finalValue }`)
+- `POST /admin/invoices/{id}/payments` — admin registers manual payment directly (no proof)
+
+---
+
+### `caiman-notification`
+
+**Purpose:** Owns the notification pipeline end-to-end. Listens to domain events from billing and payment, writes to `notification_outbox`. Runs **Huginn** (minutely scheduler) which reads the outbox and dispatches emails with exponential backoff retry.
+
+**Owned tables:**
+- `notification_outbox` — `id`, `invoice_id`, `trigger_type`, `channel`, `recipient`, `payload`, `scheduled_for`, `status`, `attempt_count`, `max_attempts`, `last_attempted_at`, `last_error`, `created_at`
+- `notification_log` — `id`, `invoice_id`, `outbox_id`, `trigger_type`, `channel`, `status`, `recipient`, `error_message`, `sent_at`
+
+**Events produced:** none (terminal consumer)
+
+**Events consumed:**
+- `InvoiceGeneratedEvent` → creates `INVOICE_CREATED` outbox entry scheduled for `notification_time` today
+- `InvoiceOverdueDetectedEvent` → creates `OVERDUE_REMINDER` outbox entry
+- `PendingReminderDueEvent` → creates `PENDING_REMINDER` outbox entry (after idempotency guard)
+- `PaymentProofApprovedEvent` → creates `PAYMENT_APPROVED` outbox entry with `scheduled_for = NOW()`
+- `PaymentProofRejectedEvent` → creates `PAYMENT_REJECTED` outbox entry with `scheduled_for = NOW()`
+
+**Endpoints exposed:** none
+
+---
+
+### `caiman-app`
+
+**Purpose:** Composition root. Wires all modules together. Owns no business logic and no DB tables.
+
+- Contains Spring Boot `main` class and application startup config
+- Registers `DebtorGateway`, `InvoiceGateway`, and other cross-module gateway beans (implemented in `:infrastructure` modules, consumed by other contexts)
+- Owns security config: static API token filter for admin endpoints, JWT validation filter for public debtor endpoints
+- Owns global exception handling (`@ControllerAdvice`)
+- Owns `ApplicationEventPublisher` bean used by all modules to publish domain events
+
+---
+
+### `db`
+
+**Purpose:** Liquibase migration files only. Not a Gradle sub-project — just a directory at the repo root consumed by the Spring Boot app at startup.
+
+- `db/changelog/changes/` — versioned YAML changesets
+- Authoritative source for all table and column definitions
+
+---
+
 ## Documentation — always read before implementing
 
 All business decisions, domain rules, and technical choices are documented in `./docs`. **Always consult the relevant documentation before writing or modifying any code.**
