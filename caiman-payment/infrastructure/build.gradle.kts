@@ -1,4 +1,4 @@
 dependencies {
-    implementation(project(":caiman-debtor-core"))
+    implementation(project(":caiman-payment-core"))
     implementation(project(":caiman-shared"))
 }

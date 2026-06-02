@@ -216,6 +216,34 @@ Detailed description of each Gradle module: business purpose, owned DB tables, e
 
 ---
 
+## Known Pitfalls & Solutions
+
+Lessons learned during development. Check here before debugging similar issues.
+
+---
+
+### Gradle nested sub-projects with duplicate names cause silent bean loss
+
+**Symptom:** Controllers or beans from bounded-context modules are missing at runtime. Endpoints return 404. No error at startup. Only some modules work.
+
+**Root cause:** Gradle sub-projects named `core`, `entrypoint`, `infrastructure` across multiple bounded contexts share the same project name → identical GAV (`com.caimanproject:entrypoint:0.0.1-SNAPSHOT`). Gradle's conflict resolution picks **one** and silently discards the others. The discarded modules never reach the classpath.
+
+**How to detect:** Run `./gradlew :caiman-app:dependencies --configuration runtimeClasspath` and look for `->` substitution arrows:
+```
++--- project :caiman-debtor:entrypoint -> project :caiman-payment:entrypoint   ← wrong
+```
+
+**Fix:** In `settings.gradle.kts`, use flat unique project names with `projectDir` mapping. Directory structure stays nested; project identity becomes flat and unique:
+```kotlin
+include("caiman-debtor-entrypoint")
+project(":caiman-debtor-entrypoint").projectDir = file("caiman-debtor/entrypoint")
+```
+After fix, dependency tree must show NO `->` substitutions between bounded-context modules.
+
+**Related:** Spring Boot 4 requires `@SpringBootApplication(scanBasePackages = "com.caimanproject")` to scan beans across all modules. Without it, only `com.caimanproject.app` is scanned.
+
+---
+
 ## Documentation — always read before implementing
 
 All business decisions, domain rules, and technical choices are documented in `./docs`. **Always consult the relevant documentation before writing or modifying any code.**

@@ -1,4 +1,4 @@
 dependencies {
-    implementation(project(":caiman-debtor-core"))
+    implementation(project(":caiman-billing-core"))
     implementation("org.springframework.boot:spring-boot-starter-web")
 }
