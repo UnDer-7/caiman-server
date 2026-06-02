@@ -1,4 +1,4 @@
-package com.caimanproject.caimanserver;
+package com.caimanproject.debtor.entrypoint;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,9 +9,7 @@ import java.util.Map;
 public class TempController {
 
     @GetMapping("/tst")
-    public Map<String,String> testEndpoint() {
-        return Map.of(
-            "msg", "is working!!!"
-                     );
+    public Map<String, String> testEndpoint() {
+        return Map.of("msg", "is working!!!");
     }
 }

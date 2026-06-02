@@ -1,13 +1,12 @@
-package com.caimanproject.caimanserver;
+package com.caimanproject.app;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class CaimanServerApplicationTests {
+class CaimanApplicationTests {
 
     @Test
     void contextLoads() {
     }
-
 }

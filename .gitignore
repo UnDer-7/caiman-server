@@ -40,3 +40,4 @@ build/
 .vscode/
 
 .docker_volume/
+.sdkmanrc
