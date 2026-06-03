@@ -296,7 +296,13 @@ All business decisions, domain rules, and technical choices are documented in `.
 8. **Reminder scheduling is calculated from `invoice.created_at` (PENDING\_REMINDER) and `invoice.due_date` (OVERDUE\_REMINDER).** Odin does not consult `notification_log` to decide whether to enqueue — `notification_log` is audit-only.  
 9. **`PAYMENT_APPROVED` and `PAYMENT_REJECTED` notifications are enqueued inline** at proof resolution time with `scheduled_for = NOW()`, not by Odin.
 
-10. **No wildcard imports (`*`).** All imports must be fully qualified. The only exception is test source files, where wildcard imports are allowed exclusively for assertion and mock libraries.
+10. **Dependency versions must be centralized in `gradle/libs.versions.toml`.** Any dependency whose version is **not** managed by a BOM (Spring Boot BOM or another imported BOM) must declare its version in the catalog — never hardcode a version string directly in a `build.gradle.kts` module file.
+
+    - **BOM-managed** (Spring Boot starters, Lombok, JPA, etc.): declare without version in the module build file. BOM is the source of truth.
+    - **Non-BOM-managed** (MapStruct, lombok-mapstruct-binding, and any third-party lib not covered by a BOM): version goes in `gradle/libs.versions.toml`, referenced via `libs.*` accessor in the module build file.
+    - **Gradle plugins**: always declared in `gradle/libs.versions.toml` under `[plugins]` and referenced via `alias(libs.plugins.*)` in the root `build.gradle.kts`.
+
+11. **No wildcard imports (`*`).** All imports must be fully qualified. The only exception is test source files, where wildcard imports are allowed exclusively for assertion and mock libraries.
 
     **Forbidden everywhere (including tests):**
     ```java
