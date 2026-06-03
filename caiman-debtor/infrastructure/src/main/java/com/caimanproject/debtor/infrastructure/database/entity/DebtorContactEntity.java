@@ -12,8 +12,20 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
+@Getter
+@Setter
+@Builder
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(
     name = "debtor_contact",
     uniqueConstraints = @UniqueConstraint(
@@ -41,22 +53,4 @@ public class DebtorContactEntity {
     @Column(name = "priority", nullable = false)
     private int priority = 1;
 
-    protected DebtorContactEntity() {}
-
-    public DebtorContactEntity(String id, DebtorEntity debtor, ContactType contactType,
-                               String contactValue, int priority) {
-        this.id = id;
-        this.debtor = debtor;
-        this.contactType = contactType;
-        this.contactValue = contactValue;
-        this.priority = priority;
-    }
-
-    public String getId() { return id; }
-    public DebtorEntity getDebtor() { return debtor; }
-    public ContactType getContactType() { return contactType; }
-    public String getContactValue() { return contactValue; }
-    public void setContactValue(String contactValue) { this.contactValue = contactValue; }
-    public int getPriority() { return priority; }
-    public void setPriority(int priority) { this.priority = priority; }
 }

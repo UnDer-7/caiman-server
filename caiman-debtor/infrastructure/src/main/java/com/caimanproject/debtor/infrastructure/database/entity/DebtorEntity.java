@@ -6,12 +6,24 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Getter
+@Setter
+@Builder
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "debtor")
 public class DebtorEntity {
 
@@ -40,30 +52,4 @@ public class DebtorEntity {
     @OneToMany(mappedBy = "debtor", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<DebtorContactEntity> contacts = new ArrayList<>();
 
-    protected DebtorEntity() {}
-
-    public DebtorEntity(String id, String name, String notes, boolean notificationsEnabled,
-                        boolean active, Instant createdAt, Instant updatedAt) {
-        this.id = id;
-        this.name = name;
-        this.notes = notes;
-        this.notificationsEnabled = notificationsEnabled;
-        this.active = active;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-
-    public String getId() { return id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
-    public boolean isNotificationsEnabled() { return notificationsEnabled; }
-    public void setNotificationsEnabled(boolean notificationsEnabled) { this.notificationsEnabled = notificationsEnabled; }
-    public boolean isActive() { return active; }
-    public void setActive(boolean active) { this.active = active; }
-    public Instant getCreatedAt() { return createdAt; }
-    public Instant getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
-    public List<DebtorContactEntity> getContacts() { return contacts; }
 }
