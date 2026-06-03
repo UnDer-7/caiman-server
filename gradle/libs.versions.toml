@@ -1,4 +1,6 @@
 [versions]
+spring-boot = "4.0.6"
+spring-dependency-management = "1.1.7"
 mapstruct = "1.6.3"
 lombok-mapstruct-binding = "0.2.0"
 
@@ -6,3 +8,7 @@ lombok-mapstruct-binding = "0.2.0"
 mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
 mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
 lombok-mapstruct-binding = { module = "org.projectlombok:lombok-mapstruct-binding", version.ref = "lombok-mapstruct-binding" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
