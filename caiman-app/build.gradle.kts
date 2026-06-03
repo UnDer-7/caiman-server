@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
 
     implementation(project(":caiman-debtor-entrypoint"))
     implementation(project(":caiman-debtor-infrastructure"))

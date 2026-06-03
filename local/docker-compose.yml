@@ -1,0 +1,18 @@
+services:
+  caiman_server_database:
+    image: postgres:17-alpine
+    container_name: caiman_server_database
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      # ADM
+      POSTGRES_USER: admin_usr
+      POSTGRES_PASSWORD: admin_pass
+      POSTGRES_DB: caiman_server
+    volumes:
+      - caiman_server_database_vlm:/var/lib/postgresql/data
+
+volumes:
+  caiman_server_database_vlm:
+    name: caiman_server_database_local_volume

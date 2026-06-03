@@ -41,3 +41,4 @@ build/
 
 .docker_volume/
 .sdkmanrc
+.tmp/

@@ -1,5 +1,17 @@
 # Caiman — Agent Instructions
 
+## CRITICAL: Spring Boot 4
+
+This project uses **Spring Boot 4**. Not Spring Boot 3. Most search results, Stack Overflow answers, and LLM training data reference Spring Boot 3 — that information is often **not applicable here**.
+
+Key differences to watch:
+- **Jackson imports changed significantly.** Many packages moved. Do not assume Spring Boot 3 import paths.
+- API deprecations and removals differ from Spring Boot 3.
+- When in doubt about any Spring/Spring Boot API, consult the official migration guide before writing code:
+  **https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide**
+
+---
+
 ## What is this project
 
 Caiman is an open-source, self-hosted personal billing management system. It allows a single admin to track and collect informal recurring or one-time shared expenses from a small group of people.
@@ -100,7 +112,8 @@ Detailed description of each Gradle module: business purpose, owned DB tables, e
 **Purpose:** Manages the lifecycle of debtors — the people who owe money. No billing logic here, only identity and contact data.
 
 **Owned tables:**
-- `debtor` — `id`, `name`, `email`, `phone`, `telegram_handle`, `notes`, `notifications_enabled`, `is_active`, `created_at`, `updated_at`
+- `debtor` — `id`, `name`, `notes`, `notifications_enabled`, `is_active`, `created_at`, `updated_at`
+- `debtor_contact` — `id`, `debtor_id`, `contact_type` (`EMAIL`, `MOBILE_PHONE`, `WHATSAPP`, `TELEGRAM`), `contact_value`, `priority`
 
 **Events produced:** none
 
