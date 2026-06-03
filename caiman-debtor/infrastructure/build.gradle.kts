@@ -5,7 +5,7 @@ dependencies {
     // ----------------
 
     implementation(project(":caiman-debtor-core"))
-    implementation(project(":caiman-shared"))
+    implementation(project(":caiman-contracts"))
 
     implementation(libs.mapstruct)
     annotationProcessor(libs.lombok.mapstruct.binding)

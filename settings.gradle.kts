@@ -1,6 +1,9 @@
 rootProject.name = "caiman-server"
 
-include("caiman-shared")
+include("caiman-contracts")
+project(":caiman-contracts").projectDir = file("caiman-shared/contracts")
+include("caiman-web-support")
+project(":caiman-web-support").projectDir = file("caiman-shared/web-support")
 
 include("caiman-debtor-core")
 project(":caiman-debtor-core").projectDir = file("caiman-debtor/core")

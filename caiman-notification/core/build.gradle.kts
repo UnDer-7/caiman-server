@@ -1,3 +1,3 @@
 dependencies {
-    implementation(project(":caiman-shared"))
+    implementation(project(":caiman-contracts"))
 }

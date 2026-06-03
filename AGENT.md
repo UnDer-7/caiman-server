@@ -38,7 +38,9 @@ Payment is confirmed by the debtor uploading a receipt (PIX, bank transfer, Venm
 
 ```
 caiman-server/                        ← Gradle root project
-  caiman-shared/                      ← Domain events, cross-module gateway interfaces, common types
+  caiman-shared/                      ← Physical parent directory (not a Gradle module)
+    contracts/                        ← [caiman-contracts] Domain events, gateways, common types, base exceptions
+    web-support/                      ← [caiman-web-support] @CaimanEndpoint, WebMvcConfigurer, global exception handler
   caiman-debtor/                      ← Bounded context: Debtor management
     core/                             ← Domain model, use cases, port interfaces (spring-context + spring-tx only)
     entrypoint/                       ← Adapters/in: REST controllers
@@ -62,32 +64,34 @@ caiman-server/                        ← Gradle root project
 
 ### Module dependency rules
 
-**No cross-module Maven/Gradle dependencies between bounded contexts.** All cross-context communication goes through `caiman-shared`.
+**No cross-module Maven/Gradle dependencies between bounded contexts.** All cross-context communication goes through `caiman-contracts`.
 
 ```
-caiman-shared
+caiman-contracts
   └── no dependencies on other modules
 
-caiman-debtor:core         → caiman-shared
-caiman-debtor:entrypoint   → caiman-debtor:core
-caiman-debtor:infrastructure → caiman-debtor:core, caiman-shared
+caiman-web-support         → caiman-contracts, spring-web
 
-caiman-billing:core        → caiman-shared
-caiman-billing:entrypoint  → caiman-billing:core
-caiman-billing:infrastructure → caiman-billing:core, caiman-shared
+caiman-debtor:core         → caiman-contracts
+caiman-debtor:entrypoint   → caiman-debtor:core, caiman-web-support
+caiman-debtor:infrastructure → caiman-debtor:core, caiman-contracts
 
-caiman-payment:core        → caiman-shared
-caiman-payment:entrypoint  → caiman-payment:core
-caiman-payment:infrastructure → caiman-payment:core, caiman-shared
+caiman-billing:core        → caiman-contracts
+caiman-billing:entrypoint  → caiman-billing:core, caiman-web-support
+caiman-billing:infrastructure → caiman-billing:core, caiman-contracts
 
-caiman-notification:core   → caiman-shared
-caiman-notification:entrypoint → caiman-notification:core, caiman-shared
-caiman-notification:infrastructure → caiman-notification:core, caiman-shared
+caiman-payment:core        → caiman-contracts
+caiman-payment:entrypoint  → caiman-payment:core, caiman-web-support
+caiman-payment:infrastructure → caiman-payment:core, caiman-contracts
+
+caiman-notification:core   → caiman-contracts
+caiman-notification:entrypoint → caiman-notification:core, caiman-contracts
+caiman-notification:infrastructure → caiman-notification:core, caiman-contracts
 
 caiman-app → all :entrypoint and :infrastructure modules (composition root — wires everything)
 ```
 
-Cross-context data access (e.g. billing needing debtor info) uses gateway interfaces defined in `caiman-shared`, implemented in the providing context's `:infrastructure` module, and wired by `caiman-app`.
+Cross-context data access (e.g. billing needing debtor info) uses gateway interfaces defined in `caiman-contracts`, implemented in the providing context's `:infrastructure` module, and wired by `caiman-app`.
 
 ## Module responsibilities
 
@@ -95,13 +99,29 @@ Detailed description of each Gradle module: business purpose, owned DB tables, e
 
 ---
 
-### `caiman-shared`
+### `caiman-contracts`
 
-**Purpose:** Shared kernel. No business logic. Contains only contracts that cross module boundaries.
+**Physical path:** `caiman-shared/contracts/`
 
-- **Domain events** (POJOs, no Spring): `InvoiceGeneratedEvent`, `InvoiceOverdueDetectedEvent`, `PendingReminderDueEvent`, `PaymentProofApprovedEvent`, `PaymentProofRejectedEvent`
-- **Gateway interfaces** consumed cross-context: `DebtorGateway` (provides debtor info to billing), `InvoiceGateway` (provides invoice info to payment)
-- **Common types**: `Money`, pagination wrappers, shared enums (`CycleUnit`, `InvoiceStatus`, `TriggerType`, etc.)
+**Purpose:** Shared kernel. No business logic, no Spring dependency. Pure Java contracts that cross module boundaries.
+
+- **Base exception** (`exception/`): `CaimanException` (abstract) — all domain exceptions extend this; caught by `caiman-web-support` global handler
+- **Domain events** (`event/`, POJOs, no Spring): `InvoiceGeneratedEvent`, `InvoiceOverdueDetectedEvent`, `PendingReminderDueEvent`, `PaymentProofApprovedEvent`, `PaymentProofRejectedEvent`
+- **Gateway interfaces** (`gateway/`) consumed cross-context: `DebtorGateway` (provides debtor info to billing), `InvoiceGateway` (provides invoice info to payment)
+- **Common types** (`type/`): `Money`, pagination wrappers, shared enums (`CycleUnit`, `InvoiceStatus`, `TriggerType`, etc.)
+- **Owns no DB tables**
+- **Exposes no endpoints**
+
+---
+
+### `caiman-web-support`
+
+**Physical path:** `caiman-shared/web-support/`
+
+**Purpose:** Web infrastructure shared across all entrypoint modules. Depends on `caiman-contracts` and `spring-web`.
+
+- **`annotation/`**: `@CaimanEndpoint` — meta-annotation combining `@RestController`, `@RequestMapping`, `@Validated`; used by all REST controllers
+- **`config/`**: `ControllersConfig` (`WebMvcConfigurer`) — applies path prefix from `CaimanServerProps` to all `@CaimanEndpoint` classes; `GlobalRestExceptionHandlerConfig` (`@ControllerAdvice`) — catches `CaimanException` and subclasses
 - **Owns no DB tables**
 - **Exposes no endpoints**
 
@@ -177,7 +197,7 @@ Detailed description of each Gradle module: business purpose, owned DB tables, e
 - `PaymentProofApprovedEvent` — when proof status transitions to `APPROVED` (via AI or admin)
 - `PaymentProofRejectedEvent` — when proof status transitions to `REJECTED`
 
-**Events consumed:** none (triggered by HTTP upload; invoice data fetched via `InvoiceGateway` from `caiman-shared`)
+**Events consumed:** none (triggered by HTTP upload; invoice data fetched via `InvoiceGateway` from `caiman-contracts`)
 
 **Endpoints exposed:**
 - `POST /public/invoices/{id}/proof` — unauthenticated, JWT upload token required; debtor submits proof file
