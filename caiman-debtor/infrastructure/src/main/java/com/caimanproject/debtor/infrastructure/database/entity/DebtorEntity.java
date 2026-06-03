@@ -49,6 +49,7 @@ public class DebtorEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Builder.Default
     @OneToMany(mappedBy = "debtor", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<DebtorContactEntity> contacts = new ArrayList<>();
 

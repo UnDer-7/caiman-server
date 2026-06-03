@@ -50,6 +50,7 @@ public class DebtorContactEntity {
     @Column(name = "contact_value", length = 500, nullable = false)
     private String contactValue;
 
+    @Builder.Default
     @Column(name = "priority", nullable = false)
     private int priority = 1;
 

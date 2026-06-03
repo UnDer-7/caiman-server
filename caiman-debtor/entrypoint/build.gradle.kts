@@ -2,7 +2,7 @@ dependencies {
     implementation(project(":caiman-debtor-core"))
     implementation("org.springframework.boot:spring-boot-starter-web")
 
-    implementation("org.mapstruct:mapstruct:1.6.2")
-    annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
-    annotationProcessor("org.mapstruct:mapstruct-processor:1.6.2")
+    implementation(libs.mapstruct)
+    annotationProcessor(libs.lombok.mapstruct.binding)
+    annotationProcessor(libs.mapstruct.processor)
 }
