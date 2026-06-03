@@ -56,7 +56,7 @@ caiman-server/                        ← Gradle root project
     entrypoint/                       ← Adapters/in: HuginnJob (@Scheduled), domain event listeners
     infrastructure/                   ← Adapters/out: JPA repositories, SMTP email sender
   caiman-app/                         ← Spring Boot main class, security config, composition root
-  db/                                 ← Liquibase changelog files
+    src/main/resources/db/            ← Liquibase changelog files
   docs/                               ← Project documentation (always consult before implementing)
 ```
 
@@ -220,11 +220,13 @@ Detailed description of each Gradle module: business purpose, owned DB tables, e
 
 ---
 
-### `db`
+### Liquibase migrations
 
-**Purpose:** Liquibase migration files only. Not a Gradle sub-project — just a directory at the repo root consumed by the Spring Boot app at startup.
+**Location:** `caiman-app/src/main/resources/db/` — on the Spring Boot classpath, not a separate Gradle module.
 
-- `db/changelog/changes/` — versioned YAML changesets
+- `db/changelog/db.changelog-master.yaml` — master changelog (`includeAll` over `changes/`)
+- `db/changelog/changes/` — one YAML file per table + one for indexes, ordered by FK dependency
+  - `V0_01__debtor.yaml` through `V0_11__indexes.yaml`
 - Authoritative source for all table and column definitions
 
 ---
@@ -269,7 +271,7 @@ All business decisions, domain rules, and technical choices are documented in `.
 | `./docs/diagrams/state-payment-proof.mmd` | PaymentProof state machine |
 | `./docs/diagrams/state-notification-outbox.mmd` | NotificationOutbox state machine |
 | `./docs/diagrams/full-flow.mmd` | Full system flow from ChargePlan creation to payment result notification |
-| `./db/changelog/changes/V1__initial_schema.yaml` | Complete Liquibase DDL — authoritative source for table and column definitions |
+| `./caiman-app/src/main/resources/db/changelog/changes/` | Complete Liquibase DDL — one file per table (V0_01–V0_11), authoritative source for table and column definitions |
 
 ## Key concepts (quick reference)
 
@@ -293,4 +295,33 @@ All business decisions, domain rules, and technical choices are documented in `.
 7. **Outbox entries for the same `invoice_id` \+ `trigger_type` must not be duplicated.** Odin always checks for existing `SCHEDULED` or `PROCESSING` entries before enqueuing (idempotency guard).  
 8. **Reminder scheduling is calculated from `invoice.created_at` (PENDING\_REMINDER) and `invoice.due_date` (OVERDUE\_REMINDER).** Odin does not consult `notification_log` to decide whether to enqueue — `notification_log` is audit-only.  
 9. **`PAYMENT_APPROVED` and `PAYMENT_REJECTED` notifications are enqueued inline** at proof resolution time with `scheduled_for = NOW()`, not by Odin.
+
+10. **No wildcard imports (`*`).** All imports must be fully qualified. The only exception is test source files, where wildcard imports are allowed exclusively for assertion and mock libraries.
+
+    **Forbidden everywhere (including tests):**
+    ```java
+    import java.util.*;
+    import org.springframework.web.bind.annotation.*;
+    import com.caimanproject.billing.core.domain.*;
+    ```
+
+    **Required — always use full imports:**
+    ```java
+    import java.util.List;
+    import java.util.UUID;
+    import org.springframework.web.bind.annotation.GetMapping;
+    import org.springframework.web.bind.annotation.RestController;
+    import com.caimanproject.billing.core.domain.Invoice;
+    ```
+
+    **Allowed only in test files — assertion and mock libs only:**
+    ```java
+    // AssertJ
+    import static org.assertj.core.api.Assertions.*;
+    // Mockito
+    import static org.mockito.Mockito.*;
+    import static org.mockito.ArgumentMatchers.*;
+    // JUnit 5
+    import static org.junit.jupiter.api.Assertions.*;
+    ```
 
