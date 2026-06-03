@@ -27,6 +27,9 @@ spring:
     username: ${CAIMAN_SERVER_DATABASE_USERNAME}
     password: ${CAIMAN_SERVER_DATABASE_PASSWORD}
 
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
   threads:
     virtual:
       enabled: true

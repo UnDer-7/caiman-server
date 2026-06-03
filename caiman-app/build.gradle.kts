@@ -4,8 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-webmvc")
-
+    // ### Modules ####
     implementation(project(":caiman-debtor-entrypoint"))
     implementation(project(":caiman-debtor-infrastructure"))
 
@@ -17,6 +16,10 @@ dependencies {
 
     implementation(project(":caiman-notification-entrypoint"))
     implementation(project(":caiman-notification-infrastructure"))
+    // ----------------
+
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.springframework.boot:spring-boot-starter-liquibase")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
