@@ -5,34 +5,6 @@ databaseChangeLog:
       changes:
 
         - createIndex:
-            indexName: idx_debtor_is_active
-            tableName: debtor
-            remarks: Filters active debtors in plan membership assignment UI.
-            columns:
-              - column:
-                  name: is_active
-
-        - createIndex:
-            indexName: idx_dc_debtor_type
-            tableName: debtor_contact
-            remarks: >
-              Core lookup for Huginn: resolve contact address by debtor and channel type.
-              Also used by admin UI to list contacts per debtor filtered by type.
-            columns:
-              - column:
-                  name: debtor_id
-              - column:
-                  name: contact_type
-
-        - createIndex:
-            indexName: idx_dc_debtor
-            tableName: debtor_contact
-            remarks: Fetch all contacts for a debtor (admin debtor detail view).
-            columns:
-              - column:
-                  name: debtor_id
-
-        - createIndex:
             indexName: idx_charge_plan_status
             tableName: charge_plan
             remarks: Odin filters plans by status = ACTIVE on every daily run.

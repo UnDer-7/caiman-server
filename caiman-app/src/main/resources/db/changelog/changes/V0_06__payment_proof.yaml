@@ -130,3 +130,9 @@ databaseChangeLog:
                   remarks: Timestamp when the proof was uploaded. Always stored in UTC.
                   constraints:
                     nullable: false
+              - column:
+                  name: updated_at
+                  type: datetime
+                  remarks: Timestamp of the last update to this record. Always stored in UTC.
+                  constraints:
+                    nullable: false

@@ -89,3 +89,15 @@ databaseChangeLog:
                     When set, scheduler excludes this member from future invoice generation.
                   constraints:
                     nullable: true
+              - column:
+                  name: created_at
+                  type: datetime
+                  remarks: Timestamp when this record was created. Always stored in UTC.
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: datetime
+                  remarks: Timestamp of the last update to this record. Always stored in UTC.
+                  constraints:
+                    nullable: false

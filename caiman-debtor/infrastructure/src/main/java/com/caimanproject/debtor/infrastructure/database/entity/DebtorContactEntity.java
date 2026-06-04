@@ -19,6 +19,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.time.Instant;
+
 @Entity
 @Getter
 @Setter
@@ -28,10 +30,16 @@ import lombok.ToString;
 @AllArgsConstructor
 @Table(
     name = "debtor_contact",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uq_dc_debtor_type_value",
-        columnNames = {"debtor_id", "contact_type", "contact_value"}
-    )
+    uniqueConstraints = {
+        @UniqueConstraint(
+            name = "uq_dc_debtor_type_value",
+            columnNames = {"debtor_id", "contact_type", "contact_value"}
+        ),
+        @UniqueConstraint(
+            name = "uq_dc_debtor_type_priority",
+            columnNames = {"debtor_id", "contact_type", "priority"}
+        )
+    }
 )
 public class DebtorContactEntity {
 
@@ -54,4 +62,9 @@ public class DebtorContactEntity {
     @Column(name = "priority", nullable = false)
     private int priority = 1;
 
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
 }

@@ -60,7 +60,24 @@ databaseChangeLog:
                     Huginn picks the entry with the lowest priority when routing.
                   constraints:
                     nullable: false
+              - column:
+                  name: created_at
+                  type: datetime
+                  remarks: Timestamp when this record was created. Always stored in UTC.
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: datetime
+                  remarks: Timestamp of the last update to this record. Always stored in UTC.
+                  constraints:
+                    nullable: false
         - addUniqueConstraint:
             tableName: debtor_contact
             columnNames: debtor_id, contact_type, contact_value
             constraintName: uq_dc_debtor_type_value
+
+        - addUniqueConstraint:
+            tableName: debtor_contact
+            columnNames: debtor_id, contact_type, priority
+            constraintName: uq_dc_debtor_type_priority

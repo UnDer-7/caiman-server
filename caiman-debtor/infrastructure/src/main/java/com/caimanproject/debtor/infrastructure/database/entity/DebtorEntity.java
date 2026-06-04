@@ -38,10 +38,10 @@ public class DebtorEntity {
     private String notes;
 
     @Column(name = "notifications_enabled", nullable = false)
-    private boolean notificationsEnabled;
+    private Boolean notificationsEnabled;
 
     @Column(name = "is_active", nullable = false)
-    private boolean active;
+    private Boolean active;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
