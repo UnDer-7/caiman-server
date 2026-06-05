@@ -4,6 +4,13 @@ server:
 caiman-server:
   application:
     endpoints-prefix: ${CAIMAN_SERVER_APPLICATION_ENDPOINTS_PREFIX:}
+  open-api:
+    api-docs:
+      path: ${CAIMAN_SERVER_OPEN_API_API_DOCS_PATH}
+      enabled: ${CAIMAN_SERVER_OPEN_API_API_DOCS_ENABLE}
+    swagger-ui:
+      path: ${CAIMAN_SERVER_OPEN_API_SWAGGER_UI_REDIRECT_PATH}
+      enabled: ${CAIMAN_SERVER_OPEN_API_SWAGGER_UI_ENABLE}
 
 spring:
   application:
@@ -37,3 +44,13 @@ spring:
   threads:
     virtual:
       enabled: true
+
+springdoc:
+  api-docs:
+    path: ${caiman-server.open-api.api-docs.path}
+    resolve-schema-properties: true
+    enabled: ${caiman-server.open-api.api-docs.enabled}
+  override-with-generic-response: false
+  swagger-ui:
+    path: ${caiman-server.open-api.swagger-ui.path}
+    enabled: ${caiman-server.open-api.swagger-ui.enabled}

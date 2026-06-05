@@ -1,12 +1,16 @@
 package com.caimanproject.debtor.infrastructure.database.entity;
 
-import com.caimanproject.debtor.core.ContactType;
+import com.caimanproject.debtor.core.domain.types.ContactType;
+import com.caimanproject.debtor.infrastructure.database.config.AuditableEntity;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -18,8 +22,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-
-import java.time.Instant;
 
 @Entity
 @Getter
@@ -41,9 +43,10 @@ import java.time.Instant;
         )
     }
 )
-public class DebtorContactEntity {
+public class DebtorContactEntity implements AuditableEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", length = 36, nullable = false)
     private String id;
 
@@ -62,9 +65,6 @@ public class DebtorContactEntity {
     @Column(name = "priority", nullable = false)
     private int priority = 1;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    @Embedded
+    private AuditEmbeddable audit;
 }

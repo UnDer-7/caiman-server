@@ -1,8 +1,12 @@
 package com.caimanproject.debtor.infrastructure.database.entity;
 
+import com.caimanproject.debtor.infrastructure.database.config.AuditableEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -13,7 +17,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,9 +28,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "debtor")
-public class DebtorEntity {
+public class DebtorEntity implements AuditableEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", length = 36, nullable = false)
     private String id;
 
@@ -43,11 +47,8 @@ public class DebtorEntity {
     @Column(name = "is_active", nullable = false)
     private Boolean active;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    @Embedded
+    private AuditEmbeddable audit;
 
     @Builder.Default
     @OneToMany(mappedBy = "debtor", cascade = CascadeType.ALL, orphanRemoval = true)

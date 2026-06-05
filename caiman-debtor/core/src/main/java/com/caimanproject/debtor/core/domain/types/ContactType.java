@@ -1,4 +1,4 @@
-package com.caimanproject.debtor.core;
+package com.caimanproject.debtor.core.domain.types;
 
 public enum ContactType {
     EMAIL,

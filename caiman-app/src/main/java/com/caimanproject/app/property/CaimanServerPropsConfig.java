@@ -1,6 +1,8 @@
 package com.caimanproject.app.property;
 
 import com.caimanproject.contracts.config.CaimanServerProps;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
@@ -8,7 +10,8 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "caiman-server", ignoreUnknownFields = false)
 public record CaimanServerPropsConfig(
-    ApplicationPropImpl application
+    @NotNull @Validated ApplicationPropImpl application,
+    @NotNull @Validated OpenApiPropImp openApi
 ) implements CaimanServerProps {
 
     record ApplicationPropImpl(
@@ -17,6 +20,15 @@ public record CaimanServerPropsConfig(
                 Cannot be just '/', cannot end with '/', and must contain only alphanumeric characters, '.', '_', '~', or '-'
                 """)
         String endpointsPrefix
-    ) implements CaimanServerProps.ApplicationProp{
-    }
+    ) implements CaimanServerProps.ApplicationProp{ }
+
+    record OpenApiPropImp(
+        @NotNull @Validated OpenApiGenericPropImpl apiDocs,
+        @NotNull @Validated OpenApiGenericPropImpl swaggerUi
+    ) implements CaimanServerProps.OpenApiProp {}
+
+    record OpenApiGenericPropImpl(
+        @NotBlank String path,
+        @NotNull Boolean enabled
+    ) implements CaimanServerProps.OpenApiGenericProp {}
 }

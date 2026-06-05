@@ -93,6 +93,52 @@ caiman-app → all :entrypoint and :infrastructure modules (composition root —
 
 Cross-context data access (e.g. billing needing debtor info) uses gateway interfaces defined in `caiman-contracts`, implemented in the providing context's `:infrastructure` module, and wired by `caiman-app`.
 
+---
+
+## Hexagonal Architecture Conventions
+
+### Port naming (`core.port.in` / `core.port.out`)
+
+- **`port.in`** — use case interfaces (primary ports, driven by adapters in `entrypoint`). Named after the action: `CreateDebtorUseCase`, `UpdateDebtorUseCase`.
+- **`port.out`** — gateway interfaces (secondary ports, implemented by adapters in `infrastructure`). Named after the capability the core needs: `DebtorPersistenceGateway`, `DebtorEventGateway`, `CreditBureauGateway`.
+
+### Service / use case implementation naming (`core.domain.service`)
+
+- Interface in `port.in`: `CreateDebtorUseCase`
+- Implementation in `core.domain.service`: `CreateDebtorService`
+
+### Adapter naming (`infrastructure`)
+
+Suffix is always `Adapter`, never `Impl`. Name by context/intent, not technology — technology changes, intent doesn't.
+
+| Package | Class | Implements |
+|---|---|---|
+| `infrastructure.database.adapter` | `DebtorPersistenceAdapter` | `DebtorPersistenceGateway` |
+| `infrastructure.database.adapter` | `DebtorQueryAdapter` | `DebtorQueryGateway` |
+| `infrastructure.messaging.adapter` | `DebtorEventAdapter` | `DebtorEventGateway` |
+| `infrastructure.http.adapter` | `CreditBureauAdapter` | `CreditBureauGateway` |
+
+### Interface segregation
+
+Split `port.out` interfaces when they grow large. Prefer separating write from read:
+
+```
+DebtorPersistenceGateway  →  save(Debtor), update(Debtor)
+DebtorQueryGateway        →  findById(UUID), findByDocument(String), findAllActive()
+```
+
+`CreateDebtorService` only injects `DebtorPersistenceGateway` — it never sees query methods it doesn't use. Each service declares only the ports it actually needs.
+
+### Infrastructure sub-package structure per adapter type
+
+```
+infrastructure.database.adapter     ← JPA/DB adapters
+infrastructure.messaging.adapter    ← event/message producers
+infrastructure.http.adapter         ← outbound HTTP clients
+```
+
+---
+
 ## Module responsibilities
 
 Detailed description of each Gradle module: business purpose, owned DB tables, events produced/consumed, and REST endpoints exposed.

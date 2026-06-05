@@ -5,6 +5,8 @@ plugins {
 }
 
 val springBootVersion = libs.versions.spring.boot.get()
+val springdocVersion = libs.versions.springdoc.openapi.get()
+val logstashEncoderVersion = libs.versions.logstash.logback.encoder.get()
 
 subprojects {
     apply(plugin = "java")
@@ -26,6 +28,7 @@ subprojects {
     configure<io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension> {
         imports {
             mavenBom("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
+            mavenBom("org.springdoc:springdoc-openapi-bom:$springdocVersion")
         }
     }
 
@@ -36,5 +39,6 @@ subprojects {
     dependencies {
         "compileOnly"("org.projectlombok:lombok")
         "annotationProcessor"("org.projectlombok:lombok")
+        "implementation"("net.logstash.logback:logstash-logback-encoder:$logstashEncoderVersion")
     }
 }
