@@ -18,6 +18,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Entity
@@ -54,4 +55,16 @@ public class DebtorEntity implements AuditableEntity {
     @OneToMany(mappedBy = "debtor", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<DebtorContactEntity> contacts = new ArrayList<>();
 
+    public void addContact(final DebtorContactEntity contact) {
+        if (contact != null) {
+            contact.setDebtor(this);
+            contacts.add(contact);
+        }
+    }
+
+    public void addContacts(final Collection<DebtorContactEntity> contacts) {
+        if (contacts != null && !contacts.isEmpty()) {
+            contacts.forEach(this::addContact);
+        }
+    }
 }

@@ -8,9 +8,11 @@ import com.caimanproject.debtor.entrypoint.payload.response.DebtorResponseDto;
 import com.caimanproject.web.annotation.CaimanEndpoint;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -21,6 +23,7 @@ public class DebtorController implements DebtorControllerSpec {
     private final CreateDebtorUseCase createDebtorUseCase;
 
     @Override
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public DebtorResponseDto createDebtor(@RequestBody final CreateDebtorRequestDto payload) {
         final var debtor = debtorWebMapper.toModel(payload);

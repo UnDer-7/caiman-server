@@ -4,6 +4,7 @@ import com.caimanproject.contracts.util.Constants;
 import com.caimanproject.debtor.core.domain.model.Debtor;
 import com.caimanproject.debtor.infrastructure.database.entity.DebtorEntity;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(
@@ -14,5 +15,6 @@ public interface DebtorEntityMapper {
 
     Debtor toModel(DebtorEntity entity);
 
+    @Mapping(target = "contacts", ignore = true)
     DebtorEntity toEntity(Debtor model);
 }

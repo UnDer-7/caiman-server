@@ -7,6 +7,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
+import java.util.Collection;
+
 @Mapper(
     componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
     uses = {OptionalEntityMapper.class, AuditEntityMapper.class, IdMapper.class},
@@ -17,4 +19,6 @@ public interface DebtorContactEntityMapper {
 
     @Mapping(target = "debtor", ignore = true)
     DebtorContactEntity toEntity(DebtorContact model);
+
+    Collection<DebtorContactEntity> toEntity(Collection<DebtorContact> models);
 }
