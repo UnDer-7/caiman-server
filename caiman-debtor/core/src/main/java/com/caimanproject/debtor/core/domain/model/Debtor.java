@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 @Getter
@@ -18,8 +19,7 @@ import java.util.function.Predicate;
 public class Debtor {
 
     @Getter(AccessLevel.NONE)
-    // todo: usar tipo UUID em todos IDs
-    private final String id;
+    private final UUID id;
 
     private final String name;
 
@@ -35,7 +35,7 @@ public class Debtor {
     private final List<DebtorContact> contacts;
 
     @Builder
-    public Debtor(final String id, final String name, final String notes, final Boolean notificationsEnabled, final Boolean active,
+    public Debtor(final UUID id, final String name, final String notes, final Boolean notificationsEnabled, final Boolean active,
         final List<DebtorContact> contacts, final Audit audit) {
 
         this.id = id;
@@ -50,7 +50,7 @@ public class Debtor {
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
     }
 
-    public Optional<String> getId() {
+    public Optional<UUID> getId() {
         return Optional.ofNullable(id);
     }
 

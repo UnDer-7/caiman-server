@@ -8,10 +8,11 @@ import lombok.Builder;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 @Builder
 public record DebtorResponseDto(
-    String id,
+    UUID id,
 
     String name,
 

@@ -5,10 +5,11 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Builder
 public record DebtorContactResponseDto(
-    String id,
+    UUID id,
 
     ContactType contactType,
 

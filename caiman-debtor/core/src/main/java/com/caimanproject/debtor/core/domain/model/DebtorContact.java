@@ -9,13 +9,14 @@ import lombok.ToString;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 @Getter
 @ToString
 public class DebtorContact {
 
     @Getter(AccessLevel.NONE)
-    private final String id;
+    private final UUID id;
 
     private final ContactType contactType;
 
@@ -26,7 +27,7 @@ public class DebtorContact {
     private final Audit audit;
 
     @Builder
-    public DebtorContact(final String id, final ContactType contactType, final String contactValue, final Integer priority, final Audit audit) {
+    public DebtorContact(final UUID id, final ContactType contactType, final String contactValue, final Integer priority, final Audit audit) {
 
         this.id = id;
         this.contactType = DomainValidation.validateAndReturn(contactType, "contactType");
@@ -35,7 +36,7 @@ public class DebtorContact {
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
     }
 
-    public Optional<String> getId() {
+    public Optional<UUID> getId() {
         return Optional.ofNullable(id);
     }
 
