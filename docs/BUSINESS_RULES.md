@@ -295,13 +295,14 @@ All enum columns use `VARCHAR`. Valid values per column:
 
 **Rules:**
 
-- `name` is required and cannot be blank.  
-- `email`, `phone`, and `telegram_handle` are all optional, but at least one contact field should be present if `notifications_enabled = true`. The system does not enforce this as a hard constraint — it is a soft validation with a warning in the response.  
-- `email` must be a valid email format if provided.  
+- `name` is required and cannot be blank. Max 255 characters.  
+- Contacts are provided as a list of `{ contactType, contactValue, priority }` entries. Supported types: `EMAIL`, `MOBILE_PHONE`, `WHATSAPP`, `TELEGRAM`. A debtor may have multiple entries per type (e.g. two email addresses), differentiated by `priority` (lower = higher priority).  
+- `contactValue` is validated per `contactType`: `EMAIL` must be a valid email address; `MOBILE_PHONE` and `WHATSAPP` must follow E.164 format (`+{DDI}{DDD}{number}`). `TELEGRAM` is free-text (username without `@` or E.164 number).  
+- Within a single request, two contacts of the same `contactType` cannot share the same `priority`. The database enforces `UNIQUE(debtor_id, contact_type, priority)` and `UNIQUE(debtor_id, contact_type, contact_value)`.  
+- A debtor may be created with an empty contact list even when `notifications_enabled = true`. No validation error or warning is returned. If Huginn finds no contact of the required channel type when dispatching, it logs the skip and continues.  
 - `notifications_enabled` defaults to `true`.  
 - `is_active` defaults to `true`.  
-- `created_at` and `updated_at` are set to the current UTC instant by the application.  
-- A debtor with the same `email` may be created — the system does not enforce email uniqueness. The admin is responsible for deduplication.
+- `created_at` and `updated_at` are set to the current UTC instant by the application.
 
 ### 2.2 Update Debtor
 
@@ -312,7 +313,7 @@ All enum columns use `VARCHAR`. Valid values per column:
 - All fields are optional in the request body. Only provided fields are updated (partial update).  
 - `updated_at` is always refreshed on any update.  
 - Changing `notifications_enabled` to `false` does not cancel any existing outbox entries. It takes effect on the next scheduling run.  
-- Changing `email` does not update existing outbox entries (payload was snapshotted at enqueue time).
+- Changing or removing a contact does not update existing outbox entries — the notification payload is snapshotted at enqueue time.
 
 ### 2.3 Deactivate Debtor
 
@@ -1075,14 +1076,22 @@ With the delete-on-terminal-state approach, only three statuses exist in the out
   - Insert a `FAILED` entry into `notification_log`.  
   - Delete the outbox row.
 
-### 11.5 Email Dispatch Rules
+### 11.5 Multi-Channel Dispatch
+
+Huginn dispatches to **all active channel types** for a given debtor. Each channel type is independent:
+
+- For each channel type configured for the plan (e.g. `EMAIL`, `WHATSAPP`, `TELEGRAM`):  
+  - Select the `debtor_contact` row with the **lowest `priority` value** for that `contact_type`.  
+  - If no contact exists for that type: log a warning and skip that channel. No error, no retry.  
+  - If a contact exists: dispatch via that channel.
+- In **v0**, only `EMAIL` is implemented. Multi-channel dispatch (WhatsApp, Telegram) is a future extension — the `debtor_contact` schema already supports it without changes.
+
+### 11.6 Email Dispatch Rules
 
 - Email is sent using the configured SMTP settings (application properties).  
 - Subject and body are rendered from templates (implementation detail, not a business rule).  
-- If `debtor.email` is null in the payload (should not happen — Odin validates before enqueue, but payload could be stale):  
-  - Do not attempt to send.  
-  - Log as `FAILED` with reason `"Recipient email missing in payload"`.  
-  - Delete the outbox entry immediately (do not retry — this is a config error, not a transient failure).
+- If the debtor has no `EMAIL` contact (no row with `contact_type = 'EMAIL'`): log a warning and skip. No error, no retry.  
+- If `debtor.email` is missing in the outbox payload (stale snapshot): do not attempt to send. Log as `FAILED` with reason `"Recipient email missing in payload"`. Delete the outbox entry immediately (do not retry — this is a config error, not a transient failure).
 
 ## 12\. Admin Operations
 
@@ -1176,7 +1185,9 @@ Checked by **Odin**, daily, after invoice generation.
 | Entity | Field | Rule |
 | :---- | :---- | :---- |
 | `debtor` | `name` | Required, non-blank, max 255 chars |
-| `debtor` | `email` | Valid email format if provided |
+| `debtor_contact` | `contactValue` (EMAIL) | Valid email format |
+| `debtor_contact` | `contactValue` (MOBILE\_PHONE, WHATSAPP) | E.164 format (`+{DDI}{DDD}{number}`) |
+| `debtor_contact` | `priority` | No duplicate `(contactType, priority)` per debtor in same request |
 | `charge_plan` | `total_amount` | Required, \> 0 |
 | `charge_plan` | `cycle_interval` | Required, \>= 1 |
 | `charge_plan` | `notification_timezone` | Valid IANA timezone |

@@ -1,4 +1,4 @@
-package com.caimanproject.debtor.infrastructure.database.mapper;
+package com.caimanproject.mapper;
 
 import com.caimanproject.contracts.util.Constants;
 import org.mapstruct.Mapper;
@@ -7,10 +7,10 @@ import org.mapstruct.ReportingPolicy;
 import java.util.Optional;
 
 @Mapper(
-        componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
-        unmappedTargetPolicy = ReportingPolicy.ERROR)
+    componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
+    unmappedTargetPolicy = ReportingPolicy.ERROR)
 @SuppressWarnings("java:S2789")
-public class OptionalEntityMapper {
+public class OptionalMapper {
 
     public <T> T fromOptional(final Optional<T> optional) {
         if (optional == null) {

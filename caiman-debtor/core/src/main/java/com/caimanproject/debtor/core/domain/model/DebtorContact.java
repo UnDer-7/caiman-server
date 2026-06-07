@@ -26,7 +26,7 @@ public class DebtorContact {
 
     private final Audit audit;
 
-    @Builder
+    @Builder(builderMethodName = "restoreBuilder", builderClassName = "RestoreBuilder")
     public DebtorContact(final UUID id, final ContactType contactType, final String contactValue, final Integer priority, final Audit audit) {
 
         this.id = id;
@@ -34,6 +34,11 @@ public class DebtorContact {
         this.contactValue = DomainValidation.validateAndReturn(contactValue, "contactValue");
         this.priority = DomainValidation.validateAndReturn(priority, "priority");
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
+    }
+
+    @Builder(builderMethodName = "createBuilder", builderClassName = "CreateBuilder")
+    public DebtorContact(final ContactType contactType, final String contactValue, final Integer priority) {
+        this(null, contactType, contactValue, priority, null);
     }
 
     public Optional<UUID> getId() {

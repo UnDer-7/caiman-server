@@ -16,17 +16,12 @@ public record CreateDebtorRequestDto(
 
     Boolean notificationsEnabled,
 
-    Boolean active,
-
     @Valid
     List<CreateDebtorContactRequestDto> contacts
 
 ) {
 
     public CreateDebtorRequestDto {
-        if (active == null) {
-            active = true;
-        }
         if (contacts == null) {
             contacts = Collections.emptyList();
         }

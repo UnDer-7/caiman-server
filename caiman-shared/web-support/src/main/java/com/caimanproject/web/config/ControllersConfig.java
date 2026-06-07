@@ -22,7 +22,7 @@ public class ControllersConfig implements WebMvcConfigurer {
     }
 
     private void configureControllerPrefix(final PathMatchConfigurer configurer) {
-        final var endpointsPrefix = serverProps.application().endpointsPrefix();
+        final var endpointsPrefix = serverProps.server().endpointsPrefix();
         if (endpointsPrefix != null && !endpointsPrefix.isBlank()) {
             configurer.addPathPrefix(endpointsPrefix, HandlerTypePredicate.forAnnotation(CaimanEndpoint.class));
         }

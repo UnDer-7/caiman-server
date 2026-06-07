@@ -1,9 +1,14 @@
 server:
-  port: 8080
+  port: ${caiman-server.server.port}
 
 caiman-server:
-  application:
-    endpoints-prefix: ${CAIMAN_SERVER_APPLICATION_ENDPOINTS_PREFIX:}
+  server:
+    endpoints-prefix: ${CAIMAN_SERVER_ENDPOINTS_PREFIX:}
+    port: ${CAIMAN_SERVER_PORT}
+  project:
+    name: "@project.name@"
+    version: "@project.version@"
+    description: "@project.description@"
   open-api:
     api-docs:
       path: ${CAIMAN_SERVER_OPEN_API_API_DOCS_PATH}
@@ -11,10 +16,18 @@ caiman-server:
     swagger-ui:
       path: ${CAIMAN_SERVER_OPEN_API_SWAGGER_UI_REDIRECT_PATH}
       enabled: ${CAIMAN_SERVER_OPEN_API_SWAGGER_UI_ENABLE}
+    application:
+      contact:
+        name: ToDo-put-name #ToDo: Put real name
+        url: https://google.com #ToDo: Put real site
+        email: admin@admin.com #ToDo: Put real email
+      documentation:
+        url: https://google.com #ToDo: Put real site
+        description: ToDo-put-documentation-description #ToDo: Put real doc
 
 spring:
   application:
-    name: caiman-server
+    name: ${caiman-server.project.name}
 
   jpa:
     open-in-view: false

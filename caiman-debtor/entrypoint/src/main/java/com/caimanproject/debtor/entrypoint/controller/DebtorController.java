@@ -26,8 +26,8 @@ public class DebtorController implements DebtorControllerSpec {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public DebtorResponseDto createDebtor(@RequestBody final CreateDebtorRequestDto payload) {
-        final var debtor = debtorWebMapper.toModel(payload);
-        final var debtorSaved = createDebtorUseCase.execute(debtor);
-        return debtorWebMapper.toDto(debtorSaved);
+        final var createCommand = debtorWebMapper.toCommand(payload);
+        final var debtor = createDebtorUseCase.execute(createCommand);
+        return debtorWebMapper.toDto(debtor);
     }
 }

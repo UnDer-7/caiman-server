@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -34,7 +35,7 @@ public class Debtor {
 
     private final List<DebtorContact> contacts;
 
-    @Builder
+    @Builder(builderMethodName = "restoreBuilder", builderClassName = "RestoreBuilder")
     public Debtor(final UUID id, final String name, final String notes, final Boolean notificationsEnabled, final Boolean active,
         final List<DebtorContact> contacts, final Audit audit) {
 
@@ -48,6 +49,11 @@ public class Debtor {
             .map(List::copyOf)
             .orElseGet(Collections::emptyList);
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
+    }
+
+    @Builder(builderMethodName = "createBuilder", builderClassName = "CreateBuilder")
+    public Debtor(final String name, final String notes, final Boolean notificationsEnabled, final List<DebtorContact> contacts) {
+        this(null, name, notes, notificationsEnabled, true, contacts, null);
     }
 
     public Optional<UUID> getId() {

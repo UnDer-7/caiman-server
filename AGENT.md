@@ -118,6 +118,28 @@ Suffix is always `Adapter`, never `Impl`. Name by context/intent, not technology
 | `infrastructure.messaging.adapter` | `DebtorEventAdapter` | `DebtorEventGateway` |
 | `infrastructure.http.adapter` | `CreditBureauAdapter` | `CreditBureauGateway` |
 
+### Command Objects (`core.port.in.command`)
+
+Every `port.in` use case receives a **Command Object** as its input — never a domain model directly.
+
+```
+core/port/in/
+  CreateDebtorUseCase.java           ← interface
+  command/
+    CreateDebtorCommand.java         ← input type for the use case
+    CreateDebtorContactCommand.java  ← nested data (separate file, not inner class)
+```
+
+**Rules:**
+- Commands are immutable `record`s with no validation logic and no behavior — pure data transport.
+- One command per use case. Commands are never shared between use cases.
+- Commands live in `core/port/in/command/`, not inside the service package. The entrypoint maps `RequestDto → Command`; the service maps `Command → domain model` internally.
+- The service constructs domain objects from the command using the domain model's builder. MapStruct is not used in `core` — it belongs only in `entrypoint` and `infrastructure` adapters.
+- The service validates structural rules (e.g. duplicate `contactType + priority` in a contact list) **before** constructing domain objects, throwing a `BusinessException` → HTTP 422.
+
+**Why commands, not domain objects:**  
+If the entrypoint constructs the domain model directly (via mapper), any domain constructor exception fires inside the entrypoint — preventing the service from applying business validation before construction. Commands decouple transport from construction: the service owns when and how domain objects are built.
+
 ### Interface segregation
 
 Split `port.out` interfaces when they grow large. Prefer separating write from read:
@@ -336,6 +358,24 @@ project(":caiman-debtor-entrypoint").projectDir = file("caiman-debtor/entrypoint
 After fix, dependency tree must show NO `->` substitutions between bounded-context modules.
 
 **Related:** Spring Boot 4 requires `@SpringBootApplication(scanBasePackages = "com.caimanproject")` to scan beans across all modules. Without it, only `com.caimanproject.app` is scanned.
+
+---
+
+### Domain model builders must use `restoreBuilder` / `createBuilder` naming
+
+**Rule:** Domain model classes that need two Lombok builders (one for DB restoration, one for creation) **must** follow this exact naming convention:
+
+```java
+@Builder(builderMethodName = "restoreBuilder")   // full constructor — used by infra mappers (DB → domain)
+public DomainClass(UUID id, ..., Audit audit) { ... }
+
+@Builder(builderMethodName = "createBuilder")    // creation constructor — used by services
+public DomainClass(String name, ...) { ... }
+```
+
+**Why:** `caiman-shared/mapper-spi` contains a custom `CaimanBuilderProvider` (MapStruct SPI) that intercepts `MoreThanOneBuilderCreationMethodException` and explicitly selects `restoreBuilder()` for infra mappers. Any other name for the DB-restore builder will cause MapStruct to fail with ambiguous constructor errors at compile time.
+
+**Scope:** `caiman-mapper-spi` is registered as `annotationProcessor` only in `:infrastructure` modules. The SPI resolves ambiguity specifically for the infra layer, which maps entities → domain models via `restoreBuilder`. The `createBuilder` is used only by services in `core` — never by mappers.
 
 ---
 
