@@ -4,6 +4,32 @@
 
 ---
 
+## Pendências / Questões em Aberto
+
+> Esta seção registra casos de uso identificados que ainda não possuem regra de negócio definida. Cada item deve ser resolvido antes de ser implementado.
+
+---
+
+### P-001 — Comprovante único cobrindo múltiplos devedores
+
+**Contexto:**  
+Num plano `ROTATING`, o devedor responsável pelo ciclo atual paga o valor total (ex: R$ 90,00) e envia o comprovante. Porém, esse mesmo comprovante cobre a dívida de outros membros também — por exemplo, ele pagou R$ 90,00 mas a fatura individual de cada pessoa é R$ 30,00 e ele está quitando os três de uma vez.
+
+**Casos concretos identificados:**
+- Membro A paga R$ 90,00 em um PIX único que cobre as faturas de A, B e C no mês corrente.
+- Membro A paga R$ 90,00 em um PIX único que cobre sua fatura de R$ 30,00 + adiantamento de R$ 60,00 para ciclos futuros próprios ou alheios.
+
+**Questões em aberto:**
+1. O sistema deve permitir que um único comprovante seja vinculado a múltiplas faturas (`invoice`)? Se sim, como o upload flow muda — o devedor seleciona quais faturas estão sendo cobertas?
+2. O AI deve tentar detectar automaticamente que o valor pago excede a fatura referenciada e sugerir distribuição?
+3. Excesso é tratado como `credit_balance` do membro que pagou, ou pode ser redistribuído para outros membros?
+4. O token de upload está atrelado a uma `invoice_id` específica (JWT claim). Permitir múltiplos `invoiceId` no token ou criar um token de plano separado?
+5. Quem é o "responsável" na UI: o admin distribui manualmente, ou o devedor informa os beneficiários no momento do upload?
+
+**Decisão:** ❌ Não definida — requer discussão antes de qualquer implementação.
+
+---
+
 ## Table of Contents
 
 - [Project Overview](#project-overview)  

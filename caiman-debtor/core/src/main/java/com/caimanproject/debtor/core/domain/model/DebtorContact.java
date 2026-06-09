@@ -1,6 +1,7 @@
 package com.caimanproject.debtor.core.domain.model;
 
 import com.caimanproject.contracts.util.DomainValidation;
+import com.caimanproject.debtor.core.domain.exception.domain.DebtorDomainExceptionCode;
 import com.caimanproject.debtor.core.domain.types.ContactType;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -30,9 +31,9 @@ public class DebtorContact {
     public DebtorContact(final UUID id, final ContactType contactType, final String contactValue, final Integer priority, final Audit audit) {
 
         this.id = id;
-        this.contactType = DomainValidation.validateAndReturn(contactType, "contactType");
-        this.contactValue = DomainValidation.validateAndReturn(contactValue, "contactValue");
-        this.priority = DomainValidation.validateAndReturn(priority, "priority");
+        this.contactType = validateOrThrows(contactType, "contactType");
+        this.contactValue = validateOrThrows(contactValue, "contactValue");
+        this.priority = validateOrThrows(priority, "priority");
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
     }
 
@@ -45,4 +46,7 @@ public class DebtorContact {
         return Optional.ofNullable(id);
     }
 
+    private static <T> T validateOrThrows(final T value, final String valueName) {
+        return DomainValidation.validateOrThrows(value, valueName, DebtorDomainExceptionCode.DOMAIN_INVALID_VALUE::createException);
+    }
 }

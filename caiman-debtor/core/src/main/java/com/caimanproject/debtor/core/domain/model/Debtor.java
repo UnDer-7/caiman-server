@@ -1,18 +1,18 @@
 package com.caimanproject.debtor.core.domain.model;
 
 import com.caimanproject.contracts.util.DomainValidation;
+import com.caimanproject.debtor.core.domain.exception.domain.DebtorDomainExceptionCode;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
-import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 @Getter
@@ -40,10 +40,10 @@ public class Debtor {
         final List<DebtorContact> contacts, final Audit audit) {
 
         this.id = id;
-        this.name = DomainValidation.validateAndReturn(name, "name");
+        this.name = validateOrThrows(name, "name");
         this.notes = notes;
-        this.notificationsEnabled = DomainValidation.validateAndReturn(notificationsEnabled, "notificationsEnabled");
-        this.active = DomainValidation.validateAndReturn(active, "active");
+        this.notificationsEnabled = validateOrThrows(notificationsEnabled, "notificationsEnabled");
+        this.active = validateOrThrows(active, "active");
         this.contacts = Optional.ofNullable(contacts)
             .filter(Predicate.not(List::isEmpty))
             .map(List::copyOf)
@@ -64,4 +64,7 @@ public class Debtor {
         return Optional.ofNullable(notes);
     }
 
+    private static <T> T validateOrThrows(final T value, final String valueName) {
+        return DomainValidation.validateOrThrows(value, valueName, DebtorDomainExceptionCode.DOMAIN_INVALID_VALUE::createException);
+    }
 }
