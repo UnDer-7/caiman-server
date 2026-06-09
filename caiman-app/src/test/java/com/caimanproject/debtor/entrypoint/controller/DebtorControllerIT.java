@@ -2,6 +2,7 @@ package com.caimanproject.debtor.entrypoint.controller;
 
 import com.caimanproject.app.test.IntegrationTestController;
 import com.caimanproject.app.test.builder.DtoBuilder;
+import com.caimanproject.contracts.util.RequestConstants;
 import com.caimanproject.debtor.core.domain.types.ContactType;
 import com.caimanproject.debtor.entrypoint.payload.request.CreateDebtorContactRequestDto;
 import com.caimanproject.debtor.entrypoint.payload.response.DebtorResponseDto;
@@ -39,6 +40,8 @@ class DebtorControllerIT extends IntegrationTestController {
             webTestClient
                 .post()
                 .uri(BASE_URL)
+                .header(RequestConstants.Headers.X_CORRELATION_ID, "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11")
+                .header(RequestConstants.Headers.X_CHANNEL, "integration-test")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .exchange()
@@ -84,6 +87,8 @@ class DebtorControllerIT extends IntegrationTestController {
             webTestClient
                 .post()
                 .uri(BASE_URL)
+                .header(RequestConstants.Headers.X_CORRELATION_ID, "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11")
+                .header(RequestConstants.Headers.X_CHANNEL, "integration-test")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .exchange()
@@ -123,6 +128,8 @@ class DebtorControllerIT extends IntegrationTestController {
             webTestClient
                 .post()
                 .uri(BASE_URL)
+                .header(RequestConstants.Headers.X_CORRELATION_ID, "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11")
+                .header(RequestConstants.Headers.X_CHANNEL, "integration-test")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .exchange()
@@ -159,6 +166,8 @@ class DebtorControllerIT extends IntegrationTestController {
             webTestClient
                 .post()
                 .uri(BASE_URL)
+                .header(RequestConstants.Headers.X_CORRELATION_ID, "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11")
+                .header(RequestConstants.Headers.X_CHANNEL, "integration-test")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .exchange()
@@ -170,6 +179,32 @@ class DebtorControllerIT extends IntegrationTestController {
                     assertThat(response.timestamp()).isNotNull();
                     assertThat(response.message()).isEqualTo("Informed contact list has duplicate contact priority");
                     assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value());
+                });
+        }
+
+        @Test
+        @DisplayName("should return 400 when required headers are missing")
+        void should_return_400_when_required_headers_are_missing() {
+            final var request = DtoBuilder.buildCreateDebtorRequestDto().build();
+
+            webTestClient
+                .post()
+                .uri(BASE_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+                .expectBody(ErrorResponseDto.class)
+                .value(response -> {
+                    assertThat(response.code()).isEqualTo("WEB_SUPPORT_002");
+                    assertThat(response.timestamp()).isNotNull();
+                    assertThat(response.message()).isEqualTo("Some invalid values were sent");
+                    assertThat(response.detail())
+                        .contains("Missing headers")
+                        .contains(RequestConstants.Headers.X_CORRELATION_ID)
+                        .contains(RequestConstants.Headers.X_CHANNEL);
+                    assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
                 });
         }
     }

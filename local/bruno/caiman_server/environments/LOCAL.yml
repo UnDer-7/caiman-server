@@ -1,0 +1,4 @@
+name: LOCAL
+variables:
+  - name: SERVER_URL
+    value: http://localhost:8080

@@ -17,7 +17,11 @@ public enum LogField {
     ERROR_DETAIL_MESSAGE,
     EXCEPTION_CAUSE,
     EXCEPTION_CAUSE_MSG,
-    TIMEZONE_ID;
+    TIMEZONE_ID,
+    TRANSACTION_ID,
+    HTTP_REQUEST,
+    CORRELATION_ID,
+    CHANNEL;
 
     public String label() {
         return this.name().toLowerCase();

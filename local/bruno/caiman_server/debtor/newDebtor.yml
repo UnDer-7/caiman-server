@@ -1,0 +1,31 @@
+info:
+  name: newDebtor
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{SERVER_URL}}/api/v1/debtors"
+  body:
+    type: json
+    data: |-
+      {
+          "name": "Gggwp",
+          "notes": "eu mesmo",
+          "notificationsEnabled": true,
+          "active": true,
+          "contacts": [
+              {
+                  "contactType": "EMAIL",
+                  "contactValue": "mateus7532@gmail.com",
+                  "priority": 1
+              }
+          ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
