@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum DebtorDomainExceptionCode implements ExceptionCode {
-    DOMAIN_INVALID_VALUE(
+    INVALID_VALUE(
         "001",
         "Domain received invalid values"
     ) {
@@ -31,6 +31,48 @@ public enum DebtorDomainExceptionCode implements ExceptionCode {
         public CaimanException createException() {
             return new InvalidValueDomainException(this);
         }
+    },
+    DUPLICATED_CONTACT_VALUE("002", "Debtor received duplicated contact value") {
+        @Override
+        public CaimanException createException(final String detail) {
+            return new DuplicateContactValueDomainException(this, detail);
+        }
+
+        @Override
+        public CaimanException createException(final String detail, final Throwable originalCause) {
+            return new DuplicateContactValueDomainException(this, detail, originalCause);
+        }
+
+        @Override
+        public CaimanException createException(final Throwable originalCause) {
+            return new DuplicateContactValueDomainException(this, originalCause);
+        }
+
+        @Override
+        public CaimanException createException() {
+            return new DuplicateContactValueDomainException(this);
+        }
+    },
+    DUPLICATE_CONTACT_PRIORITY("003", "Debtor received duplicate contact priority") {
+        @Override
+        public CaimanException createException(final String detail) {
+            return new DuplicateContactPriorityDomainException(this, detail);
+        }
+
+        @Override
+        public CaimanException createException(final String detail, final Throwable originalCause) {
+            return new DuplicateContactPriorityDomainException(this, detail, originalCause);
+        }
+
+        @Override
+        public CaimanException createException(final Throwable originalCause) {
+            return new DuplicateContactPriorityDomainException(this, originalCause);
+        }
+
+        @Override
+        public CaimanException createException() {
+            return new DuplicateContactPriorityDomainException(this);
+        }
     };
 
     private final String code;
@@ -41,15 +83,4 @@ public enum DebtorDomainExceptionCode implements ExceptionCode {
         return ModulePrefix.DEBTOR;
     }
 
-    @Override
-    public abstract CaimanException createException(final String detail);
-
-    @Override
-    public abstract CaimanException createException(final String detail, final Throwable originalCause);
-
-    @Override
-    public abstract CaimanException createException(final Throwable originalCause);
-
-    @Override
-    public abstract CaimanException createException();
 }

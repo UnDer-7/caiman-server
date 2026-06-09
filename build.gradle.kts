@@ -41,5 +41,13 @@ subprojects {
         "annotationProcessor"("org.projectlombok:lombok")
         "implementation"("net.logstash.logback:logstash-logback-encoder:$logstashEncoderVersion")
         "implementation"("org.slf4j:slf4j-api")
+
+        "testImplementation"("org.junit.jupiter:junit-jupiter-engine")
+        "testImplementation"("org.junit.jupiter:junit-jupiter-params")
+        "testImplementation"("org.mockito:mockito-core")
+        "testImplementation"("org.mockito:mockito-junit-jupiter")
+        "testImplementation"("org.assertj:assertj-core")
+        "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
+        "testRuntimeOnly"("ch.qos.logback:logback-classic")
     }
 }

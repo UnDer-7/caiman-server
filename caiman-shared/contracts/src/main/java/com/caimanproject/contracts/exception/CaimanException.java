@@ -144,7 +144,7 @@ public abstract class CaimanException extends RuntimeException {
     private static String getExceptionMessage(final ExceptionCode exceptionCode, final String customMessage) {
         return Optional.ofNullable(customMessage)
             .filter(Predicate.not(String::isBlank))
-            .map(cm -> "[code: %s] - [msg: %s] - [customMsg: %s]"
+            .map(cm -> "[code: %s] - [msg: %s] - [detail: %s]"
                 .formatted(exceptionCode.getCode(), exceptionCode.getMessage(), cm))
             .orElseGet(() -> getExceptionMessage(exceptionCode));
     }

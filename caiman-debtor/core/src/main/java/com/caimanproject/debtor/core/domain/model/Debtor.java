@@ -9,11 +9,12 @@ import lombok.ToString;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Getter
 @ToString
@@ -39,6 +40,24 @@ public class Debtor {
     public Debtor(final UUID id, final String name, final String notes, final Boolean notificationsEnabled, final Boolean active,
         final List<DebtorContact> contacts, final Audit audit) {
 
+        final var duplicateContactsByValue = getDuplicateContactsByValue(contacts);
+        if (!duplicateContactsByValue.isEmpty()) {
+            final var msg = duplicateContactsByValue.stream()
+                .map(dc -> "contactType: %s - contactValue: %s - priority: %s".formatted(
+                    dc.getContactType(), dc.getContactValue(), dc.getPriority()))
+                .collect(Collectors.joining(" | "));
+
+            throw DebtorDomainExceptionCode.DUPLICATED_CONTACT_VALUE.createException("Repeated Contacts: " + msg);
+        }
+        final var duplicateContactsByPriority = getDuplicateContactsByPriority(contacts);
+        if (!duplicateContactsByPriority.isEmpty()) {
+            final var msg = duplicateContactsByPriority.stream()
+                .map(dc -> "contactType: %s - contactValue: %s - priority: %s".formatted(
+                    dc.getContactType(), dc.getContactValue(), dc.getPriority()))
+                .collect(Collectors.joining(" | "));
+            throw DebtorDomainExceptionCode.DUPLICATE_CONTACT_PRIORITY.createException("Repeated Contacts: " + msg);
+        }
+
         this.id = id;
         this.name = validateOrThrows(name, "name");
         this.notes = notes;
@@ -56,6 +75,24 @@ public class Debtor {
         this(null, name, notes, notificationsEnabled, true, contacts, null);
     }
 
+    public static List<DebtorContact> getDuplicateContactsByValue(final List<DebtorContact> contacts) {
+        return contacts.stream()
+            .collect(Collectors.groupingBy(c -> Map.entry(c.getContactValue().toLowerCase(), c.getContactType())))
+            .values().stream()
+            .filter(group -> group.size() > 1)
+            .map(List::getFirst)
+            .toList();
+    }
+
+    public static List<DebtorContact> getDuplicateContactsByPriority(final List<DebtorContact> contacts) {
+        return contacts.stream()
+        .collect(Collectors.groupingBy(c -> Map.entry(c.getContactType(), c.getPriority())))
+            .values().stream()
+            .filter(group -> group.size() > 1)
+            .map(List::getFirst)
+            .toList();
+    }
+
     public Optional<UUID> getId() {
         return Optional.ofNullable(id);
     }
@@ -65,6 +102,6 @@ public class Debtor {
     }
 
     private static <T> T validateOrThrows(final T value, final String valueName) {
-        return DomainValidation.validateOrThrows(value, valueName, DebtorDomainExceptionCode.DOMAIN_INVALID_VALUE::createException);
+        return DomainValidation.validateOrThrows(value, valueName, DebtorDomainExceptionCode.INVALID_VALUE::createException);
     }
 }

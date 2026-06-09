@@ -6,22 +6,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
 @Slf4j
-public class DuplicateContactBusinessException extends BusinessException {
+class DuplicateContactBusinessException extends BusinessException {
 
-    protected DuplicateContactBusinessException(final ExceptionCode exceptionCode, final String detail,
-        final Throwable originalCause) {
+    DuplicateContactBusinessException(final ExceptionCode exceptionCode, final String detail, final Throwable originalCause) {
         super(exceptionCode, detail, originalCause);
     }
 
-    protected DuplicateContactBusinessException(final ExceptionCode exceptionCode, final Throwable originalCause) {
+    DuplicateContactBusinessException(final ExceptionCode exceptionCode, final Throwable originalCause) {
         super(exceptionCode, originalCause);
     }
 
-    protected DuplicateContactBusinessException(final ExceptionCode exceptionCode, final String detail) {
+    DuplicateContactBusinessException(final ExceptionCode exceptionCode, final String detail) {
         super(exceptionCode, detail);
     }
 
-    protected DuplicateContactBusinessException(final ExceptionCode exceptionCode) {
+    DuplicateContactBusinessException(final ExceptionCode exceptionCode) {
         super(exceptionCode);
     }
 

@@ -47,6 +47,6 @@ public class DebtorContact {
     }
 
     private static <T> T validateOrThrows(final T value, final String valueName) {
-        return DomainValidation.validateOrThrows(value, valueName, DebtorDomainExceptionCode.DOMAIN_INVALID_VALUE::createException);
+        return DomainValidation.validateOrThrows(value, valueName, DebtorDomainExceptionCode.INVALID_VALUE::createException);
     }
 }

@@ -26,7 +26,46 @@ Num plano `ROTATING`, o devedor responsável pelo ciclo atual paga o valor total
 4. O token de upload está atrelado a uma `invoice_id` específica (JWT claim). Permitir múltiplos `invoiceId` no token ou criar um token de plano separado?
 5. Quem é o "responsável" na UI: o admin distribui manualmente, ou o devedor informa os beneficiários no momento do upload?
 
-**Decisão:** ❌ Não definida — requer discussão antes de qualquer implementação.
+**Direção de solução analisada (ainda não decidida):**  
+Devedor informa no formulário de upload: valor enviado + lista opcional de membros beneficiários do mesmo plano (retornados pelo endpoint, sem request extra). Backend valida token, divide o valor entre as invoices selecionadas e aplica o saldo restante como `credit_balance` do pagador. A tabela `payment` já suporta múltiplos registros com o mesmo `payment_proof_id` e `invoice_id` diferentes — nenhuma migração existente quebra.
+
+**Foot-guns identificados antes de qualquer implementação:**
+
+1. **Token scope violation** — O JWT tem claim `invoiceId = X` (fatura de A). Se A declara pagar por B e C, o backend deve validar que todos os `memberId` informados pertencem ao mesmo `charge_plan` da invoice do token. Sem essa verificação, qualquer devedor com um token válido pode interferir nas invoices de outros planos.
+
+2. **Algoritmo de divisão indefinido** — Regra de aplicação do valor deve ser definida antes da implementação. Casos ambíguos:
+   - R$ 90,00, A=R$ 30, B=R$ 40 → sobram R$ 20 → vai para `credit_balance` de A (o pagador)?
+   - R$ 60,00, A=R$ 30, B=R$ 40 → valor insuficiente para cobrir B inteiro → B fica `PARTIALLY_PAID`? ou A acumula crédito e B fica sem pagamento?
+   - Ordem de preenchimento precisa ser determinística (ex: por `rotation_order` ASC, preenche invoices completas em sequência, restante vira `credit_balance` do pagador).
+
+3. **AI prompt precisa mudar** — O AI recebe contexto de uma única invoice (`amountDue`). Para multi-invoice, o prompt precisa incluir o valor total declarado e a lista de invoices cobertas. Verificar `valueReceived` contra o total alocado, não contra uma invoice individual. Mudança no contrato da seção 8.3.
+
+4. **Revisão manual fica complexa** — `POST /admin/proofs/{id}/resolve` recebe `{ decision, finalValue }`. Para multi-invoice, o admin precisa ver e ajustar a alocação por invoice individualmente. Endpoint muda de forma incompatível com o design atual.
+
+5. **Race condition entre uploads simultâneos** — Se B já tem uma proof em `PENDING_ANALYSIS` e A declara cobrir B ao mesmo tempo: conflito. O check de `409` da seção 7.1 precisa varrer todas as invoices-alvo declaradas, não apenas a invoice do token.
+
+6. **Notificações se multiplicam** — `PaymentProofApprovedEvent` é 1:1 com invoice hoje. Para multi-invoice, N eventos precisam ser disparados. Definir: B e C recebem email notificando que A pagou por eles? UX não está definida.
+
+7. **ROTATING vs SPLIT têm semânticas diferentes** — Em `SPLIT`, todos devem no mesmo ciclo, cobrir múltiplos é direto. Em `ROTATING`, "cobrir B e C" significa pagar invoices de ciclos futuros onde B e C seriam os responsáveis — é o caso de adiantamento, substancialmente mais complexo e com impacto na lógica de `cycle_index`.
+
+**Schema necessário (futuro, nenhuma migration existente muda):**
+
+```yaml
+# Nova tabela para persistir a alocação entre upload e aprovação
+payment_proof_allocation:
+  - id: varchar(36) PK
+  - payment_proof_id: varchar(36) → payment_proof(id)
+  - invoice_id: varchar(36) → invoice(id)
+  - allocated_amount: decimal(15,2)
+  - created_at: datetime
+```
+
+Sem essa tabela, a intenção de alocação (quais invoices, quanto cada uma) não sobrevive entre o upload e a aprovação nos modos `MANUAL` e `AI_ASSISTED`.
+
+**Workaround para v0 (já disponível, seção 9.2):**  
+Devedor envia comprovante pelo link normal cobrindo apenas sua invoice. Admin visualiza o comprovante, identifica o valor total e registra manualmente os pagamentos das outras invoices via `POST /admin/invoices/{id}/payments` com `notes` referenciando o ID do comprovante original. Zero mudança de schema, zero complexidade no upload flow.
+
+**Decisão:** ❌ Não definida — requer discussão antes de qualquer implementação. Candidata a v1.
 
 ---
 

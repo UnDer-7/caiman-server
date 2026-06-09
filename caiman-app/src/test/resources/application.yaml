@@ -1,0 +1,59 @@
+server:
+  port: ${caiman-server.server.port}
+
+caiman-server:
+  server:
+    endpoints-prefix:
+    port: 8080
+  project:
+    name: caiman-server-test
+    version: 0.0.1
+    description: Test description
+  open-api:
+    api-docs:
+      path: /v3/api-docs
+      enabled: true
+    swagger-ui:
+      path: /swagger-ui.html
+      enabled: true
+    application:
+      contact:
+        name: Test Contact
+        url: https://example.com
+        email: test@example.com
+      documentation:
+        url: https://example.com
+        description: Test documentation
+
+spring:
+  application:
+    name: caiman-server-test
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  jackson:
+    time-zone: UTC
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+  threads:
+    virtual:
+      enabled: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    resolve-schema-properties: true
+    enabled: true
+  override-with-generic-response: false
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
