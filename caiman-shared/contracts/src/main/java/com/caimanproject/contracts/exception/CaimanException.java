@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 @Slf4j
+@Getter
 public abstract class CaimanException extends RuntimeException {
 
     private final Instant timestamp;
@@ -128,25 +129,29 @@ public abstract class CaimanException extends RuntimeException {
         return Optional.ofNullable(detail)
             .filter(Predicate.not(String::isBlank))
             .map(d -> "[code: %s] - [message: %s] - [detail: %s] - [originalCauseMessage: %s]"
-                .formatted(exceptionCode.getCode(), exceptionCode.getMessage(), d, originalCause.getMessage()))
+                .formatted(exceptionCode.getFullCode(), exceptionCode.getMessage(), d, originalCause.getMessage()))
             .orElseGet(() -> getExceptionMessage(exceptionCode, originalCause));
     }
 
     private static String getExceptionMessage(final ExceptionCode exceptionCode, final Throwable throwable) {
         return "[code: %s] - [message: %s] - [originalCauseMessage: %s]"
-            .formatted(exceptionCode.getCode(), exceptionCode.getMessage(), throwable.getMessage());
+            .formatted(exceptionCode.getFullCode(), exceptionCode.getMessage(), throwable.getMessage());
     }
 
     private static String getExceptionMessage(final ExceptionCode exceptionCode) {
-        return "[code: %s] - [message: %s]".formatted(exceptionCode.getCode(), exceptionCode.getMessage());
+        return "[code: %s] - [message: %s]".formatted(exceptionCode.getFullCode(), exceptionCode.getMessage());
     }
 
     private static String getExceptionMessage(final ExceptionCode exceptionCode, final String customMessage) {
         return Optional.ofNullable(customMessage)
             .filter(Predicate.not(String::isBlank))
             .map(cm -> "[code: %s] - [msg: %s] - [detail: %s]"
-                .formatted(exceptionCode.getCode(), exceptionCode.getMessage(), cm))
+                .formatted(exceptionCode.getFullCode(), exceptionCode.getMessage(), cm))
             .orElseGet(() -> getExceptionMessage(exceptionCode));
+    }
+
+    public Optional<String> getDetail() {
+        return Optional.ofNullable(detail);
     }
 
     protected enum LogLevel {

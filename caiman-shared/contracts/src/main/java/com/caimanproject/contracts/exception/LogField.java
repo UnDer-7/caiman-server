@@ -7,7 +7,17 @@ public enum LogField {
     MSG,
     EXCEPTION_CLASS,
     EXCEPTION_MESSAGE,
-    LOG_LEVEL;
+    LOG_LEVEL,
+    ERROR_CODE,
+    ERROR_TIMESTAMP,
+    ERROR_MESSAGE,
+    HTTP_STATUS_CODE,
+    ERROR_MODULE_PREFIX,
+    ERROR_CODE_FULL,
+    ERROR_DETAIL_MESSAGE,
+    EXCEPTION_CAUSE,
+    EXCEPTION_CAUSE_MSG,
+    TIMEZONE_ID;
 
     public String label() {
         return this.name().toLowerCase();

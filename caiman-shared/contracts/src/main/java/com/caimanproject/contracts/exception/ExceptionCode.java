@@ -11,10 +11,15 @@ public interface ExceptionCode {
     CaimanException createException(Throwable originalCause);
     CaimanException createException();
 
-    public enum ModulePrefix {
+    default String getFullCode() {
+        return this.getModulePrefix().toString() + "_" + this.getCode();
+    }
+
+    enum ModulePrefix {
         BILLING,
         DEBTOR,
         NOTIFICATION,
-        PAYMENT
+        PAYMENT,
+        WEB_SUPPORT
     }
 }
