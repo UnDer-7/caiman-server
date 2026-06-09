@@ -1,7 +1,7 @@
 package com.caimanproject.debtor.core.domain.model;
 
 import com.caimanproject.contracts.util.DomainValidation;
-import com.caimanproject.debtor.core.domain.exception.domain.DebtorDomainExceptionCode;
+import com.caimanproject.debtor.core.domain.exception.domain.DomainExceptionCode;
 import com.caimanproject.debtor.core.domain.types.ContactType;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -47,6 +47,6 @@ public class DebtorContact {
     }
 
     private static <T> T validateOrThrows(final T value, final String valueName) {
-        return DomainValidation.validateOrThrows(value, valueName, DebtorDomainExceptionCode.INVALID_VALUE::createException);
+        return DomainValidation.validateOrThrows(value, valueName, DomainExceptionCode.INVALID_VALUE::createException);
     }
 }

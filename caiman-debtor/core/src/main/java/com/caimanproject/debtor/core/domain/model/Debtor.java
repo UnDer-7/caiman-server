@@ -1,7 +1,7 @@
 package com.caimanproject.debtor.core.domain.model;
 
 import com.caimanproject.contracts.util.DomainValidation;
-import com.caimanproject.debtor.core.domain.exception.domain.DebtorDomainExceptionCode;
+import com.caimanproject.debtor.core.domain.exception.domain.DomainExceptionCode;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -47,7 +47,7 @@ public class Debtor {
                     dc.getContactType(), dc.getContactValue(), dc.getPriority()))
                 .collect(Collectors.joining(" | "));
 
-            throw DebtorDomainExceptionCode.DUPLICATED_CONTACT_VALUE.createException("Repeated Contacts: " + msg);
+            throw DomainExceptionCode.DUPLICATED_CONTACT_VALUE.createException("Repeated Contacts: " + msg);
         }
         final var duplicateContactsByPriority = getDuplicateContactsByPriority(contacts);
         if (!duplicateContactsByPriority.isEmpty()) {
@@ -55,7 +55,7 @@ public class Debtor {
                 .map(dc -> "contactType: %s - contactValue: %s - priority: %s".formatted(
                     dc.getContactType(), dc.getContactValue(), dc.getPriority()))
                 .collect(Collectors.joining(" | "));
-            throw DebtorDomainExceptionCode.DUPLICATE_CONTACT_PRIORITY.createException("Repeated Contacts: " + msg);
+            throw DomainExceptionCode.DUPLICATE_CONTACT_PRIORITY.createException("Repeated Contacts: " + msg);
         }
 
         this.id = id;
@@ -102,6 +102,6 @@ public class Debtor {
     }
 
     private static <T> T validateOrThrows(final T value, final String valueName) {
-        return DomainValidation.validateOrThrows(value, valueName, DebtorDomainExceptionCode.INVALID_VALUE::createException);
+        return DomainValidation.validateOrThrows(value, valueName, DomainExceptionCode.INVALID_VALUE::createException);
     }
 }

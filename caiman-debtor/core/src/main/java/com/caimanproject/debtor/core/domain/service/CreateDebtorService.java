@@ -1,6 +1,6 @@
 package com.caimanproject.debtor.core.domain.service;
 
-import com.caimanproject.debtor.core.domain.exception.business.DebtorBusinessExceptionCode;
+import com.caimanproject.debtor.core.domain.exception.business.BusinessExceptionCode;
 import com.caimanproject.debtor.core.domain.model.Debtor;
 import com.caimanproject.debtor.core.domain.model.DebtorContact;
 import com.caimanproject.debtor.core.port.in.CreateDebtorUseCase;
@@ -48,7 +48,7 @@ class CreateDebtorService implements CreateDebtorUseCase {
                 .map(dc -> "contactType: %s - contactValue: %s - priority: %s".formatted(
                     dc.getContactType(), dc.getContactValue(), dc.getPriority()))
                 .collect(Collectors.joining(" | "));
-            throw DebtorBusinessExceptionCode.DUPLICATE_CONTACT_BY_PRIORITY.createException("Duplicate Contacts: " + msg);
+            throw BusinessExceptionCode.DUPLICATE_CONTACT_BY_PRIORITY.createException("Duplicate Contacts: " + msg);
         }
 
         final List<DebtorContact> duplicateContactsByValue = Debtor.getDuplicateContactsByValue(contacts);
@@ -57,7 +57,7 @@ class CreateDebtorService implements CreateDebtorUseCase {
                 .map(dc -> "contactType: %s - contactValue: %s - priority: %s".formatted(
                     dc.getContactType(), dc.getContactValue(), dc.getPriority()))
                 .collect(Collectors.joining(" | "));
-            throw DebtorBusinessExceptionCode.DUPLICATE_CONTACT_BY_VALUE.createException("Duplicate Contacts: " + msg);
+            throw BusinessExceptionCode.DUPLICATE_CONTACT_BY_VALUE.createException("Duplicate Contacts: " + msg);
         }
     }
 

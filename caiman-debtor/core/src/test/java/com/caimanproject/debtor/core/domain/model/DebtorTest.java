@@ -1,6 +1,6 @@
 package com.caimanproject.debtor.core.domain.model;
 
-import com.caimanproject.debtor.core.domain.exception.domain.DebtorDomainExceptionCode;
+import com.caimanproject.debtor.core.domain.exception.domain.DomainExceptionCode;
 import com.caimanproject.debtor.core.domain.types.ContactType;
 import com.caimanproject.debtor.core.test.builder.DomainBuilder;
 import org.assertj.core.api.Assertions;
@@ -136,7 +136,7 @@ class DebtorTest {
                 final var abstractThrowableAssert = Assertions.assertThatThrownBy(debtorBuilder::build);
 
                 // Then
-                final var expectedException = DebtorDomainExceptionCode.DUPLICATED_CONTACT_VALUE.createException();
+                final var expectedException = DomainExceptionCode.DUPLICATED_CONTACT_VALUE.createException();
                 abstractThrowableAssert.isInstanceOf(expectedException.getClass())
                     .hasMessageContainingAll(repeatedContactValue.toArray(new String[0]));
             }
@@ -155,7 +155,7 @@ class DebtorTest {
                 final var abstractThrowableAssert = Assertions.assertThatThrownBy(debtorBuilder::build);
 
                 // Then
-                final var expectedException = DebtorDomainExceptionCode.DUPLICATE_CONTACT_PRIORITY.createException();
+                final var expectedException = DomainExceptionCode.DUPLICATE_CONTACT_PRIORITY.createException();
                 abstractThrowableAssert.isInstanceOf(expectedException.getClass())
                     .hasMessageContainingAll(repeatedContactValue.toArray(new String[0]));
             }
@@ -195,7 +195,7 @@ class DebtorTest {
                 final var abstractThrowableAssert = Assertions.assertThatThrownBy(debtorBuilder::build);
 
                 // Then
-                final var expectedException = DebtorDomainExceptionCode.DUPLICATED_CONTACT_VALUE.createException();
+                final var expectedException = DomainExceptionCode.DUPLICATED_CONTACT_VALUE.createException();
                 abstractThrowableAssert.isInstanceOf(expectedException.getClass())
                     .hasMessageContainingAll(repeatedContactValue.toArray(new String[0]));
             }
@@ -217,7 +217,7 @@ class DebtorTest {
                 final var abstractThrowableAssert = Assertions.assertThatThrownBy(debtorBuilder::build);
 
                 // Then
-                final var expectedException = DebtorDomainExceptionCode.DUPLICATE_CONTACT_PRIORITY.createException();
+                final var expectedException = DomainExceptionCode.DUPLICATE_CONTACT_PRIORITY.createException();
                 abstractThrowableAssert.isInstanceOf(expectedException.getClass())
                     .hasMessageContainingAll(repeatedContactValue.toArray(new String[0]));
             }

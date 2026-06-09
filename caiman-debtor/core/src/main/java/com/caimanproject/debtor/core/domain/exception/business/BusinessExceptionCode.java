@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum DebtorBusinessExceptionCode implements ExceptionCode {
+public enum BusinessExceptionCode implements ExceptionCode {
     DUPLICATE_CONTACT_BY_VALUE("001", "Informed contact list has duplicate contact value") {
         @Override
         public CaimanException createException(final String detail) {

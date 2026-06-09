@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum DebtorDomainExceptionCode implements ExceptionCode {
+public enum DomainExceptionCode implements ExceptionCode {
     INVALID_VALUE(
         "001",
         "Domain received invalid values"
