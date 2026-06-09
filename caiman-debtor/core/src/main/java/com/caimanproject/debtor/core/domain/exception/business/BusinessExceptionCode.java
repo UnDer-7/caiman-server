@@ -56,7 +56,7 @@ public enum BusinessExceptionCode implements ExceptionCode {
 
     @Override
     public ModulePrefix getModulePrefix() {
-        return ModulePrefix.DEBTOR;
+        return ModulePrefix.DEBTOR_BUSINESS;
     }
 
 }

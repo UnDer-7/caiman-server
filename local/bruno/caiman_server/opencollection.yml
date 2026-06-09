@@ -18,10 +18,8 @@ request:
   headers:
     - name: X-Correlation-ID
       value: d76e7f4b-87e9-4858-8bcb-a86a2db52c75
-      disabled: true
     - name: X-Channel
       value: Bruno
-      disabled: true
 bundled: false
 extensions:
   bruno:

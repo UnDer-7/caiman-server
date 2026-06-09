@@ -80,7 +80,7 @@ public enum DomainExceptionCode implements ExceptionCode {
 
     @Override
     public ExceptionCode.ModulePrefix getModulePrefix() {
-        return ModulePrefix.DEBTOR;
+        return ModulePrefix.DEBTOR_DOMAIN;
     }
 
 }

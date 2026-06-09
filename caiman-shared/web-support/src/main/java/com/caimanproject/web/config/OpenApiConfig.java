@@ -86,10 +86,10 @@ public class OpenApiConfig {
         operation
                 .getResponses()
                 .addApiResponse(Integer.toString(HttpStatus.BAD_REQUEST.value()), buildBadRequestResponse());
-        operation
-                .getResponses()
-                .addApiResponse(
-                    Integer.toString(HttpStatus.INTERNAL_SERVER_ERROR.value()), buildInternalServerErrorResponse());
+//        operation
+//                .getResponses()
+//                .addApiResponse(
+//                    Integer.toString(HttpStatus.INTERNAL_SERVER_ERROR.value()), buildInternalServerErrorResponse());
     }
 
     private ApiResponse buildBadRequestResponse() {

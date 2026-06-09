@@ -137,7 +137,7 @@ class DebtorControllerIT extends IntegrationTestController {
                 .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value())
                 .expectBody(ErrorResponseDto.class)
                 .value(response -> {
-                    assertThat(response.code()).isEqualTo("DEBTOR_001");
+                    assertThat(response.code()).isEqualTo("DEBTOR_BUSINESS_001");
                     assertThat(response.timestamp()).isNotNull();
                     assertThat(response.message()).isEqualTo("Informed contact list has duplicate contact value");
                     assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value());
@@ -175,7 +175,7 @@ class DebtorControllerIT extends IntegrationTestController {
                 .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value())
                 .expectBody(ErrorResponseDto.class)
                 .value(response -> {
-                    assertThat(response.code()).isEqualTo("DEBTOR_002");
+                    assertThat(response.code()).isEqualTo("DEBTOR_BUSINESS_002");
                     assertThat(response.timestamp()).isNotNull();
                     assertThat(response.message()).isEqualTo("Informed contact list has duplicate contact priority");
                     assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value());

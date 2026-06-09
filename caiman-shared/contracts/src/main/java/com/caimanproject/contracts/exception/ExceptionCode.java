@@ -17,7 +17,10 @@ public interface ExceptionCode {
 
     enum ModulePrefix {
         BILLING,
-        DEBTOR,
+
+        DEBTOR_DOMAIN,
+        DEBTOR_BUSINESS,
+
         NOTIFICATION,
         PAYMENT,
         WEB_SUPPORT
