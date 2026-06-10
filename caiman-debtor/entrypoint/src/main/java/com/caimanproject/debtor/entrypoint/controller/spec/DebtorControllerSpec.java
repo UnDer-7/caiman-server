@@ -13,29 +13,60 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
-@Tag(name = "Debtor", description = "")
+@Tag(name = "Debtors", description = "Operations for managing debtor records and their notification contacts.")
 public interface DebtorControllerSpec {
 
     @Operation(
-        summary = "ToDo",
+        summary = "Create a new debtor",
         description = """
-            ToDo
+            Creates a new debtor record with an optional list of contact endpoints.
+
+            A debtor represents a person who owes money and can be enrolled in one or more charge plans.
+            Once created, the debtor is active by default and eligible for plan membership assignment.
+            Deactivating a debtor hides them from plan assignment but does not affect existing
+            memberships, invoices, or payments.
             """
     )
     @ApiResponse(
         responseCode = OpenApiConstants.HttpStatusCodes.CREATED,
-        description = "ToDo",
+        description = """
+            Debtor created successfully. Returns the full debtor representation including the
+            system-assigned UUID, active status, notification flag, audit timestamps, and the
+            resolved contact list.
+            """,
         content = @Content(schema = @Schema(implementation = DebtorResponseDto.class))
     )
     @ApiResponse(
-        responseCode = OpenApiConstants.HttpStatusCodes.UNPROCESSABLE_ENTITY,
-        description = "Business rule violation — all possible error scenarios are documented below", // melhorar texto
+        responseCode = OpenApiConstants.HttpStatusCodes.BAD_REQUEST,
+        description = "Invalid request. One or more fields failed format or presence validation (e.g., blank `name`, missing `contactType`). See `detail` for a field-level breakdown.",
         content = @Content(
             schema = @Schema(implementation = ErrorResponseDto.class),
             examples = {
                 @ExampleObject(
-                    name = "duplicate contact value - ToDo", // descricao um pouco mais detalhada, mas nao muito grande do pq pode ocorrer
-                    summary = "ToDo", // breve descricao, como titulo
+                    name = "invalid field values",
+                    summary = "One or more required fields are missing or malformed",
+                    value = """
+                        {
+                          "code": "WEB_SUPPORT_002",
+                          "timestamp": "2026-06-09T17:58:44.646783829Z",
+                          "message": "Some invalid values were sent",
+                          "detail": "[ propertyPath: name - errorMotive: must not be blank - valueProvided:  ]",
+                          "httpStatusCode": 400
+                        }
+                        """
+                )
+            }
+        )
+    )
+    @ApiResponse(
+        responseCode = OpenApiConstants.HttpStatusCodes.UNPROCESSABLE_ENTITY,
+        description = "Business rule violation. The request was well-formed but violated a business constraint. All possible business error scenarios are documented below.",
+        content = @Content(
+            schema = @Schema(implementation = ErrorResponseDto.class),
+            examples = {
+                @ExampleObject(
+                    name = "Two or more contacts share the same contactType and contactValue",
+                    summary = "duplicate contact value",
                     value = """
                         {
                           "code": "DEBTOR_BUSINESS_001",
@@ -47,8 +78,8 @@ public interface DebtorControllerSpec {
                         """
                 ),
                 @ExampleObject(
-                    name = "duplicate contact priority - ToDo", // descricao um pouco mais detalhada, mas nao muito grande do pq pode ocorrer
-                    summary = "ToDo", // breve descricao, como titulo
+                    name = "Two or more contacts share the same contactType and priority",
+                    summary = "duplicate contact priority",
                     value = """
                         {
                           "code": "DEBTOR_BUSINESS_002",
@@ -64,32 +95,36 @@ public interface DebtorControllerSpec {
     )
     @ApiResponse(
         responseCode = OpenApiConstants.HttpStatusCodes.INTERNAL_SERVER_ERROR,
-        description = "Internal erros", // melhorar texto
+        description = """
+            An unexpected internal error occurred. The `message` field always contains a generic phrase
+            and `detail` is always `null`. Use the `code` field to identify the error category and
+            correlate with application logs for more details.
+            """,
         content = @Content(
             schema = @Schema(implementation = ErrorResponseDto.class),
             examples = {
                 @ExampleObject(
-                    name = "internal validation, All message are the same, the code changes depending on the error - ToDo", // descricao um pouco mais detalhada, mas nao muito grande do pq pode ocorrer
-                    summary = "internal validation - ToDo", // breve descricao, como titulo
+                    name = "An internal validation error occurred. Check application logs for details.",
+                    summary = "internal validation error",
                     value = """
                         {
                           "code": "DEBTOR_DOMAIN_001",
                           "timestamp": "2026-06-09T17:58:44.646783829Z",
                           "message": "An internal validation failure occurred.",
-                          "detail": "null",
+                          "detail": null,
                           "httpStatusCode": 500
                         }
                         """
                 ),
                 @ExampleObject(
-                    name = "unexpected erro ocured, All message are the same, the code changes depending on the error - ToDo", // descricao um pouco mais detalhada, mas nao muito grande do pq pode ocorrer
-                    summary = "unexpected erro ocured - ToDo", // breve descricao, como titulo
+                    name = "An unexpected error occurred. Check application logs for details.",
+                    summary = "unexpected error",
                     value = """
                         {
                           "code": "WEB_SUPPORT_001",
                           "timestamp": "2026-06-09T17:58:44.646783829Z",
                           "message": "An internal server error occurred.",
-                          "detail": "null",
+                          "detail": null,
                           "httpStatusCode": 500
                         }
                         """
