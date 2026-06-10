@@ -1,6 +1,7 @@
 package com.caimanproject.debtor.entrypoint.payload.request;
 
 import com.caimanproject.debtor.core.domain.types.ContactType;
+import com.caimanproject.debtor.entrypoint.validation.ValidContactValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -10,6 +11,7 @@ import lombok.Builder;
 
 @Schema(description = "A single contact endpoint for a debtor, identifying both the channel and the address used by the notification dispatcher.")
 @Builder
+@ValidContactValue
 public record CreateDebtorContactRequestDto(
     @Schema(
         description = "Notification channel. Currently only EMAIL is supported.",

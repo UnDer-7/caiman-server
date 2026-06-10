@@ -11,6 +11,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
@@ -179,6 +181,48 @@ class DebtorControllerIT extends IntegrationTestController {
                     assertThat(response.timestamp()).isNotNull();
                     assertThat(response.message()).isEqualTo("Informed contact list has duplicate contact priority");
                     assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value());
+                });
+        }
+
+        @ParameterizedTest
+        @DisplayName("should return 400 when contact value is not a valid email")
+        @ValueSource(strings = {
+            "not-a-valid-email",
+            "user@",
+            "@example.com",
+            "user@.com",
+            "user@example"
+        })
+        void should_return_400_when_contact_value_is_invalid_email(final String invalidEmail) {
+            final var request = DtoBuilder.buildCreateDebtorRequestDto()
+                .contacts(List.of(
+                    CreateDebtorContactRequestDto.builder()
+                        .contactType(ContactType.EMAIL)
+                        .contactValue(invalidEmail)
+                        .priority(1)
+                        .build()
+                ))
+                .build();
+
+            webTestClient
+                .post()
+                .uri(BASE_URL)
+                .header(RequestConstants.Headers.X_CORRELATION_ID, "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11")
+                .header(RequestConstants.Headers.X_CHANNEL, "integration-test")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+                .expectBody(ErrorResponseDto.class)
+                .value(response -> {
+                    assertThat(response.code()).isEqualTo("WEB_SUPPORT_002");
+                    assertThat(response.timestamp()).isNotNull();
+                    assertThat(response.message()).isEqualTo("Some invalid values were sent");
+                    assertThat(response.detail())
+                        .contains("propertyPath: contacts[0].contactValue")
+                        .contains("errorMotive: must be a valid EMAIL address");
+                    assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
                 });
         }
 
