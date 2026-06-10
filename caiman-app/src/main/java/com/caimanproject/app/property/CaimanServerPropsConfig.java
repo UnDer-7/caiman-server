@@ -15,8 +15,15 @@ import org.springframework.validation.annotation.Validated;
 public record CaimanServerPropsConfig(
     @NotNull @Valid ApplicationPropImpl server,
     @NotNull @Valid OpenApiPropImp openApi,
-    @NotNull @Valid ProjectPropImpl project
+    @NotNull @Valid ProjectPropImpl project,
+    @NotNull @Valid DatabasePropImpl database
 ) implements CaimanServerProps {
+
+    record DatabasePropImpl(
+        @NotBlank String url,
+        @NotBlank String username,
+        @NotBlank String password
+    ) implements CaimanServerProps.DatabaseProp{}
 
     record ProjectPropImpl(
         @NotBlank String name,

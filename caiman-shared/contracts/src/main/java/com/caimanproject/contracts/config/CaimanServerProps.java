@@ -4,6 +4,13 @@ public interface CaimanServerProps {
     ApplicationProp server();
     OpenApiProp openApi();
     ProjectProp project();
+    DatabaseProp database();
+
+    interface DatabaseProp {
+        String url();
+        String username();
+        String password();
+    }
 
     interface ProjectProp {
         String name();
