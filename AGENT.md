@@ -201,7 +201,7 @@ Detailed description of each Gradle module: business purpose, owned DB tables, e
 
 **Owned tables:**
 - `debtor` — `id`, `name`, `notes`, `notifications_enabled`, `is_active`, `created_at`, `updated_at`
-- `debtor_contact` — `id`, `debtor_id`, `contact_type` (`EMAIL`, `MOBILE_PHONE`, `WHATSAPP`, `TELEGRAM`), `contact_value`, `priority`
+- `debtor_contact` — `id`, `debtor_id`, `contact_type` (`EMAIL`), `contact_value`, `priority`
 
 **Events produced:** none
 

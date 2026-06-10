@@ -12,13 +12,7 @@ import lombok.Builder;
 @Builder
 public record CreateDebtorContactRequestDto(
     @Schema(
-        description = """
-            Notification channel. One of: EMAIL, MOBILE_PHONE, WHATSAPP, TELEGRAM. \
-            EMAIL — standard SMTP address. \
-            MOBILE_PHONE — E.164 phone number (e.g. +5561986823666). \
-            WHATSAPP — E.164 number; integration adapter constructs the JID. \
-            TELEGRAM — username without @ or E.164 phone number.
-            """,
+        description = "Notification channel. Currently only EMAIL is supported.",
         example = "EMAIL",
         nullable = false,
         requiredMode = Schema.RequiredMode.REQUIRED)
@@ -26,13 +20,7 @@ public record CreateDebtorContactRequestDto(
     ContactType contactType,
 
     @Schema(
-        description = """
-            The actual contact address for the given contactType. \
-            EMAIL — standard email address (e.g. user@example.com). \
-            MOBILE_PHONE — E.164 (e.g. +5561986823666). \
-            WHATSAPP — E.164 number. \
-            TELEGRAM — username (without @) or E.164 phone number.
-            """,
+        description = "The actual contact address for the given contactType. EMAIL — standard email address (e.g. user@example.com).",
         example = "user@example.com",
         nullable = false,
         requiredMode = Schema.RequiredMode.REQUIRED)

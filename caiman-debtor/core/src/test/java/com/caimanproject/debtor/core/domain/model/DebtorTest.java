@@ -55,13 +55,10 @@ class DebtorTest {
 
                 Arguments.of(List.of(
                     DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe11@gmail.com").priority(0).build(),
-                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.MOBILE_PHONE).contactValue("+0111988883333").priority(0).build(),
-                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.WHATSAPP).contactValue("+0111988883333").priority(0).build(),
-                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.TELEGRAM).contactValue("+0111988883333").priority(0).build()
-                                    )),
+                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("marty@gmail.com").priority(1).build())),
 
                 Arguments.of(List.of(
-                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.MOBILE_PHONE).contactValue("+0111988883333").priority(0).build())),
+                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe11@gmail.com").priority(0).build())),
 
                 Arguments.of(List.of())
             );
@@ -103,8 +100,7 @@ class DebtorTest {
 
                 Arguments.of(List.of(
                     DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe@gmail.com").priority(0).build(),
-                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.MOBILE_PHONE).contactValue("+5561988880001").priority(0).build(),
-                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.WHATSAPP).contactValue("+5561988880002").priority(0).build())),
+                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("marty@gmail.com").priority(1).build())),
 
                 Arguments.of(List.of(
                     DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe@gmail.com").priority(0).build())),
@@ -168,7 +164,7 @@ class DebtorTest {
                     .notificationsEnabled(true)
                     .contacts(List.of(
                         DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe@gmail.com").priority(0).build(),
-                        DomainBuilder.buildDebtorContactFull().contactType(ContactType.MOBILE_PHONE).contactValue("+5561988883333").priority(1).build()))
+                        DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe2@gmail.com").priority(1).build()))
                     .build()
                 ).doesNotThrowAnyException();
             }
@@ -232,7 +228,7 @@ class DebtorTest {
                     .active(true)
                     .contacts(List.of(
                         DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe@gmail.com").priority(0).build(),
-                        DomainBuilder.buildDebtorContactFull().contactType(ContactType.MOBILE_PHONE).contactValue("+5561988883333").priority(1).build()))
+                        DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe2@gmail.com").priority(1).build()))
                     .audit(DomainBuilder.buildAuditFull().build())
                     .build()
                 ).doesNotThrowAnyException();
@@ -267,19 +263,19 @@ class DebtorTest {
 
             Arguments.of(
                 List.of(
-                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.MOBILE_PHONE).contactValue("+5561988883333").priority(0).build(),
-                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.MOBILE_PHONE).contactValue("+5561988883333").priority(1).build(),
-                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.MOBILE_PHONE).contactValue("+0111988883333").priority(2).build()),
-                List.of("+5561988883333")),
+                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe@gmail.com").priority(0).build(),
+                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe@gmail.com").priority(1).build(),
+                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("other@gmail.com").priority(2).build()),
+                List.of("johndoe@gmail.com")),
 
             Arguments.of(
                 List.of(
                     DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("joji@gmail.com").priority(0).build(),
                     DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe11@gmail.com").priority(1).build(),
                     DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe11@gmail.com").priority(2).build(),
-                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.MOBILE_PHONE).contactValue("+0111988883333").priority(3).build(),
-                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.MOBILE_PHONE).contactValue("+0111988883333").priority(4).build()),
-                List.of("johndoe11@gmail.com", "+0111988883333"))
+                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("marty@gmail.com").priority(3).build(),
+                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("marty@gmail.com").priority(4).build()),
+                List.of("johndoe11@gmail.com", "marty@gmail.com"))
                         );
     }
 
@@ -296,17 +292,16 @@ class DebtorTest {
                 List.of(
                     DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe@gmail.com").priority(0).build(),
                     DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("marty@gmail.com").priority(0).build(),
-                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.MOBILE_PHONE).contactValue("+5561988880001").priority(0).build(),
-                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.MOBILE_PHONE).contactValue("+5561988880002").priority(0).build(),
+                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("other@gmail.com").priority(1).build(),
                     DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("carol@gmail.com").priority(1).build()),
-                List.of("johndoe@gmail.com", "+5561988880001")),
+                List.of("johndoe@gmail.com", "other@gmail.com")),
 
             Arguments.of(
                 List.of(
-                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.MOBILE_PHONE).contactValue("+5561988883333").priority(1).build(),
-                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.MOBILE_PHONE).contactValue("+0111988883333").priority(1).build(),
+                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe1@gmail.com").priority(1).build(),
+                    DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe2@gmail.com").priority(1).build(),
                     DomainBuilder.buildDebtorContactFull().contactType(ContactType.EMAIL).contactValue("johndoe@gmail.com").priority(0).build()),
-                List.of("+5561988883333"))
+                List.of("johndoe1@gmail.com"))
         );
     }
 }

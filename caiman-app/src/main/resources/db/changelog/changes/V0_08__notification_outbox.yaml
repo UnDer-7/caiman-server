@@ -48,7 +48,7 @@ databaseChangeLog:
               - column:
                   name: channel
                   type: varchar(50)
-                  remarks: "Delivery channel. Currently always EMAIL. Future: TELEGRAM, SMS."
+                  remarks: "Delivery channel. Currently always EMAIL."
                   constraints:
                     nullable: false
               - column:

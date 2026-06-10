@@ -361,8 +361,8 @@ All enum columns use `VARCHAR`. Valid values per column:
 **Rules:**
 
 - `name` is required and cannot be blank. Max 255 characters.  
-- Contacts are provided as a list of `{ contactType, contactValue, priority }` entries. Supported types: `EMAIL`, `MOBILE_PHONE`, `WHATSAPP`, `TELEGRAM`. A debtor may have multiple entries per type (e.g. two email addresses), differentiated by `priority` (lower = higher priority).  
-- `contactValue` is validated per `contactType`: `EMAIL` must be a valid email address; `MOBILE_PHONE` and `WHATSAPP` must follow E.164 format (`+{DDI}{DDD}{number}`). `TELEGRAM` is free-text (username without `@` or E.164 number).  
+- Contacts are provided as a list of `{ contactType, contactValue, priority }` entries. Supported type in v0: `EMAIL`. A debtor may have multiple `EMAIL` entries, differentiated by `priority` (lower = higher priority).  
+- `contactValue` for `EMAIL` must be a valid email address.  
 - Within a single request, two contacts of the same `contactType` cannot share the same `priority`. The database enforces `UNIQUE(debtor_id, contact_type, priority)` and `UNIQUE(debtor_id, contact_type, contact_value)`.  
 - A debtor may be created with an empty contact list even when `notifications_enabled = true`. No validation error or warning is returned. If Huginn finds no contact of the required channel type when dispatching, it logs the skip and continues.  
 - `notifications_enabled` defaults to `true`.  
@@ -1143,13 +1143,7 @@ With the delete-on-terminal-state approach, only three statuses exist in the out
 
 ### 11.5 Multi-Channel Dispatch
 
-Huginn dispatches to **all active channel types** for a given debtor. Each channel type is independent:
-
-- For each channel type configured for the plan (e.g. `EMAIL`, `WHATSAPP`, `TELEGRAM`):  
-  - Select the `debtor_contact` row with the **lowest `priority` value** for that `contact_type`.  
-  - If no contact exists for that type: log a warning and skip that channel. No error, no retry.  
-  - If a contact exists: dispatch via that channel.
-- In **v0**, only `EMAIL` is implemented. Multi-channel dispatch (WhatsApp, Telegram) is a future extension — the `debtor_contact` schema already supports it without changes.
+In v0, only `EMAIL` is supported. Huginn selects the `debtor_contact` row with the **lowest `priority` value** for `contact_type = EMAIL`. If no EMAIL contact exists: log a warning and skip. No error, no retry.
 
 ### 11.6 Email Dispatch Rules
 
@@ -1251,7 +1245,6 @@ Checked by **Odin**, daily, after invoice generation.
 | :---- | :---- | :---- |
 | `debtor` | `name` | Required, non-blank, max 255 chars |
 | `debtor_contact` | `contactValue` (EMAIL) | Valid email format |
-| `debtor_contact` | `contactValue` (MOBILE\_PHONE, WHATSAPP) | E.164 format (`+{DDI}{DDD}{number}`) |
 | `debtor_contact` | `priority` | No duplicate `(contactType, priority)` per debtor in same request |
 | `charge_plan` | `total_amount` | Required, \> 0 |
 | `charge_plan` | `cycle_interval` | Required, \>= 1 |

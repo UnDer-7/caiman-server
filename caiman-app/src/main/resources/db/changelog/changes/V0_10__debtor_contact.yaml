@@ -32,11 +32,7 @@ databaseChangeLog:
                   name: contact_type
                   type: varchar(50)
                   remarks: >
-                    Channel type. One of: EMAIL, MOBILE_PHONE, WHATSAPP, TELEGRAM.
-                    EMAIL        — standard SMTP address (e.g. user@example.com).
-                    MOBILE_PHONE — E.164 phone number (e.g. +5561986823666).
-                    WHATSAPP     — E.164 number; JID is built by the integration adapter.
-                    TELEGRAM     — username without @ or E.164 phone number.
+                    Channel type. Currently only EMAIL is supported.
                   constraints:
                     nullable: false
               - column:
@@ -44,10 +40,7 @@ databaseChangeLog:
                   type: varchar(500)
                   remarks: >
                     The actual contact address for the given contact_type.
-                    EMAIL        — standard email address.
-                    MOBILE_PHONE — E.164 (e.g. +5561986823666).
-                    WHATSAPP     — E.164 number; integration adapter constructs the JID.
-                    TELEGRAM     — username (without @) or E.164 phone number.
+                    EMAIL — standard email address (e.g. user@example.com).
                   constraints:
                     nullable: false
               - column:

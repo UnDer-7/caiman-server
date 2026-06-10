@@ -121,9 +121,9 @@ class CreateDebtorServiceTest {
 
             Arguments.of(
                 List.of(
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.MOBILE_PHONE).contactValue("+5561988880001").priority(0).build(),
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.MOBILE_PHONE).contactValue("+5561988880002").priority(0).build()),
-                List.of("+5561988880001"))
+                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("a@gmail.com").priority(2).build(),
+                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("b@gmail.com").priority(2).build()),
+                List.of("a@gmail.com"))
         );
     }
 
@@ -137,18 +137,18 @@ class CreateDebtorServiceTest {
 
             Arguments.of(
                 List.of(
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.MOBILE_PHONE).contactValue("+5561988883333").priority(0).build(),
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.MOBILE_PHONE).contactValue("+5561988883333").priority(1).build(),
+                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("dup@gmail.com").priority(0).build(),
+                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("dup@gmail.com").priority(1).build(),
                     CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("other@gmail.com").priority(2).build()),
-                List.of("+5561988883333")),
+                List.of("dup@gmail.com")),
 
             Arguments.of(
                 List.of(
                     CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("johndoe@gmail.com").priority(0).build(),
                     CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("johndoe@gmail.com").priority(1).build(),
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.MOBILE_PHONE).contactValue("+0111988883333").priority(2).build(),
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.MOBILE_PHONE).contactValue("+0111988883333").priority(3).build()),
-                List.of("johndoe@gmail.com", "+0111988883333"))
+                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("marty@gmail.com").priority(2).build(),
+                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("marty@gmail.com").priority(3).build()),
+                List.of("johndoe@gmail.com", "marty@gmail.com"))
         );
     }
 }
