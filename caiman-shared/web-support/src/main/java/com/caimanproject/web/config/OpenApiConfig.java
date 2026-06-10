@@ -106,9 +106,9 @@ public class OpenApiConfig {
                                                         .summary("Missing required headers")
                                                         .value("""
                                                             {
-                                                                "code": "002",
+                                                                "code": "WEB_SUPPORT_002",
                                                                 "timestamp": "2026-02-15T17:32:10.590433349Z",
-                                                                "message": "Invalid values",
+                                                                "message": "Some invalid values were sent",
                                                                 "customMessage": "Missing headers. Headers: [X-Correlation-ID, X-Channel] are required",
                                                                 "httpStatusCode": 400
                                                             }
@@ -119,10 +119,10 @@ public class OpenApiConfig {
                                                         .summary("Invalid input data")
                                                         .value("""
                                                             {
-                                                                "code": "002",
-                                                                "timestamp": "2026-02-04T17:29:21.398223803Z",
-                                                                "message": "Invalid values",
-                                                                "customMessage": "[ propertyPath: mealTypeId - errorMotive: must not be null - valueProvided: null ]",
+                                                                "code": "WEB_SUPPORT_002",
+                                                                "timestamp": "2026-06-09T17:58:44.646783829Z",
+                                                                "message": "Some invalid values were sent",
+                                                                "detail": "[ propertyPath: name - errorMotive: must not be blank - valueProvided:  ]",
                                                                 "httpStatusCode": 400
                                                             }
                                                             """))));
