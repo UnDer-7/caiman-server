@@ -86,37 +86,37 @@ public class OpenApiConfig {
         operation
                 .getResponses()
                 .addApiResponse(Integer.toString(HttpStatus.BAD_REQUEST.value()), buildBadRequestResponse());
-//        operation
-//                .getResponses()
-//                .addApiResponse(
-//                    Integer.toString(HttpStatus.INTERNAL_SERVER_ERROR.value()), buildInternalServerErrorResponse());
+        operation
+                .getResponses()
+                .addApiResponse(
+                    Integer.toString(HttpStatus.INTERNAL_SERVER_ERROR.value()), buildInternalServerErrorResponse());
     }
 
     private ApiResponse buildBadRequestResponse() {
         return new ApiResponse()
-                .description("Invalid values")
+                .description("Invalid request. One or more fields failed format or presence validation. See `detail` for a field-level breakdown.")
                 .content(new Content()
                         .addMediaType(
                                 org.springframework.http.MediaType.APPLICATION_JSON_VALUE,
                                 new MediaType()
                                         .schema(new Schema<>().$ref("#/components/schemas/ErrorResponseDto"))
                                         .addExamples(
-                                                "Required headers are missing or invalid",
+                                                "missing required headers",
                                                 new Example()
-                                                        .summary("Missing required headers")
+                                                        .summary("Required headers are missing or have invalid values")
                                                         .value("""
                                                             {
                                                                 "code": "WEB_SUPPORT_002",
                                                                 "timestamp": "2026-02-15T17:32:10.590433349Z",
                                                                 "message": "Some invalid values were sent",
-                                                                "customMessage": "Missing headers. Headers: [X-Correlation-ID, X-Channel] are required",
+                                                                "detail": "Missing headers. Headers: [X-Correlation-ID, X-Channel] are required",
                                                                 "httpStatusCode": 400
                                                             }
                                                             """))
                                         .addExamples(
-                                                "Any invalid input data will return a response similar to this",
+                                                "invalid field values",
                                                 new Example()
-                                                        .summary("Invalid input data")
+                                                        .summary("One or more required fields are missing or malformed")
                                                         .value("""
                                                             {
                                                                 "code": "WEB_SUPPORT_002",
@@ -130,22 +130,41 @@ public class OpenApiConfig {
 
     private ApiResponse buildInternalServerErrorResponse() {
         return new ApiResponse()
-                .description("Internal Server Error")
+                .description("""
+                    An unexpected internal error occurred. The `message` field always contains a generic phrase \
+                    and `detail` is always `null`. Use the `code` field to identify the error category and \
+                    correlate with application logs for more details.""")
                 .content(new Content()
                         .addMediaType(
                                 org.springframework.http.MediaType.APPLICATION_JSON_VALUE,
                                 new MediaType()
                                         .schema(new Schema<>().$ref("#/components/schemas/ErrorResponseDto"))
                                         .addExamples(
-                                                "Any unexpected internal error will return a response similar to this",
+                                                "internal validation error",
                                                 new Example()
-                                                        .summary("Unexpected internal error")
+                                                        .summary("internal validation error")
+                                                        .description("An internal validation error occurred. Check application logs for details.")
                                                         .value("""
                                                             {
-                                                                "code": "001",
-                                                                "timestamp": "2026-02-15T17:42:49.743256697Z",
-                                                                "message": "An unexpected error occurred",
-                                                                "httpStatusCode": 500
+                                                              "code": "DEBTOR_DOMAIN_001",
+                                                              "timestamp": "2026-06-09T17:58:44.646783829Z",
+                                                              "message": "An internal validation failure occurred.",
+                                                              "detail": null,
+                                                              "httpStatusCode": 500
+                                                            }
+                                                            """))
+                                        .addExamples(
+                                                "unexpected error",
+                                                new Example()
+                                                        .summary("unexpected error")
+                                                        .description("An unexpected error occurred. Check application logs for details.")
+                                                        .value("""
+                                                            {
+                                                              "code": "WEB_SUPPORT_001",
+                                                              "timestamp": "2026-06-09T17:58:44.646783829Z",
+                                                              "message": "An internal server error occurred.",
+                                                              "detail": null,
+                                                              "httpStatusCode": 500
                                                             }
                                                             """))));
     }

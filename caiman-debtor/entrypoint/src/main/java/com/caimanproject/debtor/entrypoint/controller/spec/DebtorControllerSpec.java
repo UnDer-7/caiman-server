@@ -37,28 +37,6 @@ public interface DebtorControllerSpec {
         content = @Content(schema = @Schema(implementation = DebtorResponseDto.class))
     )
     @ApiResponse(
-        responseCode = OpenApiConstants.HttpStatusCodes.BAD_REQUEST,
-        description = "Invalid request. One or more fields failed format or presence validation (e.g., blank `name`, missing `contactType`). See `detail` for a field-level breakdown.",
-        content = @Content(
-            schema = @Schema(implementation = ErrorResponseDto.class),
-            examples = {
-                @ExampleObject(
-                    name = "invalid field values",
-                    summary = "One or more required fields are missing or malformed",
-                    value = """
-                        {
-                          "code": "WEB_SUPPORT_002",
-                          "timestamp": "2026-06-09T17:58:44.646783829Z",
-                          "message": "Some invalid values were sent",
-                          "detail": "[ propertyPath: name - errorMotive: must not be blank - valueProvided:  ]",
-                          "httpStatusCode": 400
-                        }
-                        """
-                )
-            }
-        )
-    )
-    @ApiResponse(
         responseCode = OpenApiConstants.HttpStatusCodes.UNPROCESSABLE_ENTITY,
         description = "Business rule violation. The request was well-formed but violated a business constraint. All possible business error scenarios are documented below.",
         content = @Content(
@@ -90,45 +68,6 @@ public interface DebtorControllerSpec {
                         }
                         """
                 ),
-            }
-        )
-    )
-    @ApiResponse(
-        responseCode = OpenApiConstants.HttpStatusCodes.INTERNAL_SERVER_ERROR,
-        description = """
-            An unexpected internal error occurred. The `message` field always contains a generic phrase
-            and `detail` is always `null`. Use the `code` field to identify the error category and
-            correlate with application logs for more details.
-            """,
-        content = @Content(
-            schema = @Schema(implementation = ErrorResponseDto.class),
-            examples = {
-                @ExampleObject(
-                    name = "An internal validation error occurred. Check application logs for details.",
-                    summary = "internal validation error",
-                    value = """
-                        {
-                          "code": "DEBTOR_DOMAIN_001",
-                          "timestamp": "2026-06-09T17:58:44.646783829Z",
-                          "message": "An internal validation failure occurred.",
-                          "detail": null,
-                          "httpStatusCode": 500
-                        }
-                        """
-                ),
-                @ExampleObject(
-                    name = "An unexpected error occurred. Check application logs for details.",
-                    summary = "unexpected error",
-                    value = """
-                        {
-                          "code": "WEB_SUPPORT_001",
-                          "timestamp": "2026-06-09T17:58:44.646783829Z",
-                          "message": "An internal server error occurred.",
-                          "detail": null,
-                          "httpStatusCode": 500
-                        }
-                        """
-                )
             }
         )
     )
