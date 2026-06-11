@@ -4,6 +4,7 @@ import com.caimanproject.app.CaimanApplication;
 import com.caimanproject.app.test.builder.DtoBuilder;
 import com.caimanproject.contracts.util.RequestConstants;
 import com.caimanproject.debtor.entrypoint.payload.response.DebtorResponseDto;
+import com.caimanproject.test.annotation.IntegrationTest;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
+@IntegrationTest
 @ActiveProfiles("test")
 @AutoConfigureWebTestClient
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

@@ -1,5 +1,6 @@
 package com.caimanproject.debtor.core.domain.service;
 
+import com.caimanproject.test.annotation.UnitTest;
 import com.caimanproject.debtor.core.domain.exception.business.BusinessExceptionCode;
 import com.caimanproject.debtor.core.domain.model.Debtor;
 import com.caimanproject.debtor.core.domain.types.ContactType;
@@ -23,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.stream.Stream;
 
+@UnitTest
 @ExtendWith(MockitoExtension.class)
 class CreateDebtorServiceTest {
 

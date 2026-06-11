@@ -426,7 +426,34 @@ All business decisions, domain rules, and technical choices are documented in `.
     - **Non-BOM-managed** (MapStruct, lombok-mapstruct-binding, and any third-party lib not covered by a BOM): version goes in `gradle/libs.versions.toml`, referenced via `libs.*` accessor in the module build file.
     - **Gradle plugins**: always declared in `gradle/libs.versions.toml` under `[plugins]` and referenced via `alias(libs.plugins.*)` in the root `build.gradle.kts`.
 
-13. **No wildcard imports (`*`).** All imports must be fully qualified. The only exception is test source files, where wildcard imports are allowed exclusively for assertion and mock libraries.
+13. **Every test class must be annotated with `@UnitTest` or `@IntegrationTest`** (from `com.caimanproject.test.annotation`). These annotations drive the `./gradlew unitTest` and `./gradlew integrationTest` Gradle tasks.
+
+    - `@UnitTest` — no Spring context, no infrastructure. Typically `@ExtendWith(MockitoExtension.class)` only.
+    - `@IntegrationTest` — boots a Spring context (`@SpringBootTest`) or uses Testcontainers. `@IntegrationTest` is `@Inherited`: annotating an abstract base class (e.g. `IntegrationTestController`) propagates the tag to all subclasses — do **not** repeat it on the subclass.
+
+    ```java
+    // Unit test — annotate the class directly
+    @UnitTest
+    @ExtendWith(MockitoExtension.class)
+    class DebtorServiceTest { ... }
+
+    // Integration test base — annotation inherited by all subclasses
+    @IntegrationTest
+    @SpringBootTest(...)
+    public abstract class IntegrationTestController { ... }
+
+    // Subclass — NO @IntegrationTest needed, inherited from base
+    class DebtorControllerIT extends IntegrationTestController { ... }
+
+    // Integration test with no base — annotate directly
+    @IntegrationTest
+    @SpringBootTest(...)
+    class CreateDebtorSQLiteIT { ... }
+    ```
+
+    Run commands: `make test/unit`, `make test/integration`, `make test` (both).
+
+14. **No wildcard imports (`*`).** All imports must be fully qualified. The only exception is test source files, where wildcard imports are allowed exclusively for assertion and mock libraries.
 
     **Forbidden everywhere (including tests):**
     ```java

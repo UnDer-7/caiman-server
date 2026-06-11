@@ -1,5 +1,6 @@
 package com.caimanproject.debtor.core.domain.model;
 
+import com.caimanproject.test.annotation.UnitTest;
 import com.caimanproject.debtor.core.domain.exception.domain.DomainExceptionCode;
 import com.caimanproject.debtor.core.domain.types.ContactType;
 import com.caimanproject.debtor.core.test.builder.DomainBuilder;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+@UnitTest
 @ExtendWith(MockitoExtension.class)
 class DebtorTest {
 

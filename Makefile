@@ -35,7 +35,7 @@ all: help
 .PHONY: dev/compile
 dev/compile:
 	@echo ">>> Compiling…"
-	./gradlew clean compileJava
+	./gradlew clean compileJava --rerun-tasks
 
 ## dev/run: Build all modules and run the application locally (loads .env variables)
 .PHONY: dev/run
@@ -46,6 +46,21 @@ dev/run:
 	set +a && \
 	./gradlew :caiman-app:bootRun
 
+## ----- Tests -----
+## test/unit: Run unit tests across all modules
+.PHONY: test/unit
+test/unit:
+	./gradlew unitTest --rerun-tasks
+
+## test/integration: Run integration tests across all modules
+.PHONY: test/integration
+test/integration:
+	./gradlew integrationTest --rerun-tasks
+
+## test: Run unit and integration tests across all modules
+.PHONY: test
+test:
+	./gradlew unitTest integrationTest --rerun-tasks
 
 
 

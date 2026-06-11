@@ -34,6 +34,35 @@ subprojects {
 
     tasks.withType<Test> {
         useJUnitPlatform()
+        testLogging {
+            events("started", "passed", "skipped", "failed")
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+            showExceptions = true
+            showCauses = true
+            showStackTraces = true
+            showStandardStreams = true
+        }
+    }
+
+    tasks.register<Test>("unitTest") {
+        description = "Runs unit tests (tagged @UnitTest)."
+        group = "verification"
+        testClassesDirs = sourceSets["test"].output.classesDirs
+        classpath = sourceSets["test"].runtimeClasspath
+        useJUnitPlatform {
+            includeTags("unit")
+        }
+    }
+
+    tasks.register<Test>("integrationTest") {
+        description = "Runs integration tests (tagged @IntegrationTest)."
+        group = "verification"
+        testClassesDirs = sourceSets["test"].output.classesDirs
+        classpath = sourceSets["test"].runtimeClasspath
+        useJUnitPlatform {
+            includeTags("integration")
+        }
+        shouldRunAfter("unitTest")
     }
 
     dependencies {
@@ -43,6 +72,10 @@ subprojects {
         "testAnnotationProcessor"("org.projectlombok:lombok")
         "implementation"("net.logstash.logback:logstash-logback-encoder:$logstashEncoderVersion")
         "implementation"("org.slf4j:slf4j-api")
+
+        if (project.name != "caiman-test-support") {
+            "testImplementation"(project(":caiman-test-support"))
+        }
 
         "testImplementation"("org.junit.jupiter:junit-jupiter-engine")
         "testImplementation"("org.junit.jupiter:junit-jupiter-params")
