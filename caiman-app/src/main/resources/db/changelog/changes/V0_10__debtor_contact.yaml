@@ -2,6 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: 10-create-debtor-contact
       author: caiman
+      validCheckSum: any
       changes:
         - createTable:
             tableName: debtor_contact
@@ -65,11 +66,34 @@ databaseChangeLog:
                   remarks: Timestamp of the last update to this record. Always stored in UTC.
                   constraints:
                     nullable: false
+
+  - changeSet:
+      id: 10-debtor-contact-unique-type-value
+      author: caiman
+      dbms: "!sqlite"
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          uniqueConstraintExists:
+            tableName: debtor_contact
+            constraintName: uq_dc_debtor_type_value
+      changes:
         - addUniqueConstraint:
             tableName: debtor_contact
             columnNames: debtor_id, contact_type, contact_value
             constraintName: uq_dc_debtor_type_value
 
+  - changeSet:
+      id: 10-debtor-contact-unique-type-priority
+      author: caiman
+      dbms: "!sqlite"
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          uniqueConstraintExists:
+            tableName: debtor_contact
+            constraintName: uq_dc_debtor_type_priority
+      changes:
         - addUniqueConstraint:
             tableName: debtor_contact
             columnNames: debtor_id, contact_type, priority

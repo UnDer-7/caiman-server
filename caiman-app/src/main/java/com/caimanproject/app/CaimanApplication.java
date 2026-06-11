@@ -5,9 +5,13 @@ import com.caimanproject.app.property.CaimanServerPropsConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 
 @EnableConfigurationProperties(CaimanServerPropsConfig.class)
-@SpringBootApplication(scanBasePackages = "com.caimanproject")
+@SpringBootApplication(
+    exclude = {DataSourceAutoConfiguration.class},
+    scanBasePackages = "com.caimanproject"
+)
 public class CaimanApplication {
 
     private CaimanApplication() {

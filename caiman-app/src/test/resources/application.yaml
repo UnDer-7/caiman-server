@@ -24,10 +24,6 @@ caiman-server:
       documentation:
         url: https://example.com
         description: Test documentation
-  database:
-    url: 'not-informed'
-    username: 'not-informed'
-    password: 'not-informed'
 
 spring:
   application:

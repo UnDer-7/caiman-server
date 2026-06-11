@@ -39,6 +39,8 @@ subprojects {
     dependencies {
         "compileOnly"("org.projectlombok:lombok")
         "annotationProcessor"("org.projectlombok:lombok")
+        "testCompileOnly"("org.projectlombok:lombok")
+        "testAnnotationProcessor"("org.projectlombok:lombok")
         "implementation"("net.logstash.logback:logstash-logback-encoder:$logstashEncoderVersion")
         "implementation"("org.slf4j:slf4j-api")
 

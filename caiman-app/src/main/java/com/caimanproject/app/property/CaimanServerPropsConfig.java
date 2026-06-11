@@ -1,7 +1,9 @@
 package com.caimanproject.app.property;
 
+import com.caimanproject.app.config.DatabaseType;
 import com.caimanproject.contracts.config.CaimanServerProps;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,11 +21,33 @@ public record CaimanServerPropsConfig(
     @NotNull @Valid DatabasePropImpl database
 ) implements CaimanServerProps {
 
-    record DatabasePropImpl(
-        @NotBlank String url,
-        @NotBlank String username,
-        @NotBlank String password
-    ) implements CaimanServerProps.DatabaseProp{}
+    public record DatabasePropImpl(
+        @NotNull DatabaseType type,
+        String url,
+        String username,
+        String password,
+        String sqliteFile
+    ) implements CaimanServerProps.DatabaseProp {
+
+        public DatabasePropImpl {
+            url = (url != null && url.isBlank()) ? null : url;
+            username = (username != null && username.isBlank()) ? null : username;
+            password = (password != null && password.isBlank()) ? null : password;
+            sqliteFile = (sqliteFile != null && sqliteFile.isBlank()) ? null : sqliteFile;
+        }
+
+        @AssertTrue(message = "DATABASE_TYPE=POSTGRES requires DATABASE_JDBC_URL, DATABASE_USERNAME, DATABASE_PASSWORD environment variables")
+        boolean isPostgresConfigValid() {
+            return type != DatabaseType.POSTGRES
+                || (url != null && username != null && password != null);
+        }
+
+        @AssertTrue(message = "DATABASE_TYPE=SQLITE requires DATABASE_SQLITE_FILE environment variable")
+        boolean isSqliteConfigValid() {
+            return type != DatabaseType.SQLITE
+                || sqliteFile != null;
+        }
+    }
 
     record ProjectPropImpl(
         @NotBlank String name,

@@ -42,3 +42,8 @@ build/
 .docker_volume/
 .sdkmanrc
 .tmp/
+META-INF/
+*.db
+*.db-wal
+*.db-shm
+*.db-journal

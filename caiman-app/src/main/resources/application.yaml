@@ -25,9 +25,11 @@ caiman-server:
         url: https://google.com #ToDo: Put real site
         description: ToDo-put-documentation-description #ToDo: Put real doc
   database:
-    url: ${CAIMAN_SERVER_DATABASE_JDBC_URL}
-    username: ${CAIMAN_SERVER_DATABASE_USERNAME}
-    password: ${CAIMAN_SERVER_DATABASE_PASSWORD}
+    type: ${CAIMAN_SERVER_DATABASE_TYPE}
+    url: ${CAIMAN_SERVER_DATABASE_JDBC_URL:}
+    username: ${CAIMAN_SERVER_DATABASE_USERNAME:}
+    password: ${CAIMAN_SERVER_DATABASE_PASSWORD:}
+    sqlite-file: ${CAIMAN_SERVER_DATABASE_SQLITE_FILE:}
 
 spring:
   application:
@@ -49,11 +51,6 @@ spring:
 
   jackson:
     time-zone: UTC
-
-  datasource:
-    url: ${caiman-server.database.url}
-    username: ${caiman-server.database.username}
-    password: ${caiman-server.database.password}
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
