@@ -59,13 +59,22 @@ public class DataSourceConfig {
         return new HikariDataSource(config);
     }
 
+    // SQLite server-optimized config. Reference: https://kerkour.com/sqlite-for-servers
     private DataSource buildSqliteDataSource(String sqliteFile) {
         var config = new SQLiteConfig();
+        // Allows concurrent reads while a write is in progress (readers don't block writers)
         config.setJournalMode(SQLiteConfig.JournalMode.WAL);
+        // Wait up to 5s before returning SQLITE_BUSY when DB is locked by another connection
         config.setBusyTimeout(5000);
+        // Sync at critical moments only; safe with WAL and better performance than FULL
         config.setSynchronous(SQLiteConfig.SynchronousMode.NORMAL);
+        // Store temp tables/indexes in RAM instead of disk
         config.setTempStore(SQLiteConfig.TempStore.MEMORY);
-        config.setCacheSize(-2000);
+        // Max ~200MB RAM used to cache database pages (lazy allocation, not reserved upfront)
+        config.setCacheSize(-200000);
+        // Acquire write lock at transaction start; ensures busy_timeout is respected on writes
+        config.setTransactionMode(SQLiteConfig.TransactionMode.IMMEDIATE);
+        // SQLite does not enforce FK constraints by default; enable explicitly
         config.enforceForeignKeys(true);
 
         var ds = new SQLiteDataSource(config);
