@@ -2,6 +2,10 @@ server:
   port: ${caiman-server.server.port}
 
 caiman-server:
+  logging:
+    level: INFO
+    file-path: /tmp/caiman-test-logs
+    format: UNSTRUCTURED
   server:
     endpoints-prefix:
     port: 8080

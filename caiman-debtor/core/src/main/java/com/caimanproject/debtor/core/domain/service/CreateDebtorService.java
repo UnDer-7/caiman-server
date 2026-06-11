@@ -1,5 +1,6 @@
 package com.caimanproject.debtor.core.domain.service;
 
+import com.caimanproject.contracts.exception.LogField;
 import com.caimanproject.debtor.core.domain.exception.business.BusinessExceptionCode;
 import com.caimanproject.debtor.core.domain.model.Debtor;
 import com.caimanproject.debtor.core.domain.model.DebtorContact;
@@ -8,6 +9,7 @@ import com.caimanproject.debtor.core.port.in.command.CreateDebtorCommand;
 import com.caimanproject.debtor.core.port.out.DebtorPersistenceGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.logstash.logback.argument.StructuredArguments;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,6 +24,13 @@ class CreateDebtorService implements CreateDebtorUseCase {
 
     @Override
     public Debtor execute(final CreateDebtorCommand command) {
+        log.info(
+            LogField.Placeholders.THREE.getPlaceholder(),
+            StructuredArguments.kv(LogField.MSG.label(), "creating debtor"),
+            StructuredArguments.kv(LogField.DEBTOR_NAME.label(), command.name()),
+            StructuredArguments.kv(LogField.CONTACTS_COUNT.label(), command.contacts().size())
+        );
+
         final var contacts = command.contacts().stream()
             .map(contact -> DebtorContact.createBuilder()
                 .contactType(contact.contactType())
@@ -38,7 +47,17 @@ class CreateDebtorService implements CreateDebtorUseCase {
             .contacts(contacts)
             .build();
 
-        return debtorPersistenceGateway.save(debtor);
+        final var saved = debtorPersistenceGateway.save(debtor);
+
+        log.info(
+            LogField.Placeholders.FOUR.getPlaceholder(),
+            StructuredArguments.kv(LogField.MSG.label(), "debtor created"),
+            StructuredArguments.kv(LogField.DEBTOR_ID.label(), saved.getId().orElseThrow()),
+            StructuredArguments.kv(LogField.DEBTOR_NAME.label(), command.name()),
+            StructuredArguments.kv(LogField.CONTACTS_COUNT.label(), command.contacts().size())
+        );
+
+        return saved;
     }
 
     private static void validateContacts(final List<DebtorContact> contacts) {

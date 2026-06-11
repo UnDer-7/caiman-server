@@ -1,10 +1,17 @@
 package com.caimanproject.contracts.config;
 
 public interface CaimanServerProps {
+    LoggingProp logging();
     ApplicationProp server();
     OpenApiProp openApi();
     ProjectProp project();
     DatabaseProp database();
+
+    interface LoggingProp {
+        String level();
+        String folderPath();
+        String format();
+    }
 
     interface DatabaseProp {
         String url();

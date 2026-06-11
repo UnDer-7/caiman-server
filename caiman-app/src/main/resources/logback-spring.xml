@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
+
+    <springProperty scope="local" name="level" source="caiman-server.logging.level"/>
+    <springProperty scope="local" name="file_path" source="caiman-server.logging.folder-path"/>
+    <springProperty scope="context" name="format" source="caiman-server.logging.format"/>
+    <springProperty scope="context" name="springAppName" source="spring.application.name"/>
+
+    <property name="UNSTRUCTURED_LOG_PATTERN_COLORED"
+              value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS z}) %yellow(%clr([%t])) %highlight(%clr(${LOG_LEVEL_PATTERN:-%5p})) %magenta(%clr(%logger{1000})){cyan} %clr(:){faint} %m %X%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+    <property name="UNSTRUCTURED_LOG_PATTERN_NO_COLOR"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS z} [%t] ${LOG_LEVEL_PATTERN:-%5p} %logger{1000} : %m %X%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+
+    <!-- ####################### -->
+    <!-- ####### CONSOLE ####### -->
+    <!-- ####################### -->
+    <appender name="CONSOLE-UNSTRUCTURED" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+        <encoder>
+            <pattern>${UNSTRUCTURED_LOG_PATTERN_COLORED}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="CONSOLE-STRUCTURED" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+    </appender>
+
+
+    <!-- ####################### -->
+    <!-- ######## FILE ########## -->
+    <!-- ####################### -->
+    <appender name="FILE-UNSTRUCTURED" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- Se alterar o path, lembre de alterar no Dockerfile também -->
+        <file>${file_path}/unstructured/${springAppName}_unstructured.log</file>
+        <encoder>
+            <pattern>${UNSTRUCTURED_LOG_PATTERN_NO_COLOR}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>${file_path}/unstructured/${springAppName}_unstructured.%d{yyyy-MM-dd}.log</fileNamePattern>
+
+            <!-- keep 30 days' worth of history capped at 3GB total size -->
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="FILE-STRUCTURED" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- Se alterar o path, lembre de alterar no Dockerfile também -->
+        <file>${file_path}/structured/${springAppName}_structured.log</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>${file_path}/structured/${springAppName}_structured.%d{yyyy-MM-dd}.log</fileNamePattern>
+
+            <!-- keep 30 days' worth of history capped at 3GB total size -->
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <root level="${level}">
+        <if condition='property("format").equals("STRUCTURED")'>
+            <then>
+                <appender-ref ref="CONSOLE-STRUCTURED"/>
+                <appender-ref ref="FILE-STRUCTURED"/>
+            </then>
+            <else>
+                <appender-ref ref="CONSOLE-UNSTRUCTURED"/>
+                <appender-ref ref="FILE-UNSTRUCTURED"/>
+            </else>
+        </if>
+    </root>
+</configuration>

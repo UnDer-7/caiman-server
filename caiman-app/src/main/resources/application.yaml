@@ -5,10 +5,20 @@ caiman-server:
   server:
     endpoints-prefix: ${CAIMAN_SERVER_ENDPOINTS_PREFIX:}
     port: ${CAIMAN_SERVER_PORT}
+  logging:
+    level: ${CAIMAN_SERVER_LOGGING_LEVEL}
+    folder-path: ${CAIMAN_SERVER_LOGGING_FOLDER_PATH}
+    format: ${CAIMAN_SERVER_LOGGING_FORMAT}
   project:
     name: "@project.name@"
     version: "@project.version@"
     description: "@project.description@"
+  database:
+    type: ${CAIMAN_SERVER_DATABASE_TYPE}
+    url: ${CAIMAN_SERVER_DATABASE_JDBC_URL:}
+    username: ${CAIMAN_SERVER_DATABASE_USERNAME:}
+    password: ${CAIMAN_SERVER_DATABASE_PASSWORD:}
+    sqlite-file: ${CAIMAN_SERVER_DATABASE_SQLITE_FILE:}
   open-api:
     api-docs:
       path: ${CAIMAN_SERVER_OPEN_API_API_DOCS_PATH}
@@ -24,12 +34,6 @@ caiman-server:
       documentation:
         url: https://google.com #ToDo: Put real site
         description: ToDo-put-documentation-description #ToDo: Put real doc
-  database:
-    type: ${CAIMAN_SERVER_DATABASE_TYPE}
-    url: ${CAIMAN_SERVER_DATABASE_JDBC_URL:}
-    username: ${CAIMAN_SERVER_DATABASE_USERNAME:}
-    password: ${CAIMAN_SERVER_DATABASE_PASSWORD:}
-    sqlite-file: ${CAIMAN_SERVER_DATABASE_SQLITE_FILE:}
 
 spring:
   application:

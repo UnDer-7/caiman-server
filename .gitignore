@@ -47,3 +47,4 @@ META-INF/
 *.db-wal
 *.db-shm
 *.db-journal
+logs/

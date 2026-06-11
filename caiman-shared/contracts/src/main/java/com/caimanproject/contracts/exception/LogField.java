@@ -19,10 +19,15 @@ public enum LogField {
     EXCEPTION_CAUSE_MSG,
     TIMEZONE_ID,
     DATABASE_TYPE,
-    TRANSACTION_ID,
+    REQUEST_ID,
     HTTP_REQUEST,
     CORRELATION_ID,
-    CHANNEL;
+    CHANNEL,
+    DEBTOR_ID,
+    DEBTOR_NAME,
+    CONTACTS_COUNT,
+    CONTACT_DETAILS,
+    DEBTOR_NOTIFICATIONS_ENABLED;
 
     public String label() {
         return this.name().toLowerCase();

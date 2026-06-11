@@ -15,11 +15,22 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "caiman-server", ignoreUnknownFields = false)
 public record CaimanServerPropsConfig(
+    @NotNull @Valid LoggingPropImpl logging,
     @NotNull @Valid ApplicationPropImpl server,
     @NotNull @Valid OpenApiPropImp openApi,
     @NotNull @Valid ProjectPropImpl project,
     @NotNull @Valid DatabasePropImpl database
 ) implements CaimanServerProps {
+
+    public record LoggingPropImpl(
+        @NotBlank @Pattern(regexp = "TRACE|DEBUG|INFO|WARN|ERROR", message = "Must be one of: TRACE, DEBUG, INFO, WARN, ERROR")
+        String level,
+
+        @NotBlank String folderPath,
+
+        @NotBlank @Pattern(regexp = "UNSTRUCTURED|STRUCTURED", message = "Must be one of: UNSTRUCTURED, STRUCTURED")
+        String format
+    ) implements CaimanServerProps.LoggingProp {}
 
     public record DatabasePropImpl(
         @NotNull DatabaseType type,

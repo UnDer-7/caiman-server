@@ -40,7 +40,7 @@ public class RequestLoggingFilterConfig extends OncePerRequestFilter {
         final String correlationId = request.getHeader(RequestConstants.Headers.X_CORRELATION_ID);
         final String channel = request.getHeader(RequestConstants.Headers.X_CHANNEL);
 
-        MDC.put(LogField.TRANSACTION_ID.label(), UUID.randomUUID().toString());
+        MDC.put(LogField.REQUEST_ID.label(), UUID.randomUUID().toString());
         MDC.put(LogField.HTTP_REQUEST.label(), "%s %s".formatted(request.getMethod(), request.getRequestURI()));
         MDC.put(LogField.CORRELATION_ID.label(), correlationId);
         MDC.put(LogField.CHANNEL.label(), channel);
