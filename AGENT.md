@@ -28,11 +28,79 @@ Payment is confirmed by the debtor uploading a receipt (PIX, bank transfer, Venm
 ## Stack
 
 - **Backend**: Java 25, Spring Boot 4, Spring Data JPA, Hibernate, Spring Mail  
-- **Database**: PostgreSQL (primary), SQLite (fallback)  
+- **Database**: PostgreSQL (primary), SQLite (fallback) — selected via `CAIMAN_SERVER_DATABASE_TYPE`  
 - **Migrations**: Liquibase (YAML changelogs)  
 - **AI**: Anthropic API (claude-sonnet model) for payment proof analysis  
 - **Build**: Gradle (multi-project, Kotlin DSL)  
 - **Deployment**: Docker Compose
+
+---
+
+## Database Configuration
+
+The application supports two database backends selected at startup via a single env var. No container required for SQLite — preferred for local development.
+
+### Switching databases
+
+Set `CAIMAN_SERVER_DATABASE_TYPE` to one of:
+
+| Value | Backend | When to use |
+|---|---|---|
+| `SQLITE` | SQLite (file-based) | Local dev, tests — no container needed |
+| `POSTGRES` | PostgreSQL via HikariCP | Production, staging |
+
+### Required env vars per type
+
+**SQLite** — only one var required:
+```
+CAIMAN_SERVER_DATABASE_TYPE=SQLITE
+CAIMAN_SERVER_DATABASE_SQLITE_FILE=./sqlite_database/database.db
+```
+
+**PostgreSQL** — three vars required:
+```
+CAIMAN_SERVER_DATABASE_TYPE=POSTGRES
+CAIMAN_SERVER_DATABASE_JDBC_URL=jdbc:postgresql://localhost:5432/caiman_server
+CAIMAN_SERVER_DATABASE_USERNAME=admin_usr
+CAIMAN_SERVER_DATABASE_PASSWORD=admin_pass
+```
+
+Startup validation (`CaimanServerPropsConfig.DatabasePropImpl`) rejects the app immediately if the required vars for the selected type are missing.
+
+### How it works internally
+
+`DataSourceConfig` (`caiman-app`) reads `CaimanServerPropsConfig.database().type()` and builds the appropriate `DataSource` bean:
+
+- **POSTGRES**: `HikariDataSource` with the provided JDBC URL, username, and password.
+- **SQLITE**: `SQLiteDataSource` with a server-optimized config — WAL journal mode, 5 s busy timeout, NORMAL sync, MEMORY temp store, ~200 MB page cache, IMMEDIATE transaction mode, and foreign key enforcement. File path from `CAIMAN_SERVER_DATABASE_SQLITE_FILE`.
+
+`JpaVendorAdapter` switches Hibernate dialect in the same switch: `PostgreSQLDialect` vs `SQLiteDialect` (Hibernate community dialect).
+
+### Liquibase compatibility — `dbms: "!sqlite"` guard
+
+SQLite does not support `ALTER TABLE ADD CONSTRAINT` (unique constraints must be declared at table creation). Any changeset that uses `addUniqueConstraint` **must** be guarded so it is skipped on SQLite:
+
+```yaml
+- changeSet:
+    id: some-unique-constraint
+    author: caiman
+    dbms: "!sqlite"          # ← skip on SQLite
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        uniqueConstraintExists:
+          tableName: some_table
+          constraintName: uq_some_constraint
+    changes:
+      - addUniqueConstraint:
+          tableName: some_table
+          columnNames: col_a, col_b
+          constraintName: uq_some_constraint
+```
+
+The table creation changeset (without `dbms` guard) already declares the columns. The `addUniqueConstraint` changeset is only meaningful for PostgreSQL. Skipping it on SQLite is safe — enforce uniqueness via application-layer validation or a `UNIQUE` index on the `createTable` changeset instead if needed.
+
+---
 
 ## Project structure
 
