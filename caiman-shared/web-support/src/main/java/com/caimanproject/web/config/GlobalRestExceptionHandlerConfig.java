@@ -33,6 +33,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -200,6 +203,16 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
     }
 
     private ErrorResponseDto buildErrorResponse(final CaimanException exception) {
+        final Function<LogField, String> getFromMDC = field -> Optional.of(field)
+            .map(LogField::label)
+            .map(MDC::get)
+            .filter(Predicate.not(String::isBlank))
+            .orElse(null);
+
+        final String requestId = getFromMDC.apply(LogField.REQUEST_ID);
+        final String correlationId = getFromMDC.apply(LogField.CORRELATION_ID);
+        final String channel = getFromMDC.apply(LogField.CHANNEL);
+
         return switch (exception) {
             case EntrypointInvalidValuesException invalidValues -> ErrorResponseDto.builder()
                 .code(invalidValues.getExceptionCode().getFullCode())
@@ -207,6 +220,9 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
                 .message(invalidValues.getExceptionCode().getMessage())
                 .detail(invalidValues.getDetail().orElse(null))
                 .httpStatusCode(invalidValues.getHttpStatusCode())
+                .requestId(requestId)
+                .correlationId(correlationId)
+                .channel(channel)
                 .build();
             case BusinessException business -> ErrorResponseDto.builder()
                 .code(business.getExceptionCode().getFullCode())
@@ -214,18 +230,27 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
                 .message(business.getExceptionCode().getMessage())
                 .detail(business.getDetail().orElse(null))
                 .httpStatusCode(business.getHttpStatusCode())
+                .requestId(requestId)
+                .correlationId(correlationId)
+                .channel(channel)
                 .build();
             case DomainException domain -> ErrorResponseDto.builder()
                 .code(domain.getExceptionCode().getFullCode())
                 .timestamp(domain.getTimestamp())
                 .message("An internal validation failure occurred.")
                 .httpStatusCode(domain.getHttpStatusCode())
+                .requestId(requestId)
+                .correlationId(correlationId)
+                .channel(channel)
                 .build();
             case TechnicalException technical -> ErrorResponseDto.builder()
                 .code(technical.getExceptionCode().getFullCode())
                 .timestamp(technical.getTimestamp())
                 .message("An internal server error occurred.")
                 .httpStatusCode(technical.getHttpStatusCode())
+                .requestId(requestId)
+                .correlationId(correlationId)
+                .channel(channel)
                 .build();
             default -> {
                 log.error(
@@ -238,6 +263,9 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
                     .timestamp(exception.getTimestamp())
                     .message("An unexpected error occurred.")
                     .httpStatusCode(500)
+                    .requestId(requestId)
+                    .correlationId(correlationId)
+                    .channel(channel)
                     .build();
             }
         };

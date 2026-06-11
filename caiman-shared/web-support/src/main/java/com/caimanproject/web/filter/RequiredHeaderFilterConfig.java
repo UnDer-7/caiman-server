@@ -3,6 +3,7 @@ package com.caimanproject.web.filter;
 import com.caimanproject.contracts.exception.CaimanException;
 import com.caimanproject.contracts.exception.ErrorHttpStatus;
 import com.caimanproject.contracts.exception.ExceptionCode;
+import com.caimanproject.contracts.exception.LogField;
 import com.caimanproject.contracts.util.RequestConstants;
 import com.caimanproject.web.dto.response.ErrorResponseDto;
 import com.caimanproject.web.exception.EntrypointInvalidValuesException;
@@ -12,6 +13,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +31,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -163,12 +167,25 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
     }
 
     private static ErrorResponseDto buildErrorResponse(final CaimanException invalidValues) {
+        final Function<LogField, String> getFromMDC = field -> Optional.of(field)
+            .map(LogField::label)
+            .map(MDC::get)
+            .filter(Predicate.not(String::isBlank))
+            .orElse(null);
+
+        final String requestId = getFromMDC.apply(LogField.REQUEST_ID);
+        final String correlationId = getFromMDC.apply(LogField.CORRELATION_ID);
+        final String channel = getFromMDC.apply(LogField.CHANNEL);
+
         return ErrorResponseDto.builder()
             .code(invalidValues.getExceptionCode().getFullCode())
             .timestamp(invalidValues.getTimestamp())
             .message(invalidValues.getExceptionCode().getMessage())
             .detail(invalidValues.getDetail().orElse(null))
             .httpStatusCode(invalidValues.getHttpStatusCode())
+            .requestId(requestId)
+            .correlationId(correlationId)
+            .channel(channel)
             .build();
     }
 }

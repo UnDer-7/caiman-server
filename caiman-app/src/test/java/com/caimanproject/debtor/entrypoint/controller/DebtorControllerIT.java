@@ -86,11 +86,13 @@ class DebtorControllerIT extends IntegrationTestController {
                 .name("")
                 .build();
 
+            final var correlationId = "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11";
+            final var channel = "integration-test";
             webTestClient
                 .post()
                 .uri(BASE_URL)
-                .header(RequestConstants.Headers.X_CORRELATION_ID, "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11")
-                .header(RequestConstants.Headers.X_CHANNEL, "integration-test")
+                .header(RequestConstants.Headers.X_CORRELATION_ID, correlationId)
+                .header(RequestConstants.Headers.X_CHANNEL, channel)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .exchange()
@@ -105,6 +107,9 @@ class DebtorControllerIT extends IntegrationTestController {
                         .contains("propertyPath: name")
                         .contains("errorMotive: must not be blank");
                     assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+                    assertThat(response.requestId()).isNotNull();
+                    assertThat(response.correlationId()).isEqualTo(correlationId);
+                    assertThat(response.channel()).isEqualTo(channel);
                 });
         }
 
@@ -127,11 +132,13 @@ class DebtorControllerIT extends IntegrationTestController {
                 ))
                 .build();
 
+            final var correlationId = "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11";
+            final var channel = "integration-test";
             webTestClient
                 .post()
                 .uri(BASE_URL)
-                .header(RequestConstants.Headers.X_CORRELATION_ID, "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11")
-                .header(RequestConstants.Headers.X_CHANNEL, "integration-test")
+                .header(RequestConstants.Headers.X_CORRELATION_ID, correlationId)
+                .header(RequestConstants.Headers.X_CHANNEL, channel)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .exchange()
@@ -143,6 +150,9 @@ class DebtorControllerIT extends IntegrationTestController {
                     assertThat(response.timestamp()).isNotNull();
                     assertThat(response.message()).isEqualTo("Informed contact list has duplicate contact value");
                     assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value());
+                    assertThat(response.requestId()).isNotNull();
+                    assertThat(response.correlationId()).isEqualTo(correlationId);
+                    assertThat(response.channel()).isEqualTo(channel);
                 });
         }
 
@@ -165,11 +175,13 @@ class DebtorControllerIT extends IntegrationTestController {
                 ))
                 .build();
 
+            final var correlationId = "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11";
+            final var channel = "integration-test";
             webTestClient
                 .post()
                 .uri(BASE_URL)
-                .header(RequestConstants.Headers.X_CORRELATION_ID, "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11")
-                .header(RequestConstants.Headers.X_CHANNEL, "integration-test")
+                .header(RequestConstants.Headers.X_CORRELATION_ID, correlationId)
+                .header(RequestConstants.Headers.X_CHANNEL, channel)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .exchange()
@@ -181,6 +193,9 @@ class DebtorControllerIT extends IntegrationTestController {
                     assertThat(response.timestamp()).isNotNull();
                     assertThat(response.message()).isEqualTo("Informed contact list has duplicate contact priority");
                     assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value());
+                    assertThat(response.requestId()).isNotNull();
+                    assertThat(response.correlationId()).isEqualTo(correlationId);
+                    assertThat(response.channel()).isEqualTo(channel);
                 });
         }
 
@@ -204,11 +219,13 @@ class DebtorControllerIT extends IntegrationTestController {
                 ))
                 .build();
 
+            final var correlationId = "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11";
+            final var channel = "integration-test";
             webTestClient
                 .post()
                 .uri(BASE_URL)
-                .header(RequestConstants.Headers.X_CORRELATION_ID, "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11")
-                .header(RequestConstants.Headers.X_CHANNEL, "integration-test")
+                .header(RequestConstants.Headers.X_CORRELATION_ID, correlationId)
+                .header(RequestConstants.Headers.X_CHANNEL, channel)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .exchange()
@@ -223,6 +240,9 @@ class DebtorControllerIT extends IntegrationTestController {
                         .contains("propertyPath: contacts[0].contactValue")
                         .contains("errorMotive: must be a valid EMAIL address");
                     assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+                    assertThat(response.requestId()).isNotNull();
+                    assertThat(response.correlationId()).isEqualTo(correlationId);
+                    assertThat(response.channel()).isEqualTo(channel);
                 });
         }
 
@@ -249,6 +269,9 @@ class DebtorControllerIT extends IntegrationTestController {
                         .contains(RequestConstants.Headers.X_CORRELATION_ID)
                         .contains(RequestConstants.Headers.X_CHANNEL);
                     assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+                    assertThat(response.requestId()).isNotNull();
+                    assertThat(response.correlationId()).isNull();
+                    assertThat(response.channel()).isNull();
                 });
         }
     }
