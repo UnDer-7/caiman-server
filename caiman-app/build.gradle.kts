@@ -5,6 +5,10 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
 }
 
+tasks.bootRun {
+    workingDir = rootProject.projectDir
+}
+
 tasks.named<ProcessResources>("processResources") {
     filesMatching(listOf("application*.yml", "application*.yaml")) {
         filter(ReplaceTokens::class, "tokens" to mapOf(
