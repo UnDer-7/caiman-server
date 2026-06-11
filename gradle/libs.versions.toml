@@ -6,6 +6,7 @@ lombok-mapstruct-binding = "0.2.0"
 springdoc-openapi = "3.0.3"
 logstash-logback-encoder = "9.0"
 sqlite-jdbc = "3.53.2.0"
+jacoco = "0.8.15"
 
 [libraries]
 mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }

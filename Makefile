@@ -50,17 +50,22 @@ dev/run:
 ## test/unit: Run unit tests across all modules
 .PHONY: test/unit
 test/unit:
-	./gradlew unitTest --rerun-tasks
+	./gradlew clean unitTest --rerun-tasks
 
 ## test/integration: Run integration tests across all modules
 .PHONY: test/integration
 test/integration:
-	./gradlew integrationTest --rerun-tasks
+	./gradlew clean integrationTest --rerun-tasks
 
 ## test: Run unit and integration tests across all modules
 .PHONY: test
 test:
-	./gradlew unitTest integrationTest --rerun-tasks
+	./gradlew clean unitTest integrationTest --rerun-tasks
+
+## test/coverage: Run all tests and generate aggregated JaCoCo report
+.PHONY: test/coverage
+test/coverage:
+	./gradlew clean unitTest integrationTest jacocoRootReport --rerun-tasks
 
 
 

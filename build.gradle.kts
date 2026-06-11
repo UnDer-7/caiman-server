@@ -1,5 +1,9 @@
+import org.gradle.testing.jacoco.tasks.JacocoReport
+import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
+
 plugins {
     java
+    jacoco
     alias(libs.plugins.spring.boot) apply false
     alias(libs.plugins.spring.dependency.management) apply false
 }
@@ -7,10 +11,36 @@ plugins {
 val springBootVersion = libs.versions.spring.boot.get()
 val springdocVersion = libs.versions.springdoc.openapi.get()
 val logstashEncoderVersion = libs.versions.logstash.logback.encoder.get()
+val jacocoToolVersion = libs.versions.jacoco.get()
+
+repositories {
+    mavenCentral()
+}
+
+jacoco {
+    toolVersion = jacocoToolVersion
+}
+
+// Classes with no meaningful coverage value: bootstrap, wiring, exceptions, generated code.
+// Use *Foo*.class (not *Foo.class) so Ant glob's trailing * also matches inner-class suffixes
+// like $Inner — e.g. "**/*Config*.class" covers both FooConfig.class and FooConfig$Bar.class.
+val jacocoExcludes = listOf(
+    "**/CaimanApplication.class",
+    "**/exception/**",
+    "**/*Config*.class",       // @Configuration / @ConfigurationProperties + their inner classes
+    "**/*Initializer.class",
+    "**/*Constants*.class",    // constant holders + their inner classes
+    "**/*MapperImpl.class",
+)
 
 subprojects {
     apply(plugin = "java")
+    apply(plugin = "jacoco")
     apply(plugin = "io.spring.dependency-management")
+
+    configure<org.gradle.testing.jacoco.plugins.JacocoPluginExtension> {
+        toolVersion = jacocoToolVersion
+    }
 
     group = "com.caimanproject"
     version = "0.0.1-SNAPSHOT"
@@ -84,5 +114,62 @@ subprojects {
         "testImplementation"("org.assertj:assertj-core")
         "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
         "testRuntimeOnly"("ch.qos.logback:logback-classic")
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Aggregated JaCoCo report — single XML/HTML for all modules
+//
+// Run after tests:  ./gradlew unitTest integrationTest jacocoRootReport
+// Sonar property:   sonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/aggregate/jacoco.xml
+// ─────────────────────────────────────────────────────────────────────────────
+// caiman-test-support: test infrastructure, no production code
+// caiman-mapper-spi: MapStruct annotation processor SPI (compile-time tooling, not runtime code)
+val reportableProjects = subprojects.filter { it.name !in setOf("caiman-test-support", "caiman-mapper-spi") }
+
+tasks.register<JacocoReport>("jacocoRootReport") {
+    group = "verification"
+    description = "Aggregates JaCoCo coverage reports from all modules into a single report."
+
+    // Runs after tests when both are in the same build; does NOT trigger tests on its own.
+    mustRunAfter(subprojects.flatMap { it.tasks.withType<Test>() })
+
+    sourceDirectories.setFrom(
+        files(
+            reportableProjects.map { subproject ->
+                subproject.extensions.getByType<SourceSetContainer>()["main"].allSource.srcDirs
+            }
+        )
+    )
+    classDirectories.setFrom(
+        files(
+            reportableProjects.map { subproject ->
+                subproject.tasks.named<JavaCompile>("compileJava").map { compileTask ->
+                    subproject.fileTree(compileTask.destinationDirectory) {
+                        exclude(jacocoExcludes)
+                    }
+                }
+            }
+        )
+    )
+    executionData.setFrom(
+        files(
+            subprojects.flatMap { subproject ->
+                subproject.tasks.withType<Test>().mapNotNull { testTask ->
+                    testTask.extensions.findByType<JacocoTaskExtension>()?.destinationFile
+                }
+            }
+        )
+    )
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        xml.outputLocation.set(
+            rootProject.layout.buildDirectory.file("reports/jacoco/aggregate/jacoco.xml")
+        )
+        html.outputLocation.set(
+            rootProject.layout.buildDirectory.dir("reports/jacoco/aggregate/html")
+        )
     }
 }
