@@ -43,7 +43,7 @@ subprojects {
     }
 
     group = "com.caimanproject"
-    version = "0.0.1-SNAPSHOT"
+    version = "v0.0.1"
 
     java {
         toolchain {

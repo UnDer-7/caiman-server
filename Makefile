@@ -3,7 +3,7 @@
 # ==================================================================================== #
 PROJECT_NAME=caiman-server
 REGISTRY_HOST=under7
-PROJECT_VERSION := $(shell ./gradlew properties -q --console=plain 2>/dev/null | grep '^version:' | awk '{print $$2}')
+PROJECT_VERSION := $(shell ./gradlew :caiman-app:properties -q --console=plain 2>/dev/null | grep '^version:' | awk '{print $$2}')
 
 
 
@@ -73,12 +73,50 @@ test/coverage:
 ## ===== BUILD =====
 # ==================================================================================== #
 ## ----- JVM -----
-## build/jvm: Build the project to be run on a JVM environment
-.PHONY: build/jvm
-build/jvm:
+
+## build/jar: Build the bootJar (run before build/docker-jvm if code changed)
+.PHONY: build/jar
+build/jar:
 	@START=$$(date +%s) && \
-	echo 'Building for JVM...' && \
-	./gradlew :caiman-app:bootJar -x test && \
+	echo 'Building bootJar...' && \
+	./gradlew :caiman-app:bootJar -x test --rerun-tasks && \
 	END=$$(date +%s) && \
 	ELAPSED=$$((END-START)) && \
-	echo "JVM build completed in $$((ELAPSED/3600))h $$(((ELAPSED%3600)/60))m $$((ELAPSED%60))s"
+	echo "bootJar built in $$((ELAPSED/3600))h $$(((ELAPSED%3600)/60))m $$((ELAPSED%60))s"
+
+## build/jar/docker: Build JVM Docker image from Dockerfile.jvm (run build/jar first)
+.PHONY: build/jar/docker
+build/jar/docker:
+	@START=$$(date +%s) && \
+	JAR=caiman-app/build/libs/caiman-app-$(PROJECT_VERSION).jar && \
+	echo "Building Docker JVM image from $$JAR..." && \
+	docker build -f Dockerfile.jvm \
+	  --build-arg JAR_FILE=$$JAR \
+	  -t $(REGISTRY_HOST)/$(PROJECT_NAME):$(PROJECT_VERSION)-jvm . && \
+	END=$$(date +%s) && \
+	ELAPSED=$$((END-START)) && \
+	echo "Docker JVM build completed in $$((ELAPSED/3600))h $$(((ELAPSED%3600)/60))m $$((ELAPSED%60))s"
+
+
+# ==================================================================================== #
+## ===== VERSION =====
+# ==================================================================================== #
+## version: Show current project version
+.PHONY: version
+version:
+	@grep -oP 'version = "\K[^"]+' build.gradle.kts | head -1
+
+## version/set: Set project version  (usage: make version/set 0.1.2)
+.PHONY: version/set
+version/set:
+	@if [ -z "$(filter-out version/set,$(MAKECMDGOALS))" ]; then \
+		echo "ERROR: Version number is required"; \
+		echo "Usage: make version/set 0.1.2"; \
+		exit 1; \
+	fi
+	@sed -i 's/version = "[^"]*"/version = "$(filter-out version/set,$(MAKECMDGOALS))"/' build.gradle.kts
+	@echo "Version → $(filter-out version/set,$(MAKECMDGOALS))"
+
+# Prevent make from treating version number as a target
+%:
+	@:
