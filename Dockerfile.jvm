@@ -18,12 +18,12 @@ RUN java -Djarmode=tools -jar application.jar extract --destination extracted
 # Training env vars are scoped to this stage only.
 # ============================================================
 FROM bellsoft/liberica-openjre-alpine:25-cds AS aot-trainer
-RUN addgroup -g 1000 -S app && adduser -u 1000 -S app -G app
-WORKDIR /application
-COPY --from=builder --chown=app:app /builder/application.jar application.jar
-COPY --chown=app:app docker-entrypoint.sh .
-RUN chmod +x docker-entrypoint.sh && chown app:app /application
-USER app
+RUN addgroup -g 1000 -S caiman && adduser -u 1000 -S caiman -G caiman
+WORKDIR /app
+COPY --from=builder --chown=caiman:caiman /builder/application.jar application.jar
+COPY --chown=caiman:caiman docker-entrypoint.sh .
+RUN chmod +x docker-entrypoint.sh && chown caiman:caiman /app
+USER caiman
 ENV CAIMAN_SERVER_PORT=8080 \
     CAIMAN_SERVER_ENDPOINTS_PREFIX=/api \
     CAIMAN_SERVER_LOGGING_LEVEL=WARN \
@@ -43,15 +43,17 @@ RUN AOT_FLAG="-XX:AOTCacheOutput=app.aot" \
 # Stage 3: Runtime — lib/ (cached layer) + app + AOT cache.
 # lib/ is copied separately from application.jar so Docker
 # only rebuilds the last layer when only app code changes.
-# Runs as non-root user app (uid 1000).
+# Runs as non-root user caiman (uid 1000).
 # ============================================================
 FROM bellsoft/liberica-openjre-alpine:25-cds
-RUN addgroup -g 1000 -S app && adduser -u 1000 -S app -G app
-WORKDIR /application
-COPY --from=builder --chown=app:app /builder/extracted/lib/ lib/
-COPY --from=builder --chown=app:app /builder/application.jar application.jar
-COPY --from=aot-trainer --chown=app:app /application/app.aot ./
-COPY --chown=app:app docker-entrypoint.sh .
-RUN chmod +x docker-entrypoint.sh && chown app:app /application
-USER app
+RUN addgroup -g 1000 -S caiman && adduser -u 1000 -S caiman -G caiman
+WORKDIR /app
+COPY --from=builder --chown=caiman:caiman /builder/extracted/lib/ lib/
+COPY --from=builder --chown=caiman:caiman /builder/application.jar application.jar
+COPY --from=aot-trainer --chown=caiman:caiman /app/app.aot ./
+COPY --chown=caiman:caiman docker-entrypoint.sh .
+RUN chmod +x docker-entrypoint.sh && \
+    mkdir -p /app/logs /app/data && \
+    chown -R caiman:caiman /app
+USER caiman
 ENTRYPOINT ["./docker-entrypoint.sh"]
