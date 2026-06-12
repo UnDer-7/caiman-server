@@ -460,7 +460,7 @@ This test extends `IntegrationTestController` (gets Postgres automatically) and 
 - [ ] **Step 1: Create the test**
 
 ```java
-package com.caimanproject.app.integration;
+package com.caimanproject.app.database;
 
 import com.caimanproject.app.test.IntegrationTestController;
 import com.caimanproject.app.test.builder.DtoBuilder;
@@ -504,13 +504,14 @@ class CreateDebtorPostgresIT extends IntegrationTestController {
                 assertThat(response.audit().createdAt()).isNotNull();
             });
     }
+
 }
 ```
 
 - [ ] **Step 2: Run the new Postgres test to verify it passes**
 
 ```bash
-./gradlew :caiman-app:test --tests "com.caimanproject.app.integration.CreateDebtorPostgresIT" 2>&1 | tail -20
+./gradlew :caiman-app:test --tests "com.caimanproject.app.database.CreateDebtorPostgresIT" 2>&1 | tail -20
 ```
 
 Expected: `BUILD SUCCESSFUL`, 1 test passed.
@@ -529,7 +530,7 @@ The database file uses a UUID suffix so each test run gets a clean database. `@A
 - [ ] **Step 1: Create the test**
 
 ```java
-package com.caimanproject.app.integration;
+package com.caimanproject.app.database;
 
 import com.caimanproject.app.CaimanApplication;
 import com.caimanproject.app.test.builder.DtoBuilder;
@@ -567,7 +568,7 @@ class CreateDebtorSQLiteIT {
     private static final Path SQLITE_DB_PATH = Path.of(
         System.getProperty("java.io.tmpdir"),
         "caiman-test-" + UUID.randomUUID() + ".db"
-    );
+                                                      );
 
     @DynamicPropertySource
     static void registerSQLiteProperties(DynamicPropertyRegistry registry) {
@@ -614,6 +615,7 @@ class CreateDebtorSQLiteIT {
                 assertThat(response.audit().createdAt()).isNotNull();
             });
     }
+
 }
 ```
 
@@ -625,7 +627,7 @@ class CreateDebtorSQLiteIT {
 - [ ] **Step 2: Run the SQLite test in isolation**
 
 ```bash
-./gradlew :caiman-app:test --tests "com.caimanproject.app.integration.CreateDebtorSQLiteIT" 2>&1 | tail -30
+./gradlew :caiman-app:test --tests "com.caimanproject.app.database.CreateDebtorSQLiteIT" 2>&1 | tail -30
 ```
 
 Expected: `BUILD SUCCESSFUL`, 1 test passed.

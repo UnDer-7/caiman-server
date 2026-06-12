@@ -1,4 +1,4 @@
-package com.caimanproject.app.integration;
+package com.caimanproject.app.database;
 
 import com.caimanproject.app.test.IntegrationTestController;
 import com.caimanproject.app.test.builder.DtoBuilder;
