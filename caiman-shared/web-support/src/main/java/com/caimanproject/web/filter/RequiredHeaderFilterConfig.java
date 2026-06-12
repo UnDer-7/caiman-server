@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -52,7 +53,8 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
             final AntPathMatcher pathMatcher,
             final Optional<SwaggerUiConfigProperties> swaggerUiConfigProperties,
             final Optional<SpringDocConfigProperties> springDocConfigProperties,
-            final ObjectMapper objectMapper) {
+            final ObjectMapper objectMapper,
+            @Value("${management.endpoints.web.base-path:/manage}") final String managementBasePath) {
 
         this.pathMatcher = pathMatcher;
 
@@ -60,7 +62,10 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
         this.springDocConfigProperties = springDocConfigProperties;
         this.objectMapper = objectMapper;
 
-        final var customIgnoredPath = List.of("/favicon.ico");
+        final var customIgnoredPath = List.of(
+            "/favicon.ico",
+            managementBasePath,
+            managementBasePath + "/**");
 
         this.ignoredPaths = Stream.of(getApiDocsPaths(), getSwaggerUiPaths(), customIgnoredPath)
                 .flatMap(Collection::stream)

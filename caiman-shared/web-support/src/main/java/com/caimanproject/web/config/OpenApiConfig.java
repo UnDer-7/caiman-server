@@ -45,22 +45,26 @@ public class OpenApiConfig {
     @Bean
     public OperationCustomizer globalHeadersCustomizer() {
         return (Operation operation, HandlerMethod handlerMethod) -> {
+            if (!isCaimanEndpoint(handlerMethod)) {
+                return operation;
+            }
+
             final Parameter correlationIdParam = new Parameter()
-                    .in("header")
-                    .name(RequestConstants.Headers.X_CORRELATION_ID)
-                    .description(
-                            "Unique identifier for tracking the request across services. Must be a valid UUID format.")
-                    .required(true)
-                    .schema(new UUIDSchema())
-                    .example("550e8400-e29b-41d4-a716-446655440000");
+                .in("header")
+                .name(RequestConstants.Headers.X_CORRELATION_ID)
+                .description(
+                    "Unique identifier for tracking the request across services. Must be a valid UUID format.")
+                .required(true)
+                .schema(new UUIDSchema())
+                .example("550e8400-e29b-41d4-a716-446655440000");
 
             final Parameter channelParam = new Parameter()
-                    .in("header")
-                    .name(RequestConstants.Headers.X_CHANNEL)
-                    .description("Channel/Client that originated the request (e.g., Web, Telegram, WhatsApp)")
-                    .required(true)
-                    .schema(new StringSchema())
-                    .example("Web");
+                .in("header")
+                .name(RequestConstants.Headers.X_CHANNEL)
+                .description("Channel/Client that originated the request (e.g., Web, Telegram, WhatsApp)")
+                .required(true)
+                .schema(new StringSchema())
+                .example("Web");
 
             operation.addParametersItem(correlationIdParam);
             operation.addParametersItem(channelParam);
@@ -72,7 +76,7 @@ public class OpenApiConfig {
     @Bean
     public OperationCustomizer globalApiResponsesCustomizer() {
         return (Operation operation, HandlerMethod handlerMethod) -> {
-            if (!handlerMethod.getBeanType().isAnnotationPresent(CaimanEndpoint.class)) {
+            if (!isCaimanEndpoint(handlerMethod)) {
                 return operation;
             }
 
@@ -195,5 +199,9 @@ public class OpenApiConfig {
         info.setContact(contact);
 
         return info;
+    }
+
+    private static boolean isCaimanEndpoint(final HandlerMethod handlerMethod) {
+        return handlerMethod.getBeanType().isAnnotationPresent(CaimanEndpoint.class);
     }
 }

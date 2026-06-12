@@ -72,3 +72,26 @@ springdoc:
   swagger-ui:
     path: ${caiman-server.open-api.swagger-ui.path}
     enabled: ${caiman-server.open-api.swagger-ui.enabled}
+  show-actuator: true
+
+management:
+  endpoints:
+    web:
+      base-path: /manage
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      show-components: always
+  health:
+    defaults:
+      enabled: false
+    db:
+      enabled: true
+    ping:
+      enabled: true
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true

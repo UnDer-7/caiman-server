@@ -44,6 +44,7 @@ dependencies {
     implementation("org.hibernate.orm:hibernate-community-dialects")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
 
     testImplementation(project(":caiman-debtor-core"))
     testImplementation(project(":caiman-web-support"))
