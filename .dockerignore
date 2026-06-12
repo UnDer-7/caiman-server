@@ -1,0 +1,29 @@
+# Version control
+.git
+.gitignore
+
+# IDE
+.idea
+*.iml
+
+# Gradle caches
+.gradle
+**/.gradle
+
+# Build output — keep only the bootJar under caiman-app/build/libs/
+**/build/classes/
+**/build/resources/
+**/build/tmp/
+**/build/reports/
+**/build/test-results/
+**/build/kotlin/
+**/build/generated/
+
+# Docs and planning files
+docs/
+
+# Secrets — never bake into image
+.env
+
+# Markdown
+*.md

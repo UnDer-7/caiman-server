@@ -5,21 +5,25 @@
 # lib/ contains all third-party dependencies and changes
 # infrequently → placed in its own layer for Docker cache.
 # ============================================================
-FROM bellsoft/liberica-openjre-debian:25-cds AS builder
+FROM bellsoft/liberica-openjre-alpine:25-cds AS builder
 WORKDIR /builder
 ARG JAR_FILE
 COPY ${JAR_FILE} application.jar
 RUN java -Djarmode=tools -jar application.jar extract --destination extracted
 
 # ============================================================
-# Stage 2: AOT training run — generates app.aot cache
-# JVM flags must match Stage 3 exactly so the cache is
-# compatible at runtime. Training env vars scoped to this
-# stage only.
+# Stage 2: AOT training run — generates app.aot cache.
+# Uses docker-entrypoint.sh with AOT_FLAG override so JVM
+# flags stay in sync with Stage 3 automatically.
+# Training env vars are scoped to this stage only.
 # ============================================================
-FROM bellsoft/liberica-openjre-debian:25-cds AS aot-trainer
+FROM bellsoft/liberica-openjre-alpine:25-cds AS aot-trainer
+RUN addgroup -g 1000 -S app && adduser -u 1000 -S app -G app
 WORKDIR /application
-COPY --from=builder /builder/application.jar application.jar
+COPY --from=builder --chown=app:app /builder/application.jar application.jar
+COPY --chown=app:app docker-entrypoint.sh .
+RUN chmod +x docker-entrypoint.sh && chown app:app /application
+USER app
 ENV CAIMAN_SERVER_PORT=8080 \
     CAIMAN_SERVER_ENDPOINTS_PREFIX=/api \
     CAIMAN_SERVER_LOGGING_LEVEL=WARN \
@@ -31,30 +35,23 @@ ENV CAIMAN_SERVER_PORT=8080 \
     CAIMAN_SERVER_OPEN_API_API_DOCS_ENABLE=false \
     CAIMAN_SERVER_OPEN_API_SWAGGER_UI_REDIRECT_PATH=/ \
     CAIMAN_SERVER_OPEN_API_SWAGGER_UI_ENABLE=false
-RUN java -XX:AOTCacheOutput=app.aot \
-         -XX:+UseContainerSupport \
-         -XX:InitialRAMPercentage=50.0 \
-         -XX:MaxRAMPercentage=75.0 \
-         -XX:+UseZGC \
-         -Xss256k \
-         -Dspring.context.exit=onRefresh \
-         -jar application.jar
+RUN AOT_FLAG="-XX:AOTCacheOutput=app.aot" \
+    JVM_OPTS="-Dspring.context.exit=onRefresh" \
+    ./docker-entrypoint.sh
 
 # ============================================================
 # Stage 3: Runtime — lib/ (cached layer) + app + AOT cache.
 # lib/ is copied separately from application.jar so Docker
 # only rebuilds the last layer when only app code changes.
+# Runs as non-root user app (uid 1000).
 # ============================================================
-FROM bellsoft/liberica-openjre-debian:25-cds
+FROM bellsoft/liberica-openjre-alpine:25-cds
+RUN addgroup -g 1000 -S app && adduser -u 1000 -S app -G app
 WORKDIR /application
-COPY --from=builder /builder/extracted/lib/ lib/
-COPY --from=builder /builder/application.jar application.jar
-COPY --from=aot-trainer /application/app.aot ./
-ENTRYPOINT ["java", \
-  "-XX:AOTCache=app.aot", \
-  "-XX:+UseContainerSupport", \
-  "-XX:InitialRAMPercentage=50.0", \
-  "-XX:MaxRAMPercentage=75.0", \
-  "-XX:+UseZGC", \
-  "-Xss256k", \
-  "-jar", "application.jar"]
+COPY --from=builder --chown=app:app /builder/extracted/lib/ lib/
+COPY --from=builder --chown=app:app /builder/application.jar application.jar
+COPY --from=aot-trainer --chown=app:app /application/app.aot ./
+COPY --chown=app:app docker-entrypoint.sh .
+RUN chmod +x docker-entrypoint.sh && chown app:app /application
+USER app
+ENTRYPOINT ["./docker-entrypoint.sh"]
