@@ -6,9 +6,18 @@
 .idea
 *.iml
 
+# Gradle wrapper and build scripts — not needed, JAR is pre-built
+gradlew
+gradlew.bat
+gradle/
+*.kts
+
 # Gradle caches
 .gradle
 **/.gradle
+
+# Source code — Docker only needs the pre-built JAR
+**/src/
 
 # Build output — keep only the bootJar under caiman-app/build/libs/
 **/build/classes/
@@ -19,11 +28,16 @@
 **/build/kotlin/
 **/build/generated/
 
+# Local dev files
+local/
+Makefile
+
 # Docs and planning files
 docs/
 
 # Secrets — never bake into image
 .env
+.env.*
 
 # Markdown
 *.md
