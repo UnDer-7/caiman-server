@@ -128,14 +128,14 @@ public abstract class CaimanException extends RuntimeException {
         final ExceptionCode exceptionCode, final String detail, final Throwable originalCause) {
         return Optional.ofNullable(detail)
             .filter(Predicate.not(String::isBlank))
-            .map(d -> "[code: %s] - [message: %s] - [detail: %s] - [originalCauseMessage: %s]"
-                .formatted(exceptionCode.getFullCode(), exceptionCode.getMessage(), d, originalCause.getMessage()))
+            .map(d -> "[code: %s] - [message: %s] - [detail: %s] - [originalCauseMessage: %s] [originalCauseClass: %s]"
+                .formatted(exceptionCode.getFullCode(), exceptionCode.getMessage(), d, originalCause.getMessage(), originalCause.getClass().getName()))
             .orElseGet(() -> getExceptionMessage(exceptionCode, originalCause));
     }
 
-    private static String getExceptionMessage(final ExceptionCode exceptionCode, final Throwable throwable) {
-        return "[code: %s] - [message: %s] - [originalCauseMessage: %s]"
-            .formatted(exceptionCode.getFullCode(), exceptionCode.getMessage(), throwable.getMessage());
+    private static String getExceptionMessage(final ExceptionCode exceptionCode, final Throwable originalCause) {
+        return "[code: %s] - [message: %s] - [originalCauseMessage: %s] [originalCauseClass: %s]"
+            .formatted(exceptionCode.getFullCode(), exceptionCode.getMessage(), originalCause.getMessage(), originalCause.getClass().getName());
     }
 
     private static String getExceptionMessage(final ExceptionCode exceptionCode) {

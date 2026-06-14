@@ -16,13 +16,14 @@ public interface ExceptionCode {
     }
 
     enum ModulePrefix {
+        APP,
+        WEB_SUPPORT,
+
         BILLING,
+        NOTIFICATION,
+        PAYMENT,
 
         DEBTOR_DOMAIN,
         DEBTOR_BUSINESS,
-
-        NOTIFICATION,
-        PAYMENT,
-        WEB_SUPPORT
     }
 }

@@ -15,14 +15,19 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteDataSource;
 
+import com.caimanproject.app.exception.AppExceptionCode;
+
 import javax.sql.DataSource;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Slf4j
 @Configuration(proxyBeanMethods = false)
 public class DataSourceConfig {
 
     @Bean
-    public DataSource dataSource(CaimanServerPropsConfig props) {
+    public DataSource dataSource(final CaimanServerPropsConfig props) {
         final var type = props.database().type();
         final var dataSource = switch (type) {
             case POSTGRES -> buildPostgresDataSource(
@@ -41,7 +46,7 @@ public class DataSourceConfig {
     }
 
     @Bean
-    public JpaVendorAdapter jpaVendorAdapter(CaimanServerPropsConfig props) {
+    public JpaVendorAdapter jpaVendorAdapter(final  CaimanServerPropsConfig props) {
         var adapter = new HibernateJpaVendorAdapter();
         adapter.setDatabasePlatform(switch (props.database().type()) {
             case POSTGRES -> PostgreSQLDialect.class.getName();
@@ -51,7 +56,7 @@ public class DataSourceConfig {
         return adapter;
     }
 
-    private DataSource buildPostgresDataSource(String url, String username, String password) {
+    private DataSource buildPostgresDataSource(final String url, final String username, final String password) {
         var config = new HikariConfig();
         config.setJdbcUrl(url);
         config.setUsername(username);
@@ -60,7 +65,9 @@ public class DataSourceConfig {
     }
 
     // SQLite server-optimized config. Reference: https://kerkour.com/sqlite-for-servers
-    private DataSource buildSqliteDataSource(String sqliteFile) {
+
+    private DataSource buildSqliteDataSource(final String sqliteFile) {
+        initSqliteFile(sqliteFile);
         var config = new SQLiteConfig();
         // Allows concurrent reads while a write is in progress (readers don't block writers)
         config.setJournalMode(SQLiteConfig.JournalMode.WAL);
@@ -80,5 +87,24 @@ public class DataSourceConfig {
         var ds = new SQLiteDataSource(config);
         ds.setUrl("jdbc:sqlite:" + sqliteFile);
         return ds;
+    }
+
+    private void initSqliteFile(final String sqliteFile) {
+        final Path path = Path.of(sqliteFile);
+        try {
+            if (path.getParent() != null) {
+                Files.createDirectories(path.getParent());
+            }
+            if (!Files.exists(path)) {
+                Files.createFile(path);
+            }
+        } catch (IOException e) {
+            throw AppExceptionCode.SQLITE_FILE_INITIALIZATION_FAILED
+                .createException("path=" + path.toAbsolutePath(), e);
+        }
+        log.info(
+            LogField.Placeholders.TWO.getPlaceholder(),
+            StructuredArguments.kv(LogField.MSG.label(), "SQLite database file ready"),
+            StructuredArguments.kv(LogField.SQLITE_PATH.label(), path.toAbsolutePath()));
     }
 }

@@ -52,6 +52,10 @@ spring:
         # Timezone configuration
         jdbc:
           time_zone: UTC
+        # Disable ByteBuddy runtime bytecode generation (incompatible with GraalVM native image).
+        # With native image, entity enhancement is done at build time by hibernate-graalvm.
+        bytecode:
+          provider: none
 
   jackson:
     time-zone: UTC

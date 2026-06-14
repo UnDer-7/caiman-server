@@ -1,8 +1,25 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
-    id("org.springframework.boot") version "4.0.6"
-    id("io.spring.dependency-management") version "1.1.7"
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
+    alias(libs.plugins.graalvm.native)
+}
+
+graalvmNative {
+    binaries {
+        named("main") {
+            // Allow native-image's JVM to use up to 90% of system RAM.
+            // Default is ~43% of available (not total) memory. Build is CPU-bound so the gain is small,
+            // but it reduces GC pressure during points-to analysis.
+            buildArgs.add("-J-XX:MaxRAMPercentage=90.0")
+            // spring-orm already includes this flag via its META-INF/native-image/. Kept explicit because
+            // the tracing agent previously collected ByteBuddy entries that caused BytecodeProviderImpl
+            // static init (ClassLoader.defineClass) to run during image build — those entries are now
+            // removed from reachability-metadata.json, but this flag guards against accidental re-addition.
+            buildArgs.add("-H:ServiceLoaderFeatureExcludeServices=org.hibernate.bytecode.spi.BytecodeProvider")
+        }
+    }
 }
 
 tasks.bootRun {
@@ -36,7 +53,7 @@ dependencies {
     implementation(project(":caiman-notification-infrastructure"))
     // ----------------
 
-    implementation("org.codehaus.janino:janino")
+    implementation("org.hibernate.orm:hibernate-graalvm")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-liquibase")

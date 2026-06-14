@@ -1,0 +1,33 @@
+# Prereq: ./gradlew :caiman-app:nativeCompile
+FROM debian:bookworm-slim
+
+LABEL org.opencontainers.image.title="caiman-server" \
+      org.opencontainers.image.description="Self-hosted personal billing management server (native image)" \
+      org.opencontainers.image.source="https://github.com/UnDer-7/caiman-server"
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends zlib1g wget && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd -g 1000 caiman && \
+    useradd -u 1000 -g caiman -s /bin/sh -M caiman
+
+WORKDIR /app
+COPY --chown=caiman:caiman caiman-app/build/native/nativeCompile/ ./
+
+RUN chmod +x /app/caiman-app && \
+    mkdir -p /app/logs /app/data && \
+    chown caiman:caiman /app/logs /app/data
+
+USER caiman
+EXPOSE 8080
+VOLUME ["/app/logs", "/app/data"]
+
+# JVM shim libraries (libawt.so, libjvm.so, etc.) are loaded via System.loadLibrary at runtime.
+# LD_LIBRARY_PATH=/app ensures they are resolved from the same directory as the binary.
+ENV LD_LIBRARY_PATH=/app
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD wget -qO- "http://localhost:${CAIMAN_SERVER_PORT:-8080}/manage/health/liveness" \
+        | grep -q '"status":"UP"' || exit 1
+
+ENTRYPOINT ["./caiman-app"]

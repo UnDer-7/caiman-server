@@ -12,6 +12,15 @@ import org.hibernate.validator.constraints.URL;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
+/**
+ * Maintenance: every nested record defined here must be explicitly registered in
+ * {@link com.caimanproject.app.aot.CaimanRuntimeHints}.
+ * <p>
+ * Adding, renaming, or removing a nested record requires a matching update in
+ * {@code CaimanRuntimeHints#registerHints}. Without it, Hibernate Validator's
+ * {@code JPATraversableResolver} will throw {@code MissingReflectionRegistrationError}
+ * at native-image runtime when it accesses configuration property fields via reflection.
+ */
 @Validated
 @ConfigurationProperties(prefix = "caiman-server", ignoreUnknownFields = false)
 public record CaimanServerPropsConfig(
@@ -60,13 +69,13 @@ public record CaimanServerPropsConfig(
         }
     }
 
-    record ProjectPropImpl(
+    public record ProjectPropImpl(
         @NotBlank String name,
         @NotBlank String version,
         @NotBlank String description
     ) implements CaimanServerProps.ProjectProp {}
 
-    record ApplicationPropImpl(
+    public record ApplicationPropImpl(
         @Pattern(regexp = "^$|^/[a-zA-Z0-9]([a-zA-Z0-9._~-]|/[a-zA-Z0-9])*+$", message = """
                 Invalid endpoints prefix. Must be empty/null or a valid URL path starting with '/' (e.g. '/api', '/server/v1'). \
                 Cannot be just '/', cannot end with '/', and must contain only alphanumeric characters, '.', '_', '~', or '-'
@@ -77,29 +86,29 @@ public record CaimanServerPropsConfig(
         Integer port
     ) implements CaimanServerProps.ApplicationProp{ }
 
-    record OpenApiPropImp(
+    public record OpenApiPropImp(
         @NotNull @Valid OpenApiGenericPropImpl apiDocs,
         @NotNull @Valid OpenApiGenericPropImpl swaggerUi,
         @NotNull @Valid OpenApiApplicationPropImpl application
     ) implements CaimanServerProps.OpenApiProp {}
 
-    record OpenApiGenericPropImpl(
+    public record OpenApiGenericPropImpl(
         @NotBlank String path,
         @NotNull Boolean enabled
     ) implements CaimanServerProps.OpenApiGenericProp {}
 
-    record OpenApiApplicationPropImpl(
+    public record OpenApiApplicationPropImpl(
         @NotNull @Valid OpenApiApplicationContactPropImpl contact,
         @NotNull @Valid OpenApiApplicationDocumentationPropImpl documentation
     ) implements CaimanServerProps.OpenApiApplicationProp {}
 
-    record OpenApiApplicationContactPropImpl(
+    public record OpenApiApplicationContactPropImpl(
         @NotBlank String name,
         @NotBlank @URL String url,
         @NotBlank @Email String email
     ) implements CaimanServerProps.OpenApiApplicationContactProp {}
 
-    record OpenApiApplicationDocumentationPropImpl(
+    public record OpenApiApplicationDocumentationPropImpl(
         @NotBlank @URL String url,
         @NotBlank String description
     ) implements CaimanServerProps.OpenApiApplicationDocumentationProp {}

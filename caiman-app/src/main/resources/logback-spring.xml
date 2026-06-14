@@ -5,7 +5,6 @@
 
     <springProperty scope="local" name="level" source="caiman-server.logging.level"/>
     <springProperty scope="local" name="file_path" source="caiman-server.logging.folder-path"/>
-    <springProperty scope="context" name="format" source="caiman-server.logging.format"/>
     <springProperty scope="context" name="springAppName" source="spring.application.name"/>
 
     <property name="UNSTRUCTURED_LOG_PATTERN_COLORED"
@@ -67,16 +66,17 @@
         </rollingPolicy>
     </appender>
 
-    <root level="${level}">
-        <if condition='property("format").equals("STRUCTURED")'>
-            <then>
-                <appender-ref ref="CONSOLE-STRUCTURED"/>
-                <appender-ref ref="FILE-STRUCTURED"/>
-            </then>
-            <else>
-                <appender-ref ref="CONSOLE-UNSTRUCTURED"/>
-                <appender-ref ref="FILE-UNSTRUCTURED"/>
-            </else>
-        </if>
-    </root>
+    <springProfile name="structured-logging">
+        <root level="${level}">
+            <appender-ref ref="CONSOLE-STRUCTURED"/>
+            <appender-ref ref="FILE-STRUCTURED"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="!structured-logging">
+        <root level="${level}">
+            <appender-ref ref="CONSOLE-UNSTRUCTURED"/>
+            <appender-ref ref="FILE-UNSTRUCTURED"/>
+        </root>
+    </springProfile>
 </configuration>

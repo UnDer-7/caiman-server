@@ -31,6 +31,11 @@ all: help
 # ==================================================================================== #
 ## ===== DEV =====
 # ==================================================================================== #
+## dev/clean: Clean all build outputs
+.PHONY: dev/clean
+dev/clean:
+	./gradlew clean --rerun-tasks
+
 ## dev/compile: Just compile the application
 .PHONY: dev/compile
 dev/compile:
@@ -73,7 +78,6 @@ test/coverage:
 ## ===== BUILD =====
 # ==================================================================================== #
 ## ----- JVM -----
-
 ## build/jar: Build the bootJar (run before build/docker-jvm if code changed)
 .PHONY: build/jar
 build/jar:
@@ -96,6 +100,31 @@ build/jar/docker:
 	END=$$(date +%s) && \
 	ELAPSED=$$((END-START)) && \
 	echo "Docker JVM build completed in $$((ELAPSED/3600))h $$(((ELAPSED%3600)/60))m $$((ELAPSED%60))s"
+
+## ----- GRAALVM -----
+## build/native: Build GraalVM native image (loads .env variables)
+.PHONY: build/native
+build/native:
+	@START=$$(date +%s) && \
+	echo 'Loading .env and building native image...' && \
+	set -a && \
+	eval $$(grep -v '^\s*#' .env | grep -v '^\s*$$' | sed 's/\r$$//') && \
+	set +a && \
+	./gradlew :caiman-app:nativeCompile -x test --rerun-tasks && \
+	END=$$(date +%s) && \
+	ELAPSED=$$((END-START)) && \
+	echo "Native build completed in $$((ELAPSED/3600))h $$(((ELAPSED%3600)/60))m $$((ELAPSED%60))s"
+
+## build/native/docker: Build native Docker image from Dockerfile.native (run build/native first)
+.PHONY: build/native/docker
+build/native/docker:
+	@START=$$(date +%s) && \
+	echo "Building Docker native image..." && \
+	docker build -f Dockerfile.native \
+	  -t $(REGISTRY_HOST)/$(PROJECT_NAME):$(PROJECT_VERSION)-native . && \
+	END=$$(date +%s) && \
+	ELAPSED=$$((END-START)) && \
+	echo "Docker native build completed in $$((ELAPSED/3600))h $$(((ELAPSED%3600)/60))m $$((ELAPSED%60))s"
 
 
 # ==================================================================================== #

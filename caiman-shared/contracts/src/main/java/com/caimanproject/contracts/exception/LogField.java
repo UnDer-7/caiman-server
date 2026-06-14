@@ -27,7 +27,8 @@ public enum LogField {
     DEBTOR_NAME,
     CONTACTS_COUNT,
     CONTACT_DETAILS,
-    DEBTOR_NOTIFICATIONS_ENABLED;
+    DEBTOR_NOTIFICATIONS_ENABLED,
+    SQLITE_PATH;
 
     public String label() {
         return this.name().toLowerCase();

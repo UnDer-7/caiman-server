@@ -488,11 +488,15 @@ All business decisions, domain rules, and technical choices are documented in `.
 10. **Reminder scheduling is calculated from `invoice.created_at` (PENDING\_REMINDER) and `invoice.due_date` (OVERDUE\_REMINDER).** Odin does not consult `notification_log` to decide whether to enqueue — `notification_log` is audit-only.  
 11. **`PAYMENT_APPROVED` and `PAYMENT_REJECTED` notifications are enqueued inline** at proof resolution time with `scheduled_for = NOW()`, not by Odin.
 
-12. **Dependency versions must be centralized in `gradle/libs.versions.toml`.** Any dependency whose version is **not** managed by a BOM (Spring Boot BOM or another imported BOM) must declare its version in the catalog — never hardcode a version string directly in a `build.gradle.kts` module file.
+12. **Dependency versions must be centralized in `gradle/libs.versions.toml`.** Before adding any dependency, check whether it is managed by the Spring Boot BOM. If it is, declare it without a version. If not, put the version in `libs.versions.toml`.
 
-    - **BOM-managed** (Spring Boot starters, Lombok, JPA, etc.): declare without version in the module build file. BOM is the source of truth.
+    **How to check Spring Boot BOM coverage** (always check these before adding a version):
+    - https://docs.spring.io/spring-boot/appendix/dependency-versions/properties.html — shows the property name that controls the version
+    - https://docs.spring.io/spring-boot/appendix/dependency-versions/coordinates.html — lists every `groupId:artifactId` managed by the BOM with its version; prefer what is declared here
+
+    - **BOM-managed** (Spring Boot starters, Lombok, JPA, Hibernate ORM, etc.): declare without version in the module build file. BOM is the source of truth.
     - **Non-BOM-managed** (MapStruct, lombok-mapstruct-binding, and any third-party lib not covered by a BOM): version goes in `gradle/libs.versions.toml`, referenced via `libs.*` accessor in the module build file.
-    - **Gradle plugins**: always declared in `gradle/libs.versions.toml` under `[plugins]` and referenced via `alias(libs.plugins.*)` in the root `build.gradle.kts`.
+    - **Gradle plugins**: always declared in `gradle/libs.versions.toml` under `[plugins]` and referenced via `alias(libs.plugins.*)` in all build files. Plugin versions cannot be managed by the BOM — inline the version directly in the `[plugins]` entry (e.g. `hibernate-orm = { id = "org.hibernate.orm", version = "7.2.12.Final" }`) and keep it in sync with the BOM's managed version.
 
 13. **Every test class must be annotated with `@UnitTest` or `@IntegrationTest`** (from `com.caimanproject.test.annotation`). These annotations drive the `./gradlew unitTest` and `./gradlew integrationTest` Gradle tasks.
 
@@ -549,4 +553,47 @@ All business decisions, domain rules, and technical choices are documented in `.
     // JUnit 5
     import static org.junit.jupiter.api.Assertions.*;
     ```
+
+15. **GraalVM native image.** This project compiles to a native binary via `./gradlew :caiman-app:nativeCompile`. Every implementation decision must account for native-image constraints. GraalVM's static analysis cannot see reflection, `Class.forName()`, dynamic proxies, or resource loading that happens at runtime — these must be declared upfront as hints.
+
+    **Reflection and class loading — what to watch for:**
+    - Any class instantiated via `Class.forName()` or loaded by name through a framework (e.g. Hibernate loading a dialect by its fully qualified class name) must be registered in a `RuntimeHintsRegistrar`.
+    - Any class whose fields or methods are accessed via `Method.invoke()` / `Field.get()` at runtime (e.g. Hibernate Validator traversing `@ConfigurationProperties` records) requires explicit `MemberCategory` registration.
+    - Dynamic JDK proxies and CGLIB proxies must be declared via `hints.proxies()`.
+    - Resources loaded via `ClassLoader.getResourceAsStream()` must be declared via `hints.resources()`.
+
+    **Adding a new dependency — mandatory compatibility check:**
+    Before adding any library, verify native-image support using these signals (in order of preference):
+    1. `META-INF/native-image/` directory inside the JAR — self-contained support, no extra work needed.
+    2. Listed in the [GraalVM Reachability Metadata Repository](https://github.com/oracle/graalvm-reachability-metadata) — the `org.graalvm.buildtools.native` plugin downloads the metadata automatically at build time.
+    3. Neither of the above — manual hints registration is required before the native binary will work. Factor this into the implementation.
+
+    **`*AotConfig.java` — mandatory reflection registration:**
+    Each bounded-context `:entrypoint` module owns a `*AotConfig.java` class in its `aot` package that registers all classes requiring reflection. Use `@RegisterReflectionForBinding` grouped by purpose:
+
+    ```java
+    // caiman-debtor/entrypoint/aot/DebtorAotConfig.java
+    @Configuration(proxyBeanMethods = false)
+    @RegisterReflectionForBinding({
+        // DTOs — Jackson serialization/deserialization
+        CreateDebtorRequestDto.class,
+        DebtorResponseDto.class,
+        // ConstraintValidators — SpringConstraintValidatorFactory instantiates via reflection (no-arg constructor).
+        ContactValueValidator.class
+    })
+    public class DebtorAotConfig {}
+    ```
+
+    Rules:
+    - Every new DTO added to an `:entrypoint` module must also be added to that module's `*AotConfig.java`.
+    - Every custom `ConstraintValidator` must also be registered — Spring AOT does not auto-register them. `SpringConstraintValidatorFactory` instantiates them via reflection and will throw `NoSuchMethodException` at runtime without registration.
+    - `@RegisterReflectionForBinding` on a `@Configuration` is picked up automatically by Spring AOT. Multiple such classes across modules are aggregated — no central registry is needed.
+    - `ErrorResponseDto` (in `caiman-web-support`) is registered directly on `GlobalRestExceptionHandlerConfig` — that is the exception because the DTO and the config that uses it live in the same shared module.
+
+    **`CaimanRuntimeHints` (`caiman-app/.../aot/CaimanRuntimeHints.java`):**
+    Used exclusively for hints that cannot be expressed via `@RegisterReflectionForBinding`:
+    - `CaimanServerPropsConfig` nested records — Hibernate Validator's `JPATraversableResolver` accesses private fields at startup; Spring AOT alone does not register `ACCESS_DECLARED_FIELDS` for these.
+    - `SQLiteDialect` — `hibernate-community-dialects` has no native-image metadata; Hibernate loads the dialect by class name via `ClassLoaderServiceImpl.classForName()`.
+
+    Any future case where a class must be loaded by name at runtime and the owning library has no native-image support belongs here.
 

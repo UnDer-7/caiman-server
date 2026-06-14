@@ -1,3 +1,14 @@
+plugins {
+    alias(libs.plugins.hibernate.orm)
+}
+
+hibernate {
+    enhancement {
+        enableLazyInitialization = true
+        enableDirtyTracking = true
+    }
+}
+
 dependencies {
     // ### Database ###
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")

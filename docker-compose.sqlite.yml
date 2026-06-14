@@ -1,7 +1,7 @@
 services:
   caiman-server:
 #    image: under7/caiman-server:latest
-    image: under7/caiman-server:v0.0.1-jvm
+    image: under7/caiman-server:v0.0.1-native
     container_name: caiman-server
     restart: unless-stopped
     ports:
