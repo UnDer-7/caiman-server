@@ -86,8 +86,8 @@ subprojects {
         }
     }
 
-    tasks.register<Test>("integrationTest") {
-        description = "Runs integration tests (tagged @IntegrationTest)."
+    tasks.register<Test>("integrationTestJvm") {
+        description = "Runs integration tests (tagged @IntegrationTest) on JVM."
         group = "verification"
         testClassesDirs = sourceSets["test"].output.classesDirs
         classpath = sourceSets["test"].runtimeClasspath
@@ -157,9 +157,11 @@ tasks.register<JacocoReport>("jacocoRootReport") {
     executionData.setFrom(
         files(
             subprojects.flatMap { subproject ->
-                subproject.tasks.withType<Test>().mapNotNull { testTask ->
-                    testTask.extensions.findByType<JacocoTaskExtension>()?.destinationFile
-                }
+                subproject.tasks.withType<Test>()
+                    .filter { it.name != "nativeTest" }
+                    .mapNotNull { testTask ->
+                        testTask.extensions.findByType<JacocoTaskExtension>()?.destinationFile
+                    }
             }
         )
     )

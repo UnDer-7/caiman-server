@@ -26,6 +26,12 @@ tasks.bootRun {
     workingDir = rootProject.projectDir
 }
 
+tasks.register("integrationTestNative") {
+    description = "Runs integration tests (tagged @IntegrationTest) in GraalVM native mode. Requires Docker."
+    group = "verification"
+    dependsOn("nativeTest")
+}
+
 tasks.named<ProcessResources>("processResources") {
     filesMatching(listOf("application*.yml", "application*.yaml")) {
         filter(ReplaceTokens::class, "tokens" to mapOf(

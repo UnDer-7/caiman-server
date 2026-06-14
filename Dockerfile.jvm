@@ -8,13 +8,13 @@ RUN addgroup -g 1000 -S caiman && adduser -u 1000 -S caiman -G caiman
 
 # ============================================================
 # Stage 1: Extract lib/ dependencies from the bootJar.
+# Prereq: ./gradlew :caiman-app:bootJar
 # lib/ contains all third-party dependencies and changes
 # infrequently → placed in its own layer for Docker cache.
 # ============================================================
 FROM base AS builder
 WORKDIR /builder
-ARG JAR_FILE
-COPY ${JAR_FILE} application.jar
+COPY caiman-app/build/libs/*.jar application.jar
 RUN java -Djarmode=tools -jar application.jar extract --destination extracted
 
 # ============================================================

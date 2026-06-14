@@ -71,12 +71,6 @@ databaseChangeLog:
       id: 10-debtor-contact-unique-type-value
       author: caiman
       dbms: "!sqlite"
-      preConditions:
-        onFail: MARK_RAN
-        not:
-          uniqueConstraintExists:
-            tableName: debtor_contact
-            constraintName: uq_dc_debtor_type_value
       changes:
         - addUniqueConstraint:
             tableName: debtor_contact
@@ -87,12 +81,6 @@ databaseChangeLog:
       id: 10-debtor-contact-unique-type-priority
       author: caiman
       dbms: "!sqlite"
-      preConditions:
-        onFail: MARK_RAN
-        not:
-          uniqueConstraintExists:
-            tableName: debtor_contact
-            constraintName: uq_dc_debtor_type_priority
       changes:
         - addUniqueConstraint:
             tableName: debtor_contact

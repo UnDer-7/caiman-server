@@ -32,5 +32,12 @@ public class CaimanRuntimeHints implements RuntimeHintsRegistrar {
             MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
             MemberCategory.INVOKE_DECLARED_METHODS
         );
+
+        // springdoc ActuatorOperationCustomizer reads OperationHandler.operation via Field.get()
+        // at request time — not discoverable by AOT static analysis.
+        hints.reflection().registerTypeIfPresent(
+            classLoader,
+            "org.springframework.boot.webmvc.actuate.endpoint.web.AbstractWebMvcEndpointHandlerMapping$OperationHandler",
+            MemberCategory.ACCESS_DECLARED_FIELDS);
     }
 }

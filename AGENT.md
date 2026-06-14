@@ -523,7 +523,7 @@ All business decisions, domain rules, and technical choices are documented in `.
     class CreateDebtorSQLiteIT { ... }
     ```
 
-    Run commands: `make test/unit`, `make test/integration`, `make test` (both).
+    Run commands: `make test/unit`, `make test/integration/jvm`, `make test` (both JVM), `make test/integration/native` (GraalVM native, requires Docker).
 
 14. **No wildcard imports (`*`).** All imports must be fully qualified. The only exception is test source files, where wildcard imports are allowed exclusively for assertion and mock libraries.
 

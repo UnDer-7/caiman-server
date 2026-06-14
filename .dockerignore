@@ -20,6 +20,7 @@ gradle/
 **/src/
 
 # Build output — keep only the bootJar under caiman-app/build/libs/
+caiman-app/build/libs/*-plain.jar
 **/build/classes/
 **/build/resources/
 **/build/tmp/

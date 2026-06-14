@@ -57,32 +57,53 @@ dev/run:
 test/unit:
 	./gradlew clean unitTest --rerun-tasks
 
-## test/integration: Run integration tests across all modules
-.PHONY: test/integration
-test/integration:
-	./gradlew clean integrationTest --rerun-tasks
+## test/integration/jvm: Run integration tests on JVM across all modules
+.PHONY: test/integration/jvm
+test/integration/jvm:
+	./gradlew clean integrationTestJvm --rerun-tasks
 
-## test: Run unit and integration tests across all modules
+## test/integration/native: Run integration tests in GraalVM native mode (requires Docker)
+.PHONY: test/integration/native
+test/integration/native:
+	./gradlew :caiman-app:integrationTestNative --rerun-tasks
+
+## test: Run unit and integration tests (JVM) across all modules
 .PHONY: test
 test:
-	./gradlew clean unitTest integrationTest --rerun-tasks
+	./gradlew clean unitTest integrationTestJvm --rerun-tasks
 
-## test/coverage: Run all tests and generate aggregated JaCoCo report
+## test/coverage: Run all tests (JVM) and generate aggregated JaCoCo report
 .PHONY: test/coverage
 test/coverage:
-	./gradlew clean unitTest integrationTest jacocoRootReport --rerun-tasks
+	./gradlew clean unitTest integrationTestJvm jacocoRootReport --rerun-tasks
 
 
 
 # ==================================================================================== #
 ## ===== BUILD =====
 # ==================================================================================== #
+## build/artifacts: Build GraalVM native image + bootJar in a single Gradle invocation (loads .env variables)
+.PHONY: build/artifacts
+build/artifacts:
+	@START=$$(date +%s) && \
+	echo 'Loading .env and building native image + bootJar...' && \
+	set -a && \
+	eval $$(grep -v '^\s*#' .env | grep -v '^\s*$$' | sed 's/\r$$//') && \
+	set +a && \
+	./gradlew :caiman-app:nativeCompile :caiman-app:bootJar -x test --rerun-tasks && \
+	END=$$(date +%s) && \
+	ELAPSED=$$((END-START)) && \
+	echo "Artifacts built in $$((ELAPSED/3600))h $$(((ELAPSED%3600)/60))m $$((ELAPSED%60))s"
+
 ## ----- JVM -----
-## build/jar: Build the bootJar (run before build/docker-jvm if code changed)
+## build/jar: Build the bootJar (loads .env variables, run before build/docker-jvm if code changed)
 .PHONY: build/jar
 build/jar:
 	@START=$$(date +%s) && \
-	echo 'Building bootJar...' && \
+	echo 'Loading .env and building bootJar...' && \
+	set -a && \
+	eval $$(grep -v '^\s*#' .env | grep -v '^\s*$$' | sed 's/\r$$//') && \
+	set +a && \
 	./gradlew :caiman-app:bootJar -x test --rerun-tasks && \
 	END=$$(date +%s) && \
 	ELAPSED=$$((END-START)) && \
@@ -92,16 +113,15 @@ build/jar:
 .PHONY: build/jar/docker
 build/jar/docker:
 	@START=$$(date +%s) && \
-	JAR=caiman-app/build/libs/caiman-app-$(PROJECT_VERSION).jar && \
-	echo "Building Docker JVM image from $$JAR..." && \
+	echo "Building Docker JVM image..." && \
 	docker build -f Dockerfile.jvm \
-	  --build-arg JAR_FILE=$$JAR \
 	  -t $(REGISTRY_HOST)/$(PROJECT_NAME):$(PROJECT_VERSION)-jvm . && \
 	END=$$(date +%s) && \
 	ELAPSED=$$((END-START)) && \
 	echo "Docker JVM build completed in $$((ELAPSED/3600))h $$(((ELAPSED%3600)/60))m $$((ELAPSED%60))s"
 
 ## ----- GRAALVM -----
+
 ## build/native: Build GraalVM native image (loads .env variables)
 .PHONY: build/native
 build/native:
