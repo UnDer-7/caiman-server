@@ -36,6 +36,31 @@ Payment is confirmed by the debtor uploading a receipt (PIX, bank transfer, Venm
 
 ---
 
+## Environment Variables
+
+**`.env` is the single source of truth for all environment variables.** It is always committed to the repository.
+
+### Rules
+
+- Every env var the project reads must be declared in `.env`.
+- All values in `.env` are local dev defaults — no secrets, no production credentials. Committing it is safe and intentional.
+- If you need to add a new env var, add it to `.env`. Do not leave it undocumented or rely on implicit system vars.
+
+### Secrets
+
+`.env` must never contain actual secret values (API keys, tokens, passwords for real services). For secrets, use indirection:
+
+```dotenv
+# .env — committed, safe
+CAIMAN_ANTHROPIC_API_KEY="${LOCAL_CAIMAN_ANTHROPIC_API_KEY}"
+```
+
+The project reads `CAIMAN_ANTHROPIC_API_KEY`. That variable references `LOCAL_CAIMAN_ANTHROPIC_API_KEY`, which the developer must set on their own machine (e.g. in `~/.zshrc` or `~/.bashrc`). The actual key never touches the repo.
+
+**Naming convention for the machine-level variable:** prefix the project var name with `LOCAL_`.
+
+---
+
 ## Database Configuration
 
 The application supports two database backends selected at startup via a single env var. No container required for SQLite — preferred for local development.
