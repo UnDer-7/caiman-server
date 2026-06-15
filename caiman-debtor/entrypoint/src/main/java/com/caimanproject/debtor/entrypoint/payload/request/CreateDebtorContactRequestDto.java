@@ -20,8 +20,7 @@ public record CreateDebtorContactRequestDto(
                 example = "EMAIL",
                 nullable = false,
                 requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotNull
-        ContactType contactType,
+        @NotNull ContactType contactType,
 
         @Schema(
                 description =
@@ -29,9 +28,7 @@ public record CreateDebtorContactRequestDto(
                 example = "user@example.com",
                 nullable = false,
                 requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlank
-        @Size(max = 500)
-        String contactValue,
+        @NotBlank @Size(max = 500) String contactValue,
 
         @Schema(description = """
             Dispatch priority within the same (debtor, contactType) group. \
@@ -39,8 +36,7 @@ public record CreateDebtorContactRequestDto(
             Huginn picks the entry with the lowest priority when routing. \
             Defaults to 1 when not provided.
             """, example = "1", nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-        @Positive
-        Integer priority) {
+        @Positive Integer priority) {
 
     public CreateDebtorContactRequestDto {
         if (priority == null) {

@@ -21,8 +21,7 @@ public record DebtorContactResponseDto(
         @Schema(description = """
             The actual contact address for the given contactType. \
             EMAIL — standard email address (e.g. user@example.com).
-            """, example = "user@example.com", nullable = false) @NotBlank
-        String contactValue,
+            """, example = "user@example.com", nullable = false) @NotBlank String contactValue,
 
         @Schema(
                 description =

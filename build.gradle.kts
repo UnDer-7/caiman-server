@@ -191,6 +191,7 @@ tasks.register<JacocoReport>("jacocoRootReport") {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Spotless — code formatting
+// Docs: https://github.com/diffplug/spotless/tree/main/plugin-gradle
 //
 // Check:  ./gradlew spotlessCheck
 // Apply:  ./gradlew spotlessApply
@@ -224,6 +225,7 @@ spotless {
         target("**/*.java")
         palantirJavaFormat("2.89.0").style("PALANTIR").formatJavadoc(true)
         removeUnusedImports()
+        formatAnnotations()
         // Regular imports first, then org.awaitility statics, then all other statics
         importOrder("", "\\#org.awaitility.Awaitility", "\\#")
     }

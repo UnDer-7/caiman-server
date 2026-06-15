@@ -32,16 +32,14 @@ public record CaimanServerPropsConfig(
         implements CaimanServerProps {
 
     public record LoggingPropImpl(
-            @NotBlank
-            @Pattern(
+            @NotBlank @Pattern(
                     regexp = "TRACE|DEBUG|INFO|WARN|ERROR",
                     message = "Must be one of: TRACE, DEBUG, INFO, WARN, ERROR")
             String level,
 
             @NotBlank String folderPath,
 
-            @NotBlank @Pattern(regexp = "UNSTRUCTURED|STRUCTURED", message = "Must be one of: UNSTRUCTURED, STRUCTURED")
-            String format)
+            @NotBlank @Pattern(regexp = "UNSTRUCTURED|STRUCTURED", message = "Must be one of: UNSTRUCTURED, STRUCTURED") String format)
             implements CaimanServerProps.LoggingProp {}
 
     public record DatabasePropImpl(
@@ -62,8 +60,7 @@ public record CaimanServerPropsConfig(
             return type != DatabaseType.POSTGRES || (url != null && username != null && password != null);
         }
 
-        @AssertTrue(message = "DATABASE_TYPE=SQLITE requires DATABASE_SQLITE_FILE environment variable")
-        boolean isSqliteConfigValid() {
+        @AssertTrue(message = "DATABASE_TYPE=SQLITE requires DATABASE_SQLITE_FILE environment variable") boolean isSqliteConfigValid() {
             return type != DatabaseType.SQLITE || sqliteFile != null;
         }
     }

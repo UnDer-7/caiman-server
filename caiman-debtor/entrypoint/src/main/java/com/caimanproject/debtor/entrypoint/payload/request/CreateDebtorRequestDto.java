@@ -17,9 +17,7 @@ public record CreateDebtorRequestDto(
                 example = "John Doe",
                 nullable = false,
                 requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlank
-        @Size(max = 255)
-        String name,
+        @NotBlank @Size(max = 255) String name,
 
         @Schema(
                 description = "Free-text notes about this debtor. Internal use only. Not sent in notifications.",
@@ -44,8 +42,7 @@ public record CreateDebtorRequestDto(
                         "List of contact endpoints for this debtor. Each entry defines a channel and address used by the notification dispatcher. Defaults to empty list when not provided.",
                 nullable = true,
                 requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-        @Valid
-        List<CreateDebtorContactRequestDto> contacts) {
+        @Valid List<CreateDebtorContactRequestDto> contacts) {
 
     public CreateDebtorRequestDto {
         if (contacts == null) {
