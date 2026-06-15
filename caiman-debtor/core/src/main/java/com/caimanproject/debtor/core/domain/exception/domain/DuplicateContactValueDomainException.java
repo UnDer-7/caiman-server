@@ -8,7 +8,8 @@ import org.slf4j.Logger;
 @Slf4j
 class DuplicateContactValueDomainException extends BusinessException {
 
-    DuplicateContactValueDomainException(final ExceptionCode exceptionCode, final String detail, final Throwable originalCause) {
+    DuplicateContactValueDomainException(
+            final ExceptionCode exceptionCode, final String detail, final Throwable originalCause) {
         super(exceptionCode, detail, originalCause);
     }
 
@@ -28,5 +29,4 @@ class DuplicateContactValueDomainException extends BusinessException {
     protected Logger getLogger() {
         return log;
     }
-
 }

@@ -1,15 +1,14 @@
 package com.caimanproject.mapstruct.spi;
 
-import org.mapstruct.ap.spi.BuilderInfo;
-import org.mapstruct.ap.spi.DefaultBuilderProvider;
-import org.mapstruct.ap.spi.MoreThanOneBuilderCreationMethodException;
-
+import java.util.Collection;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
-import java.util.Collection;
+import org.mapstruct.ap.spi.BuilderInfo;
+import org.mapstruct.ap.spi.DefaultBuilderProvider;
+import org.mapstruct.ap.spi.MoreThanOneBuilderCreationMethodException;
 
 public class CaimanBuilderProvider extends DefaultBuilderProvider {
 
@@ -31,14 +30,14 @@ public class CaimanBuilderProvider extends DefaultBuilderProvider {
         }
 
         ExecutableElement creationMethod = typeElement.getEnclosedElements().stream()
-            .filter(e -> e.getKind() == ElementKind.METHOD)
-            .map(ExecutableElement.class::cast)
-            .filter(e -> e.getModifiers().contains(Modifier.STATIC))
-            .filter(e -> e.getModifiers().contains(Modifier.PUBLIC))
-            .filter(e -> e.getParameters().isEmpty())
-            .filter(e -> e.getSimpleName().contentEquals(RESTORE_BUILDER))
-            .findFirst()
-            .orElse(null);
+                .filter(e -> e.getKind() == ElementKind.METHOD)
+                .map(ExecutableElement.class::cast)
+                .filter(e -> e.getModifiers().contains(Modifier.STATIC))
+                .filter(e -> e.getModifiers().contains(Modifier.PUBLIC))
+                .filter(e -> e.getParameters().isEmpty())
+                .filter(e -> e.getSimpleName().contentEquals(RESTORE_BUILDER))
+                .findFirst()
+                .orElse(null);
 
         if (creationMethod == null) {
             return null;
@@ -55,8 +54,8 @@ public class CaimanBuilderProvider extends DefaultBuilderProvider {
         }
 
         return new BuilderInfo.Builder()
-            .builderCreationMethod(creationMethod)
-            .buildMethod(buildMethods)
-            .build();
+                .builderCreationMethod(creationMethod)
+                .buildMethod(buildMethods)
+                .build();
     }
 }

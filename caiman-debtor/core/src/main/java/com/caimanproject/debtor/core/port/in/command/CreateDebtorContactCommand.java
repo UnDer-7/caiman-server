@@ -4,10 +4,4 @@ import com.caimanproject.debtor.core.domain.types.ContactType;
 import lombok.Builder;
 
 @Builder
-public record CreateDebtorContactCommand(
-    ContactType contactType,
-    String contactValue,
-    Integer priority
-) {
-
-}
+public record CreateDebtorContactCommand(ContactType contactType, String contactValue, Integer priority) {}

@@ -9,9 +9,9 @@ import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(
-    componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
-    uses = {OptionalMapper.class, DebtorContactEntityMapper.class, AuditEntityMapper.class, IdMapper.class},
-    unmappedTargetPolicy = ReportingPolicy.ERROR)
+        componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
+        uses = {OptionalMapper.class, DebtorContactEntityMapper.class, AuditEntityMapper.class, IdMapper.class},
+        unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface DebtorEntityMapper {
 
     Debtor toModel(DebtorEntity entity);

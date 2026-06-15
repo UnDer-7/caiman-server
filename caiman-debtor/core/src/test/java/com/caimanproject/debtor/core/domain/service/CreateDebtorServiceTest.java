@@ -1,6 +1,5 @@
 package com.caimanproject.debtor.core.domain.service;
 
-import com.caimanproject.test.annotation.UnitTest;
 import com.caimanproject.debtor.core.domain.exception.business.BusinessExceptionCode;
 import com.caimanproject.debtor.core.domain.model.Debtor;
 import com.caimanproject.debtor.core.domain.types.ContactType;
@@ -8,6 +7,9 @@ import com.caimanproject.debtor.core.port.in.command.CreateDebtorContactCommand;
 import com.caimanproject.debtor.core.port.out.DebtorPersistenceGateway;
 import com.caimanproject.debtor.core.test.builder.CommandBuilder;
 import com.caimanproject.debtor.core.test.builder.DomainBuilder;
+import com.caimanproject.test.annotation.UnitTest;
+import java.util.List;
+import java.util.stream.Stream;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,9 +22,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.List;
-import java.util.stream.Stream;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
@@ -39,23 +38,23 @@ class CreateDebtorServiceTest {
     class DuplicateContactByPriorityTestSuit {
 
         @ParameterizedTest
-        @MethodSource("com.caimanproject.debtor.core.domain.service.CreateDebtorServiceTest#build_duplicate_contacts_by_priority_commands")
+        @MethodSource(
+                "com.caimanproject.debtor.core.domain.service.CreateDebtorServiceTest#build_duplicate_contacts_by_priority_commands")
         void should_fail_when_passing_duplicate_contact_by_priority(
-            final List<CreateDebtorContactCommand> contacts,
-            final List<String> expectedInMessage
-        ) {
+                final List<CreateDebtorContactCommand> contacts, final List<String> expectedInMessage) {
             // Given
             final var command = CommandBuilder.buildCreateDebtorCommandFull()
-                .contacts(contacts)
-                .build();
+                    .contacts(contacts)
+                    .build();
 
             // When
             final var abstractThrowableAssert = Assertions.assertThatThrownBy(() -> service.execute(command));
 
             // Then
             final var expectedException = BusinessExceptionCode.DUPLICATE_CONTACT_BY_PRIORITY.createException();
-            abstractThrowableAssert.isInstanceOf(expectedException.getClass())
-                .hasMessageContainingAll(expectedInMessage.toArray(new String[0]));
+            abstractThrowableAssert
+                    .isInstanceOf(expectedException.getClass())
+                    .hasMessageContainingAll(expectedInMessage.toArray(new String[0]));
             Mockito.verify(debtorPersistenceGateway, Mockito.never()).save(Mockito.any());
         }
     }
@@ -65,23 +64,23 @@ class CreateDebtorServiceTest {
     class DuplicateContactByValueTestSuit {
 
         @ParameterizedTest
-        @MethodSource("com.caimanproject.debtor.core.domain.service.CreateDebtorServiceTest#build_duplicate_contacts_by_value_commands")
+        @MethodSource(
+                "com.caimanproject.debtor.core.domain.service.CreateDebtorServiceTest#build_duplicate_contacts_by_value_commands")
         void should_fail_when_passing_duplicate_contact_by_value(
-            final List<CreateDebtorContactCommand> contacts,
-            final List<String> expectedInMessage
-        ) {
+                final List<CreateDebtorContactCommand> contacts, final List<String> expectedInMessage) {
             // Given
             final var command = CommandBuilder.buildCreateDebtorCommandFull()
-                .contacts(contacts)
-                .build();
+                    .contacts(contacts)
+                    .build();
 
             // When
             final var abstractThrowableAssert = Assertions.assertThatThrownBy(() -> service.execute(command));
 
             // Then
             final var expectedException = BusinessExceptionCode.DUPLICATE_CONTACT_BY_VALUE.createException();
-            abstractThrowableAssert.isInstanceOf(expectedException.getClass())
-                .hasMessageContainingAll(expectedInMessage.toArray(new String[0]));
+            abstractThrowableAssert
+                    .isInstanceOf(expectedException.getClass())
+                    .hasMessageContainingAll(expectedInMessage.toArray(new String[0]));
             Mockito.verify(debtorPersistenceGateway, Mockito.never()).save(Mockito.any());
         }
     }
@@ -108,49 +107,107 @@ class CreateDebtorServiceTest {
 
     static Stream<Arguments> build_duplicate_contacts_by_priority_commands() {
         return Stream.of(
-            Arguments.of(
-                List.of(
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("a@gmail.com").priority(0).build(),
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("b@gmail.com").priority(0).build()),
-                List.of("a@gmail.com")),
-
-            Arguments.of(
-                List.of(
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("a@gmail.com").priority(0).build(),
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("b@gmail.com").priority(0).build(),
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("c@gmail.com").priority(0).build()),
-                List.of("a@gmail.com")),
-
-            Arguments.of(
-                List.of(
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("a@gmail.com").priority(2).build(),
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("b@gmail.com").priority(2).build()),
-                List.of("a@gmail.com"))
-        );
+                Arguments.of(
+                        List.of(
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("a@gmail.com")
+                                        .priority(0)
+                                        .build(),
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("b@gmail.com")
+                                        .priority(0)
+                                        .build()),
+                        List.of("a@gmail.com")),
+                Arguments.of(
+                        List.of(
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("a@gmail.com")
+                                        .priority(0)
+                                        .build(),
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("b@gmail.com")
+                                        .priority(0)
+                                        .build(),
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("c@gmail.com")
+                                        .priority(0)
+                                        .build()),
+                        List.of("a@gmail.com")),
+                Arguments.of(
+                        List.of(
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("a@gmail.com")
+                                        .priority(2)
+                                        .build(),
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("b@gmail.com")
+                                        .priority(2)
+                                        .build()),
+                        List.of("a@gmail.com")));
     }
 
     static Stream<Arguments> build_duplicate_contacts_by_value_commands() {
         return Stream.of(
-            Arguments.of(
-                List.of(
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("johndoe@gmail.com").priority(0).build(),
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("johndoe@gmail.com").priority(1).build()),
-                List.of("johndoe@gmail.com")),
-
-            Arguments.of(
-                List.of(
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("dup@gmail.com").priority(0).build(),
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("dup@gmail.com").priority(1).build(),
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("other@gmail.com").priority(2).build()),
-                List.of("dup@gmail.com")),
-
-            Arguments.of(
-                List.of(
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("johndoe@gmail.com").priority(0).build(),
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("johndoe@gmail.com").priority(1).build(),
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("marty@gmail.com").priority(2).build(),
-                    CommandBuilder.buildCreateDebtorContactCommand().contactType(ContactType.EMAIL).contactValue("marty@gmail.com").priority(3).build()),
-                List.of("johndoe@gmail.com", "marty@gmail.com"))
-        );
+                Arguments.of(
+                        List.of(
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("johndoe@gmail.com")
+                                        .priority(0)
+                                        .build(),
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("johndoe@gmail.com")
+                                        .priority(1)
+                                        .build()),
+                        List.of("johndoe@gmail.com")),
+                Arguments.of(
+                        List.of(
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("dup@gmail.com")
+                                        .priority(0)
+                                        .build(),
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("dup@gmail.com")
+                                        .priority(1)
+                                        .build(),
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("other@gmail.com")
+                                        .priority(2)
+                                        .build()),
+                        List.of("dup@gmail.com")),
+                Arguments.of(
+                        List.of(
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("johndoe@gmail.com")
+                                        .priority(0)
+                                        .build(),
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("johndoe@gmail.com")
+                                        .priority(1)
+                                        .build(),
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("marty@gmail.com")
+                                        .priority(2)
+                                        .build(),
+                                CommandBuilder.buildCreateDebtorContactCommand()
+                                        .contactType(ContactType.EMAIL)
+                                        .contactValue("marty@gmail.com")
+                                        .priority(3)
+                                        .build()),
+                        List.of("johndoe@gmail.com", "marty@gmail.com")));
     }
 }

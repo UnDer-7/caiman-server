@@ -8,10 +8,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum DomainExceptionCode implements ExceptionCode {
-    INVALID_VALUE(
-        "001",
-        "Domain received invalid values"
-    ) {
+    INVALID_VALUE("001", "Domain received invalid values") {
         @Override
         public CaimanException createException(final String detail) {
             return new InvalidValueDomainException(this, detail);
@@ -82,5 +79,4 @@ public enum DomainExceptionCode implements ExceptionCode {
     public ExceptionCode.ModulePrefix getModulePrefix() {
         return ModulePrefix.DEBTOR_DOMAIN;
     }
-
 }

@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum WebSupportExceptionCode implements ExceptionCode {
-
     UNEXPECTED_ERROR("001", "Some unexpected error occurred") {
         @Override
         public CaimanException createException(final String detail) {

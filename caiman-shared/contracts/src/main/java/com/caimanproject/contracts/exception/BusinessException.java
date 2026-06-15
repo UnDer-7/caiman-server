@@ -22,7 +22,6 @@ public abstract class BusinessException extends CaimanException {
 
     @Override
     protected final LogLevel getLogLevel() {
-        return  LogLevel.WARN;
+        return LogLevel.WARN;
     }
-
 }

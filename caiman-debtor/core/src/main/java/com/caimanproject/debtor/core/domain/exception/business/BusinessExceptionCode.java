@@ -11,7 +11,7 @@ public enum BusinessExceptionCode implements ExceptionCode {
     DUPLICATE_CONTACT_BY_VALUE("001", "Informed contact list has duplicate contact value") {
         @Override
         public CaimanException createException(final String detail) {
-            return new DuplicateContactByValueBusinessException(this,detail);
+            return new DuplicateContactByValueBusinessException(this, detail);
         }
 
         @Override
@@ -58,5 +58,4 @@ public enum BusinessExceptionCode implements ExceptionCode {
     public ModulePrefix getModulePrefix() {
         return ModulePrefix.DEBTOR_BUSINESS;
     }
-
 }

@@ -10,6 +10,7 @@ import com.caimanproject.debtor.entrypoint.payload.request.CreateDebtorContactRe
 import com.caimanproject.debtor.entrypoint.payload.request.CreateDebtorRequestDto;
 import com.caimanproject.debtor.entrypoint.payload.response.DebtorResponseDto;
 import com.caimanproject.web.annotation.CaimanEndpoint;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.argument.StructuredArguments;
@@ -18,8 +19,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
-
-import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -34,39 +33,41 @@ public class DebtorController implements DebtorControllerSpec {
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public DebtorResponseDto createDebtor(@RequestBody final CreateDebtorRequestDto payload) {
         log.info(
-            LogField.Placeholders.FIVE.getPlaceholder(),
-            StructuredArguments.kv(LogField.MSG.label(), "debtor create request received"),
-            StructuredArguments.kv(LogField.DEBTOR_NAME.label(), payload.name()),
-            StructuredArguments.kv(LogField.DEBTOR_NOTIFICATIONS_ENABLED.label(), payload.notificationsEnabled()),
-            StructuredArguments.kv(LogField.CONTACTS_COUNT.label(), payload.contacts().size()),
-            StructuredArguments.kv(LogField.CONTACT_DETAILS.label(), getContactDetails(payload.contacts()))
-        );
+                LogField.Placeholders.FIVE.getPlaceholder(),
+                StructuredArguments.kv(LogField.MSG.label(), "debtor create request received"),
+                StructuredArguments.kv(LogField.DEBTOR_NAME.label(), payload.name()),
+                StructuredArguments.kv(LogField.DEBTOR_NOTIFICATIONS_ENABLED.label(), payload.notificationsEnabled()),
+                StructuredArguments.kv(
+                        LogField.CONTACTS_COUNT.label(), payload.contacts().size()),
+                StructuredArguments.kv(LogField.CONTACT_DETAILS.label(), getContactDetails(payload.contacts())));
 
         final var createCommand = debtorWebMapper.toCommand(payload);
         final var debtor = createDebtorUseCase.execute(createCommand);
         final var response = debtorWebMapper.toDto(debtor);
 
         log.info(
-            LogField.Placeholders.FIVE.getPlaceholder(),
-            StructuredArguments.kv(LogField.MSG.label(), "debtor create response"),
-            StructuredArguments.kv(LogField.DEBTOR_ID.label(), response.id()),
-            StructuredArguments.kv(LogField.DEBTOR_NAME.label(), response.name()),
-            StructuredArguments.kv(LogField.DEBTOR_NOTIFICATIONS_ENABLED.label(), response.notificationsEnabled()),
-            StructuredArguments.kv(LogField.CONTACTS_COUNT.label(), response.contacts().size())
-        );
+                LogField.Placeholders.FIVE.getPlaceholder(),
+                StructuredArguments.kv(LogField.MSG.label(), "debtor create response"),
+                StructuredArguments.kv(LogField.DEBTOR_ID.label(), response.id()),
+                StructuredArguments.kv(LogField.DEBTOR_NAME.label(), response.name()),
+                StructuredArguments.kv(LogField.DEBTOR_NOTIFICATIONS_ENABLED.label(), response.notificationsEnabled()),
+                StructuredArguments.kv(
+                        LogField.CONTACTS_COUNT.label(), response.contacts().size()));
 
         return response;
     }
 
     private static List<String> getContactDetails(final List<CreateDebtorContactRequestDto> contacts) {
         return contacts.stream()
-            .map(c -> {
-                final ContactType contactType = c.contactType();
-                final var contactValue = switch (contactType) {
-                    case EMAIL -> LogMask.email(c.contactValue());
-                };
-                return "(contactType: %s - contactValue: %s - priority: %s)".formatted(contactType, contactValue, c.priority());
-            })
-            .toList();
+                .map(c -> {
+                    final ContactType contactType = c.contactType();
+                    final var contactValue =
+                            switch (contactType) {
+                                case EMAIL -> LogMask.email(c.contactValue());
+                            };
+                    return "(contactType: %s - contactValue: %s - priority: %s)"
+                            .formatted(contactType, contactValue, c.priority());
+                })
+                .toList();
     }
 }

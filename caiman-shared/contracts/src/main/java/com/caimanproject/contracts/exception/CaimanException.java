@@ -1,14 +1,13 @@
 package com.caimanproject.contracts.exception;
 
+import java.time.Instant;
+import java.util.Optional;
+import java.util.function.Predicate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
-
-import java.time.Instant;
-import java.util.Optional;
-import java.util.function.Predicate;
 
 @Slf4j
 @Getter
@@ -22,7 +21,11 @@ public abstract class CaimanException extends RuntimeException {
     @Getter(AccessLevel.NONE)
     private final String detail;
 
-    protected CaimanException(final ExceptionCode exceptionCode, final ErrorHttpStatus httpStatusCode, final String detail, final Throwable originalCause) {
+    protected CaimanException(
+            final ExceptionCode exceptionCode,
+            final ErrorHttpStatus httpStatusCode,
+            final String detail,
+            final Throwable originalCause) {
 
         super(getExceptionMessage(exceptionCode, detail, originalCause), originalCause);
 
@@ -33,7 +36,8 @@ public abstract class CaimanException extends RuntimeException {
         this.exceptionCode = exceptionCode;
     }
 
-    protected CaimanException(final ExceptionCode exceptionCode, final ErrorHttpStatus httpStatusCode, final Throwable originalCause) {
+    protected CaimanException(
+            final ExceptionCode exceptionCode, final ErrorHttpStatus httpStatusCode, final Throwable originalCause) {
 
         super(getExceptionMessage(exceptionCode), originalCause);
 
@@ -44,7 +48,8 @@ public abstract class CaimanException extends RuntimeException {
         this.exceptionCode = exceptionCode;
     }
 
-    protected CaimanException(final ExceptionCode exceptionCode, final ErrorHttpStatus httpStatusCode, final String detail) {
+    protected CaimanException(
+            final ExceptionCode exceptionCode, final ErrorHttpStatus httpStatusCode, final String detail) {
 
         super(getExceptionMessage(exceptionCode, detail));
 
@@ -75,45 +80,45 @@ public abstract class CaimanException extends RuntimeException {
         switch (logLevel) {
             case TRACE ->
                 getLogger()
-                    .trace(
-                        LogField.Placeholders.THREE.getPlaceholder(),
-                        StructuredArguments.kv(LogField.MSG.label(), defaultMsg),
-                        StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
-                        StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()));
+                        .trace(
+                                LogField.Placeholders.THREE.getPlaceholder(),
+                                StructuredArguments.kv(LogField.MSG.label(), defaultMsg),
+                                StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
+                                StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()));
             case DEBUG ->
                 getLogger()
-                    .debug(
-                        LogField.Placeholders.THREE.getPlaceholder(),
-                        StructuredArguments.kv(LogField.MSG.label(), defaultMsg),
-                        StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
-                        StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()));
+                        .debug(
+                                LogField.Placeholders.THREE.getPlaceholder(),
+                                StructuredArguments.kv(LogField.MSG.label(), defaultMsg),
+                                StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
+                                StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()));
             case INFO ->
                 getLogger()
-                    .info(
-                        LogField.Placeholders.THREE.getPlaceholder(),
-                        StructuredArguments.kv(LogField.MSG.label(), defaultMsg),
-                        StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
-                        StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()));
+                        .info(
+                                LogField.Placeholders.THREE.getPlaceholder(),
+                                StructuredArguments.kv(LogField.MSG.label(), defaultMsg),
+                                StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
+                                StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()));
             case WARN ->
                 getLogger()
-                    .warn(
-                        LogField.Placeholders.THREE.getPlaceholder(),
-                        StructuredArguments.kv(LogField.MSG.label(), defaultMsg),
-                        StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
-                        StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()));
+                        .warn(
+                                LogField.Placeholders.THREE.getPlaceholder(),
+                                StructuredArguments.kv(LogField.MSG.label(), defaultMsg),
+                                StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
+                                StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()));
             case ERROR ->
                 getLogger()
-                    .error(
-                        LogField.Placeholders.THREE.getPlaceholder(),
-                        StructuredArguments.kv(LogField.MSG.label(), defaultMsg),
-                        StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
-                        StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()));
+                        .error(
+                                LogField.Placeholders.THREE.getPlaceholder(),
+                                StructuredArguments.kv(LogField.MSG.label(), defaultMsg),
+                                StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
+                                StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()));
 
             default -> {
                 log.warn(
-                    LogField.Placeholders.TWO.getPlaceholder(),
-                    StructuredArguments.kv(LogField.MSG.label(), "Log Level Unknown"),
-                    StructuredArguments.kv(LogField.LOG_LEVEL.label(), logLevel));
+                        LogField.Placeholders.TWO.getPlaceholder(),
+                        StructuredArguments.kv(LogField.MSG.label(), "Log Level Unknown"),
+                        StructuredArguments.kv(LogField.LOG_LEVEL.label(), logLevel));
 
                 throw new IllegalStateException("Unmapped log level: " + logLevel);
             }
@@ -125,17 +130,27 @@ public abstract class CaimanException extends RuntimeException {
     protected abstract Logger getLogger();
 
     private static String getExceptionMessage(
-        final ExceptionCode exceptionCode, final String detail, final Throwable originalCause) {
+            final ExceptionCode exceptionCode, final String detail, final Throwable originalCause) {
         return Optional.ofNullable(detail)
-            .filter(Predicate.not(String::isBlank))
-            .map(d -> "[code: %s] - [message: %s] - [detail: %s] - [originalCauseMessage: %s] [originalCauseClass: %s]"
-                .formatted(exceptionCode.getFullCode(), exceptionCode.getMessage(), d, originalCause.getMessage(), originalCause.getClass().getName()))
-            .orElseGet(() -> getExceptionMessage(exceptionCode, originalCause));
+                .filter(Predicate.not(String::isBlank))
+                .map(d ->
+                        "[code: %s] - [message: %s] - [detail: %s] - [originalCauseMessage: %s] [originalCauseClass: %s]"
+                                .formatted(
+                                        exceptionCode.getFullCode(),
+                                        exceptionCode.getMessage(),
+                                        d,
+                                        originalCause.getMessage(),
+                                        originalCause.getClass().getName()))
+                .orElseGet(() -> getExceptionMessage(exceptionCode, originalCause));
     }
 
     private static String getExceptionMessage(final ExceptionCode exceptionCode, final Throwable originalCause) {
         return "[code: %s] - [message: %s] - [originalCauseMessage: %s] [originalCauseClass: %s]"
-            .formatted(exceptionCode.getFullCode(), exceptionCode.getMessage(), originalCause.getMessage(), originalCause.getClass().getName());
+                .formatted(
+                        exceptionCode.getFullCode(),
+                        exceptionCode.getMessage(),
+                        originalCause.getMessage(),
+                        originalCause.getClass().getName());
     }
 
     private static String getExceptionMessage(final ExceptionCode exceptionCode) {
@@ -144,10 +159,10 @@ public abstract class CaimanException extends RuntimeException {
 
     private static String getExceptionMessage(final ExceptionCode exceptionCode, final String customMessage) {
         return Optional.ofNullable(customMessage)
-            .filter(Predicate.not(String::isBlank))
-            .map(cm -> "[code: %s] - [msg: %s] - [detail: %s]"
-                .formatted(exceptionCode.getFullCode(), exceptionCode.getMessage(), cm))
-            .orElseGet(() -> getExceptionMessage(exceptionCode));
+                .filter(Predicate.not(String::isBlank))
+                .map(cm -> "[code: %s] - [msg: %s] - [detail: %s]"
+                        .formatted(exceptionCode.getFullCode(), exceptionCode.getMessage(), cm))
+                .orElseGet(() -> getExceptionMessage(exceptionCode));
     }
 
     public Optional<String> getDetail() {

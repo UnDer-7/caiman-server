@@ -26,20 +26,21 @@ class CreateDebtorPostgresIT extends IntegrationTestController {
         final var request = DtoBuilder.buildCreateDebtorRequestDto().build();
 
         webTestClient
-            .post()
-            .uri("/v1/debtors")
-            .header(RequestConstants.Headers.X_CORRELATION_ID, "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11")
-            .header(RequestConstants.Headers.X_CHANNEL, "integration-test")
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request)
-            .exchange()
-            .expectStatus().isCreated()
-            .expectBody(DebtorResponseDto.class)
-            .value(response -> {
-                assertThat(response.id()).isNotNull();
-                assertThat(response.name()).isEqualTo(request.name());
-                assertThat(response.active()).isTrue();
-                assertThat(response.audit().createdAt()).isNotNull();
-            });
+                .post()
+                .uri("/v1/debtors")
+                .header(RequestConstants.Headers.X_CORRELATION_ID, "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11")
+                .header(RequestConstants.Headers.X_CHANNEL, "integration-test")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody(DebtorResponseDto.class)
+                .value(response -> {
+                    assertThat(response.id()).isNotNull();
+                    assertThat(response.name()).isEqualTo(request.name());
+                    assertThat(response.active()).isTrue();
+                    assertThat(response.audit().createdAt()).isNotNull();
+                });
     }
 }

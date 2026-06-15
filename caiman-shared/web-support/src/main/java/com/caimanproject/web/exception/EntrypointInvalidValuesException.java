@@ -11,7 +11,8 @@ public class EntrypointInvalidValuesException extends CaimanException {
 
     private static final ErrorHttpStatus HTTP_STATUS_CODE = ErrorHttpStatus.BAD_REQUEST;
 
-    EntrypointInvalidValuesException(final ExceptionCode exceptionCode, final String detail, final Throwable originalCause) {
+    EntrypointInvalidValuesException(
+            final ExceptionCode exceptionCode, final String detail, final Throwable originalCause) {
         super(exceptionCode, HTTP_STATUS_CODE, detail, originalCause);
     }
 
@@ -36,5 +37,4 @@ public class EntrypointInvalidValuesException extends CaimanException {
     protected Logger getLogger() {
         return log;
     }
-
 }

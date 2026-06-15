@@ -7,6 +7,7 @@ springdoc-openapi = "3.0.3"
 logstash-logback-encoder = "9.0"
 jacoco = "0.8.15"
 native-build-tools = "0.11.5"
+spotless = "8.6.0"
 
 [libraries]
 mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
@@ -19,3 +20,4 @@ spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
 graalvm-native = { id = "org.graalvm.buildtools.native", version.ref = "native-build-tools" }
 hibernate-orm = { id = "org.hibernate.orm", version = "7.2.12.Final" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

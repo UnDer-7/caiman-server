@@ -31,18 +31,15 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(
-    name = "debtor_contact",
-    uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uq_dc_debtor_type_value",
-            columnNames = {"debtor_id", "contact_type", "contact_value"}
-        ),
-        @UniqueConstraint(
-            name = "uq_dc_debtor_type_priority",
-            columnNames = {"debtor_id", "contact_type", "priority"}
-        )
-    }
-)
+        name = "debtor_contact",
+        uniqueConstraints = {
+            @UniqueConstraint(
+                    name = "uq_dc_debtor_type_value",
+                    columnNames = {"debtor_id", "contact_type", "contact_value"}),
+            @UniqueConstraint(
+                    name = "uq_dc_debtor_type_priority",
+                    columnNames = {"debtor_id", "contact_type", "priority"})
+        })
 public class DebtorContactEntity implements AuditableEntity {
 
     @Id

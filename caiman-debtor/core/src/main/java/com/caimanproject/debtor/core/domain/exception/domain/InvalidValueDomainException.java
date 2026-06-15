@@ -8,8 +8,7 @@ import org.slf4j.Logger;
 @Slf4j
 class InvalidValueDomainException extends DomainException {
 
-    InvalidValueDomainException(final ExceptionCode exceptionCode, final String detail,
-        final Throwable originalCause) {
+    InvalidValueDomainException(final ExceptionCode exceptionCode, final String detail, final Throwable originalCause) {
         super(exceptionCode, detail, originalCause);
     }
 
@@ -29,5 +28,4 @@ class InvalidValueDomainException extends DomainException {
     protected Logger getLogger() {
         return log;
     }
-
 }

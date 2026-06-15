@@ -28,5 +28,4 @@ public class UnexpectedException extends TechnicalException {
     protected Logger getLogger() {
         return log;
     }
-
 }

@@ -34,11 +34,15 @@ tasks.register("integrationTestNative") {
 
 tasks.named<ProcessResources>("processResources") {
     filesMatching(listOf("application*.yml", "application*.yaml")) {
-        filter(ReplaceTokens::class, "tokens" to mapOf(
-            "project.name" to "caiman-server",
-            "project.description" to "toDo colocar description",
-            "project.version" to project.version.toString()
-        ))
+        filter(
+            ReplaceTokens::class,
+            "tokens" to
+                mapOf(
+                    "project.name" to "caiman-server",
+                    "project.description" to "toDo colocar description",
+                    "project.version" to project.version.toString(),
+                ),
+        )
     }
 }
 

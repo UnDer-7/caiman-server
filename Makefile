@@ -8,6 +8,7 @@ PROJECT_VERSION := $(shell ./gradlew :caiman-app:properties -q --console=plain 2
 
 
 
+
 # ==================================================================================== #
 ## ===== HELPERS =====
 # ==================================================================================== #
@@ -24,6 +25,7 @@ help:
 # Hidden
 .PHONY: all
 all: help
+
 
 
 
@@ -79,6 +81,8 @@ test/coverage:
 
 
 
+
+
 # ==================================================================================== #
 ## ===== BUILD =====
 # ==================================================================================== #
@@ -115,13 +119,12 @@ build/jar/docker:
 	@START=$$(date +%s) && \
 	echo "Building Docker JVM image..." && \
 	docker build -f Dockerfile.jvm \
-	  -t $(REGISTRY_HOST)/$(PROJECT_NAME):$(PROJECT_VERSION)-jvm . && \
+	-t $(REGISTRY_HOST)/$(PROJECT_NAME):$(PROJECT_VERSION)-jvm . && \
 	END=$$(date +%s) && \
 	ELAPSED=$$((END-START)) && \
 	echo "Docker JVM build completed in $$((ELAPSED/3600))h $$(((ELAPSED%3600)/60))m $$((ELAPSED%60))s"
 
 ## ----- GRAALVM -----
-
 ## build/native: Build GraalVM native image (loads .env variables)
 .PHONY: build/native
 build/native:
@@ -141,10 +144,13 @@ build/native/docker:
 	@START=$$(date +%s) && \
 	echo "Building Docker native image..." && \
 	docker build -f Dockerfile.native \
-	  -t $(REGISTRY_HOST)/$(PROJECT_NAME):$(PROJECT_VERSION)-native . && \
+	-t $(REGISTRY_HOST)/$(PROJECT_NAME):$(PROJECT_VERSION)-native . && \
 	END=$$(date +%s) && \
 	ELAPSED=$$((END-START)) && \
 	echo "Docker native build completed in $$((ELAPSED/3600))h $$(((ELAPSED%3600)/60))m $$((ELAPSED%60))s"
+
+
+
 
 
 # ==================================================================================== #
@@ -169,3 +175,21 @@ version/set:
 # Prevent make from treating version number as a target
 %:
 	@:
+
+
+
+
+
+# ==================================================================================== #
+## ===== CODING STYLE =====
+# ==================================================================================== #
+## ----- Format -----
+## fmt/check: Check code formatting (fails if any file needs reformatting)
+.PHONY: fmt/check
+fmt/check:
+	./gradlew spotlessCheck
+
+## fmt/apply: Apply code formatting to all source files
+.PHONY: fmt/apply
+fmt/apply:
+	./gradlew spotlessApply

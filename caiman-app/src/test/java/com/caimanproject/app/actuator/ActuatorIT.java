@@ -17,46 +17,41 @@ class ActuatorIT extends IntegrationTestController {
         @Test
         @DisplayName("should return 200 without required headers")
         void should_return_200_without_required_headers() {
-            webTestClient
-                .get()
-                .uri("/manage/health")
-                .exchange()
-                .expectStatus()
-                .isOk();
+            webTestClient.get().uri("/manage/health").exchange().expectStatus().isOk();
         }
 
         @Test
         @DisplayName("should return status UP")
         void should_return_status_up() {
             webTestClient
-                .get()
-                .uri("/manage/health")
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .expectBody(JsonNode.class)
-                .value(json -> {
-                    assertThat(json.has("status")).isTrue();
-                    assertThat(json.get("status").asString()).isEqualTo("UP");
-                });
+                    .get()
+                    .uri("/manage/health")
+                    .exchange()
+                    .expectStatus()
+                    .isOk()
+                    .expectBody(JsonNode.class)
+                    .value(json -> {
+                        assertThat(json.has("status")).isTrue();
+                        assertThat(json.get("status").asString()).isEqualTo("UP");
+                    });
         }
 
         @Test
         @DisplayName("should return db component status UP")
         void should_return_db_component_status_up() {
             webTestClient
-                .get()
-                .uri("/manage/health")
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .expectBody(JsonNode.class)
-                .value(json -> {
-                    assertThat(json.has("components")).isTrue();
-                    final var db = json.get("components").get("db");
-                    assertThat(db).isNotNull();
-                    assertThat(db.get("status").asString()).isEqualTo("UP");
-                });
+                    .get()
+                    .uri("/manage/health")
+                    .exchange()
+                    .expectStatus()
+                    .isOk()
+                    .expectBody(JsonNode.class)
+                    .value(json -> {
+                        assertThat(json.has("components")).isTrue();
+                        final var db = json.get("components").get("db");
+                        assertThat(db).isNotNull();
+                        assertThat(db.get("status").asString()).isEqualTo("UP");
+                    });
         }
     }
 }

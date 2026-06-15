@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum AppExceptionCode implements ExceptionCode {
-
     SQLITE_FILE_INITIALIZATION_FAILED("001", "Failed to initialize SQLite database file") {
         @Override
         public CaimanException createException(final String detail) {

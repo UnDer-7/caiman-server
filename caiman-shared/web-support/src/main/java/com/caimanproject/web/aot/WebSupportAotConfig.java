@@ -5,9 +5,5 @@ import org.springframework.aot.hint.annotation.RegisterReflectionForBinding;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration(proxyBeanMethods = false)
-@RegisterReflectionForBinding({
-    ErrorResponseDto.class
-})
-public class WebSupportAotConfig {
-
-}
+@RegisterReflectionForBinding({ErrorResponseDto.class})
+public class WebSupportAotConfig {}

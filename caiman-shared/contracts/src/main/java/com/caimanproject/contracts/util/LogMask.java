@@ -5,8 +5,8 @@ public final class LogMask {
     private LogMask() {}
 
     /**
-     * Masks an email address for safe logging: "mateus@gmail.com" → "ma***@gmail.com".
-     * Shows the first 2 characters of the local part, then "***", then the full domain.
+     * Masks an email address for safe logging: "mateus@gmail.com" → "ma***@gmail.com". Shows the first 2 characters of
+     * the local part, then "***", then the full domain.
      */
     public static String email(final String email) {
         if (email == null || !email.contains("@")) {

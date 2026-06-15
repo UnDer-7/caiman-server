@@ -11,6 +11,15 @@ import com.caimanproject.web.dto.response.ErrorResponseDto;
 import com.caimanproject.web.exception.EntrypointInvalidValuesException;
 import com.caimanproject.web.exception.WebSupportExceptionCode;
 import jakarta.validation.ConstraintViolationException;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.argument.StructuredArguments;
@@ -28,16 +37,6 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.exc.InvalidFormatException;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
 @Slf4j
 @RestControllerAdvice
 @RequiredArgsConstructor
@@ -52,26 +51,26 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
                 """;
 
             log.warn(
-                LogField.Placeholders.FIVE.getPlaceholder(),
-                StructuredArguments.kv(LogField.MSG.label(), warnMsg),
-                StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), exception.getMessage()),
-                StructuredArguments.kv(
-                    LogField.EXCEPTION_CLASS.label(),
-                    exception.getClass().getSimpleName()),
-                StructuredArguments.kv(LogField.EXCEPTION_CAUSE.label(), exception.getCause()),
-                StructuredArguments.kv(
-                    LogField.EXCEPTION_CAUSE_MSG.label(),
-                    exception.getCause().getMessage()),
-                exception);
+                    LogField.Placeholders.FIVE.getPlaceholder(),
+                    StructuredArguments.kv(LogField.MSG.label(), warnMsg),
+                    StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), exception.getMessage()),
+                    StructuredArguments.kv(
+                            LogField.EXCEPTION_CLASS.label(),
+                            exception.getClass().getSimpleName()),
+                    StructuredArguments.kv(LogField.EXCEPTION_CAUSE.label(), exception.getCause()),
+                    StructuredArguments.kv(
+                            LogField.EXCEPTION_CAUSE_MSG.label(),
+                            exception.getCause().getMessage()),
+                    exception);
 
             return handleCaimanException(caimanException);
         }
 
         log.warn(
-            LogField.Placeholders.TWO.getPlaceholder(),
-            StructuredArguments.kv(LogField.MSG.label(), "An unexpected exception occurred"),
-            StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), exception.getMessage()),
-            exception);
+                LogField.Placeholders.TWO.getPlaceholder(),
+                StructuredArguments.kv(LogField.MSG.label(), "An unexpected exception occurred"),
+                StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), exception.getMessage()),
+                exception);
 
         final var unexpectedException = WebSupportExceptionCode.UNEXPECTED_ERROR.createException(exception);
         return logExceptionAndBuild(unexpectedException);
@@ -87,11 +86,11 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Object> handleUnexpectedException(final ConstraintViolationException exception) {
         final String invalidValues = exception.getConstraintViolations().stream()
-            .map(violation -> buildInvalidAttributeMessage(
-                violation.getPropertyPath().toString().split("\\.")[1],
-                violation.getMessage(),
-                violation.getInvalidValue()))
-            .collect(Collectors.joining(" | "));
+                .map(violation -> buildInvalidAttributeMessage(
+                        violation.getPropertyPath().toString().split("\\.")[1],
+                        violation.getMessage(),
+                        violation.getInvalidValue()))
+                .collect(Collectors.joining(" | "));
 
         return logExceptionAndBuild(WebSupportExceptionCode.INVALID_VALUES.createException(invalidValues));
     }
@@ -99,17 +98,17 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
     // Handle @NotNull, @NotEmpty, ... errors in request body
     @Override
     public ResponseEntity<Object> handleMethodArgumentNotValid(
-        final MethodArgumentNotValidException ex,
-        final HttpHeaders headers,
-        final HttpStatusCode status,
-        final WebRequest request) {
+            final MethodArgumentNotValidException ex,
+            final HttpHeaders headers,
+            final HttpStatusCode status,
+            final WebRequest request) {
 
         final String invalidValues = ex.getBindingResult().getFieldErrors().stream()
-            .map(fieldError -> buildInvalidAttributeMessage(
-                fieldError.getField(),
-                Objects.requireNonNullElse(fieldError.getDefaultMessage(), "validation failed"),
-                fieldError.getRejectedValue()))
-            .collect(Collectors.joining(" | "));
+                .map(fieldError -> buildInvalidAttributeMessage(
+                        fieldError.getField(),
+                        Objects.requireNonNullElse(fieldError.getDefaultMessage(), "validation failed"),
+                        fieldError.getRejectedValue()))
+                .collect(Collectors.joining(" | "));
 
         return logExceptionAndBuild(WebSupportExceptionCode.INVALID_VALUES.createException(invalidValues));
     }
@@ -135,24 +134,24 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
         }
 
         return buildInvalidRequestParameters(
-            exception.getName(), exception.getMessage(), exception.getValue(), exception);
+                exception.getName(), exception.getMessage(), exception.getValue(), exception);
     }
 
     // Handle invalid formats in request body
     @Override
     public ResponseEntity<Object> handleHttpMessageNotReadable(
-        final HttpMessageNotReadableException ex,
-        final HttpHeaders headers,
-        final HttpStatusCode status,
-        final WebRequest request) {
+            final HttpMessageNotReadableException ex,
+            final HttpHeaders headers,
+            final HttpStatusCode status,
+            final WebRequest request) {
 
         // Check if the cause is an InvalidFormatException (parsing error)
         if (ex.getCause() instanceof InvalidFormatException invalidFormatException) {
             final Class<?> targetType = invalidFormatException.getTargetType();
             final String fieldName = invalidFormatException.getPath().stream()
-                .map(JacksonException.Reference::getPropertyName)
-                .filter(Objects::nonNull)
-                .collect(Collectors.joining("."));
+                    .map(JacksonException.Reference::getPropertyName)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.joining("."));
 
             final Object invalidValue = invalidFormatException.getValue();
 
@@ -174,24 +173,29 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
 
             // Handle other format errors generically
             return buildInvalidRequestParameters(
-                fieldName, "invalid format for type " + targetType.getSimpleName(), invalidValue, ex);
+                    fieldName, "invalid format for type " + targetType.getSimpleName(), invalidValue, ex);
         }
 
         // For other HttpMessageNotReadableException cases, use default handling
-        final var invalidValuesException = WebSupportExceptionCode.INVALID_VALUES.createException("Failed to read request: " + ex.getMessage(), ex);
+        final var invalidValuesException = WebSupportExceptionCode.INVALID_VALUES.createException(
+                "Failed to read request: " + ex.getMessage(), ex);
         return logExceptionAndBuild(invalidValuesException);
     }
 
     private ResponseEntity<Object> logExceptionAndBuild(final CaimanException exception) {
         try {
             MDC.put(LogField.ERROR_CODE.label(), exception.getExceptionCode().getCode());
-            MDC.put(LogField.ERROR_MODULE_PREFIX.label(), exception.getExceptionCode().getModulePrefix().toString());
-            MDC.put(LogField.ERROR_CODE_FULL.label(), exception.getExceptionCode().getFullCode());
+            MDC.put(
+                    LogField.ERROR_MODULE_PREFIX.label(),
+                    exception.getExceptionCode().getModulePrefix().toString());
+            MDC.put(
+                    LogField.ERROR_CODE_FULL.label(),
+                    exception.getExceptionCode().getFullCode());
             MDC.put(LogField.ERROR_TIMESTAMP.label(), exception.getTimestamp().toString());
             MDC.put(LogField.ERROR_MESSAGE.label(), exception.getExceptionCode().getMessage());
-            MDC.put(LogField.HTTP_STATUS_CODE.label(), Integer.toString(exception.getHttpStatusCode()));;
-            exception.getDetail()
-                .ifPresent(customMsg -> MDC.put(LogField.ERROR_DETAIL_MESSAGE.label(), customMsg));
+            MDC.put(LogField.HTTP_STATUS_CODE.label(), Integer.toString(exception.getHttpStatusCode()));
+            ;
+            exception.getDetail().ifPresent(customMsg -> MDC.put(LogField.ERROR_DETAIL_MESSAGE.label(), customMsg));
 
             exception.executeLogging();
 
@@ -204,145 +208,152 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
 
     private ErrorResponseDto buildErrorResponse(final CaimanException exception) {
         final Function<LogField, String> getFromMDC = field -> Optional.of(field)
-            .map(LogField::label)
-            .map(MDC::get)
-            .filter(Predicate.not(String::isBlank))
-            .orElse(null);
+                .map(LogField::label)
+                .map(MDC::get)
+                .filter(Predicate.not(String::isBlank))
+                .orElse(null);
 
         final String requestId = getFromMDC.apply(LogField.REQUEST_ID);
         final String correlationId = getFromMDC.apply(LogField.CORRELATION_ID);
         final String channel = getFromMDC.apply(LogField.CHANNEL);
 
         return switch (exception) {
-            case EntrypointInvalidValuesException invalidValues -> ErrorResponseDto.builder()
-                .code(invalidValues.getExceptionCode().getFullCode())
-                .timestamp(invalidValues.getTimestamp())
-                .message(invalidValues.getExceptionCode().getMessage())
-                .detail(invalidValues.getDetail().orElse(null))
-                .httpStatusCode(invalidValues.getHttpStatusCode())
-                .requestId(requestId)
-                .correlationId(correlationId)
-                .channel(channel)
-                .build();
-            case BusinessException business -> ErrorResponseDto.builder()
-                .code(business.getExceptionCode().getFullCode())
-                .timestamp(business.getTimestamp())
-                .message(business.getExceptionCode().getMessage())
-                .detail(business.getDetail().orElse(null))
-                .httpStatusCode(business.getHttpStatusCode())
-                .requestId(requestId)
-                .correlationId(correlationId)
-                .channel(channel)
-                .build();
-            case DomainException domain -> ErrorResponseDto.builder()
-                .code(domain.getExceptionCode().getFullCode())
-                .timestamp(domain.getTimestamp())
-                .message("An internal validation failure occurred.")
-                .httpStatusCode(domain.getHttpStatusCode())
-                .requestId(requestId)
-                .correlationId(correlationId)
-                .channel(channel)
-                .build();
-            case TechnicalException technical -> ErrorResponseDto.builder()
-                .code(technical.getExceptionCode().getFullCode())
-                .timestamp(technical.getTimestamp())
-                .message("An internal server error occurred.")
-                .httpStatusCode(technical.getHttpStatusCode())
-                .requestId(requestId)
-                .correlationId(correlationId)
-                .channel(channel)
-                .build();
+            case EntrypointInvalidValuesException invalidValues ->
+                ErrorResponseDto.builder()
+                        .code(invalidValues.getExceptionCode().getFullCode())
+                        .timestamp(invalidValues.getTimestamp())
+                        .message(invalidValues.getExceptionCode().getMessage())
+                        .detail(invalidValues.getDetail().orElse(null))
+                        .httpStatusCode(invalidValues.getHttpStatusCode())
+                        .requestId(requestId)
+                        .correlationId(correlationId)
+                        .channel(channel)
+                        .build();
+            case BusinessException business ->
+                ErrorResponseDto.builder()
+                        .code(business.getExceptionCode().getFullCode())
+                        .timestamp(business.getTimestamp())
+                        .message(business.getExceptionCode().getMessage())
+                        .detail(business.getDetail().orElse(null))
+                        .httpStatusCode(business.getHttpStatusCode())
+                        .requestId(requestId)
+                        .correlationId(correlationId)
+                        .channel(channel)
+                        .build();
+            case DomainException domain ->
+                ErrorResponseDto.builder()
+                        .code(domain.getExceptionCode().getFullCode())
+                        .timestamp(domain.getTimestamp())
+                        .message("An internal validation failure occurred.")
+                        .httpStatusCode(domain.getHttpStatusCode())
+                        .requestId(requestId)
+                        .correlationId(correlationId)
+                        .channel(channel)
+                        .build();
+            case TechnicalException technical ->
+                ErrorResponseDto.builder()
+                        .code(technical.getExceptionCode().getFullCode())
+                        .timestamp(technical.getTimestamp())
+                        .message("An internal server error occurred.")
+                        .httpStatusCode(technical.getHttpStatusCode())
+                        .requestId(requestId)
+                        .correlationId(correlationId)
+                        .channel(channel)
+                        .build();
             default -> {
                 log.error(
-                    LogField.Placeholders.TWO.getPlaceholder(),
-                    StructuredArguments.kv(LogField.MSG.label(), "Unhandled CaimanException subtype fell through to default"),
-                    StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), exception.getClass().getName())
-                );
+                        LogField.Placeholders.TWO.getPlaceholder(),
+                        StructuredArguments.kv(
+                                LogField.MSG.label(), "Unhandled CaimanException subtype fell through to default"),
+                        StructuredArguments.kv(
+                                LogField.EXCEPTION_CLASS.label(),
+                                exception.getClass().getName()));
                 yield ErrorResponseDto.builder()
-                    .code(exception.getExceptionCode().getFullCode())
-                    .timestamp(exception.getTimestamp())
-                    .message("An unexpected error occurred.")
-                    .httpStatusCode(500)
-                    .requestId(requestId)
-                    .correlationId(correlationId)
-                    .channel(channel)
-                    .build();
+                        .code(exception.getExceptionCode().getFullCode())
+                        .timestamp(exception.getTimestamp())
+                        .message("An unexpected error occurred.")
+                        .httpStatusCode(500)
+                        .requestId(requestId)
+                        .correlationId(correlationId)
+                        .channel(channel)
+                        .build();
             }
         };
     }
 
     private static String buildInvalidAttributeMessage(
-        final String attributeName, final String errMotive, final Object attributeValue) {
+            final String attributeName, final String errMotive, final Object attributeValue) {
 
         if (errMotive.contains(Instant.class.getName())) {
             final String errMotiveInstant = "date-time must be in the following format: %s (example: %s)"
-                .formatted(Constants.DATE_TIME_FORMAT, OpenApiConstants.Examples.DATE_TIME);
+                    .formatted(Constants.DATE_TIME_FORMAT, OpenApiConstants.Examples.DATE_TIME);
 
             return "[ propertyPath: %s - errorMotive: %s - valueProvided: %s ]"
-                .formatted(attributeName, errMotiveInstant, attributeValue);
+                    .formatted(attributeName, errMotiveInstant, attributeValue);
         }
 
         return "[ propertyPath: %s - errorMotive: %s - valueProvided: %s ]"
-            .formatted(attributeName, errMotive, attributeValue);
+                .formatted(attributeName, errMotive, attributeValue);
     }
 
     private ResponseEntity<Object> buildInvalidDateResponse(
-        final Exception ex, final String fieldName, final Object invalidValue) {
+            final Exception ex, final String fieldName, final Object invalidValue) {
         final String description = "date must be in the following format: %s - example: %s"
-            .formatted(Constants.DATE_FORMAT, OpenApiConstants.Examples.DATE);
+                .formatted(Constants.DATE_FORMAT, OpenApiConstants.Examples.DATE);
 
         return buildInvalidRequestParameters(fieldName, "invalid date format", invalidValue, description, ex);
     }
 
     private ResponseEntity<Object> buildInvalidTimeResponse(
-        final Exception ex, final String fieldName, final Object invalidValue) {
+            final Exception ex, final String fieldName, final Object invalidValue) {
         final String description = "time must be in the following format: %s - example: %s"
-            .formatted(Constants.TIME_FORMAT, OpenApiConstants.Examples.TIME);
+                .formatted(Constants.TIME_FORMAT, OpenApiConstants.Examples.TIME);
 
         return buildInvalidRequestParameters(fieldName, "invalid time format", invalidValue, description, ex);
     }
 
     private ResponseEntity<Object> buildInvalidInstantResponse(
-        final Exception ex, final String fieldName, final Object invalidValue) {
+            final Exception ex, final String fieldName, final Object invalidValue) {
         final String description = "date-time must be in the following format: %s - example: %s"
-            .formatted(Constants.DATE_TIME_FORMAT, OpenApiConstants.Examples.DATE_TIME);
+                .formatted(Constants.DATE_TIME_FORMAT, OpenApiConstants.Examples.DATE_TIME);
 
         return buildInvalidRequestParameters(fieldName, "invalid date-time format", invalidValue, description, ex);
     }
 
     private ResponseEntity<Object> buildInvalidZoneIdResponse(
-        final Exception ex, final String fieldName, final Object invalidValue) {
+            final Exception ex, final String fieldName, final Object invalidValue) {
         return buildInvalidRequestParameters(
-            fieldName,
-            "invalid timezone id",
-            invalidValue,
-            "timezone must be a valid tz database identifier (e.g., America/Sao_Paulo, UTC, Europe/London)",
-            ex);
+                fieldName,
+                "invalid timezone id",
+                invalidValue,
+                "timezone must be a valid tz database identifier (e.g., America/Sao_Paulo, UTC, Europe/London)",
+                ex);
     }
 
     private ResponseEntity<Object> buildInvalidRequestParameters(
-        final String parameterName,
-        final String motive,
-        final Object valueProvided,
-        final String description,
-        final Exception originalException) {
+            final String parameterName,
+            final String motive,
+            final Object valueProvided,
+            final String description,
+            final Exception originalException) {
         var msg = "[ parameter name: %s - errorMotive: %s - valueProvided: %s - description: %s ]"
-            .formatted(parameterName, motive, valueProvided, description);
+                .formatted(parameterName, motive, valueProvided, description);
 
-        final var invalidValuesException = WebSupportExceptionCode.INVALID_VALUES.createException(msg, originalException);
+        final var invalidValuesException =
+                WebSupportExceptionCode.INVALID_VALUES.createException(msg, originalException);
         return logExceptionAndBuild(invalidValuesException);
     }
 
     private ResponseEntity<Object> buildInvalidRequestParameters(
-        final String parameterName,
-        final String motive,
-        final Object valueProvided,
-        final Exception originalException) {
+            final String parameterName,
+            final String motive,
+            final Object valueProvided,
+            final Exception originalException) {
         var msg = "[ parameter name: %s - errorMotive: %s - valueProvided: %s ]"
-            .formatted(parameterName, motive, valueProvided);
+                .formatted(parameterName, motive, valueProvided);
 
-        final var invalidValuesException = WebSupportExceptionCode.INVALID_VALUES.createException(msg, originalException);
+        final var invalidValuesException =
+                WebSupportExceptionCode.INVALID_VALUES.createException(msg, originalException);
         return logExceptionAndBuild(invalidValuesException);
     }
-
 }

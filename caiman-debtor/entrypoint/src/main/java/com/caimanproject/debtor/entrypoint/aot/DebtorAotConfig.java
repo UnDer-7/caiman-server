@@ -20,5 +20,4 @@ import org.springframework.context.annotation.Configuration;
     // ConstraintValidators — SpringConstraintValidatorFactory instantiates via reflection (no-arg constructor).
     ContactValueValidator.class
 })
-public class DebtorAotConfig {
-}
+public class DebtorAotConfig {}

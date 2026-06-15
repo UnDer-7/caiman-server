@@ -7,6 +7,7 @@ import com.caimanproject.debtor.core.domain.types.ContactType;
 import com.caimanproject.debtor.entrypoint.payload.request.CreateDebtorContactRequestDto;
 import com.caimanproject.debtor.entrypoint.payload.response.DebtorResponseDto;
 import com.caimanproject.web.dto.response.ErrorResponseDto;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -15,8 +16,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,77 +39,76 @@ class DebtorControllerIT extends IntegrationTestController {
             final var request = DtoBuilder.buildCreateDebtorRequestDto().build();
 
             webTestClient
-                .post()
-                .uri(BASE_URL)
-                .header(RequestConstants.Headers.X_CORRELATION_ID, "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11")
-                .header(RequestConstants.Headers.X_CHANNEL, "integration-test")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange()
-                .expectStatus()
-                .isCreated()
-                .expectBody(DebtorResponseDto.class)
-                .value(response -> {
-                    assertThat(response.id()).isNotNull();
-                    assertThat(response.name()).isEqualTo(request.name());
-                    assertThat(response.notes()).isEqualTo(request.notes());
-                    assertThat(response.notificationsEnabled()).isEqualTo(request.notificationsEnabled());
-                    assertThat(response.active()).isTrue();
+                    .post()
+                    .uri(BASE_URL)
+                    .header(RequestConstants.Headers.X_CORRELATION_ID, "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11")
+                    .header(RequestConstants.Headers.X_CHANNEL, "integration-test")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request)
+                    .exchange()
+                    .expectStatus()
+                    .isCreated()
+                    .expectBody(DebtorResponseDto.class)
+                    .value(response -> {
+                        assertThat(response.id()).isNotNull();
+                        assertThat(response.name()).isEqualTo(request.name());
+                        assertThat(response.notes()).isEqualTo(request.notes());
+                        assertThat(response.notificationsEnabled()).isEqualTo(request.notificationsEnabled());
+                        assertThat(response.active()).isTrue();
 
-                    assertThat(response.audit()).isNotNull();
-                    assertThat(response.audit().createdAt()).isNotNull();
-                    assertThat(response.audit().updatedAt()).isNotNull();
+                        assertThat(response.audit()).isNotNull();
+                        assertThat(response.audit().createdAt()).isNotNull();
+                        assertThat(response.audit().updatedAt()).isNotNull();
 
-                    assertThat(response.contacts())
-                        .isNotEmpty()
-                        .hasSize(request.contacts().size());
+                        assertThat(response.contacts())
+                                .isNotEmpty()
+                                .hasSize(request.contacts().size());
 
-                    final var requestContact = request.contacts().getFirst();
-                    final var responseContact = response.contacts().getFirst();
+                        final var requestContact = request.contacts().getFirst();
+                        final var responseContact = response.contacts().getFirst();
 
-                    assertThat(responseContact.id()).isNotNull();
-                    assertThat(responseContact.contactType()).isEqualTo(requestContact.contactType());
-                    assertThat(responseContact.contactValue()).isEqualTo(requestContact.contactValue());
-                    assertThat(responseContact.priority()).isEqualTo(requestContact.priority());
+                        assertThat(responseContact.id()).isNotNull();
+                        assertThat(responseContact.contactType()).isEqualTo(requestContact.contactType());
+                        assertThat(responseContact.contactValue()).isEqualTo(requestContact.contactValue());
+                        assertThat(responseContact.priority()).isEqualTo(requestContact.priority());
 
-                    assertThat(responseContact.audit()).isNotNull();
-                    assertThat(responseContact.audit().createdAt()).isNotNull();
-                    assertThat(responseContact.audit().updatedAt()).isNotNull();
-                });
+                        assertThat(responseContact.audit()).isNotNull();
+                        assertThat(responseContact.audit().createdAt()).isNotNull();
+                        assertThat(responseContact.audit().updatedAt()).isNotNull();
+                    });
         }
 
         @Test
         @DisplayName("should return 400 when name is blank")
         void should_return_400_when_name_is_blank() {
-            final var request = DtoBuilder.buildCreateDebtorRequestDto()
-                .name("")
-                .build();
+            final var request =
+                    DtoBuilder.buildCreateDebtorRequestDto().name("").build();
 
             final var correlationId = "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11";
             final var channel = "integration-test";
             webTestClient
-                .post()
-                .uri(BASE_URL)
-                .header(RequestConstants.Headers.X_CORRELATION_ID, correlationId)
-                .header(RequestConstants.Headers.X_CHANNEL, channel)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange()
-                .expectStatus()
-                .isBadRequest()
-                .expectBody(ErrorResponseDto.class)
-                .value(response -> {
-                    assertThat(response.code()).isEqualTo("WEB_SUPPORT_002");
-                    assertThat(response.timestamp()).isNotNull();
-                    assertThat(response.message()).isEqualTo("Some invalid values were sent");
-                    assertThat(response.detail())
-                        .contains("propertyPath: name")
-                        .contains("errorMotive: must not be blank");
-                    assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-                    assertThat(response.requestId()).isNotNull();
-                    assertThat(response.correlationId()).isEqualTo(correlationId);
-                    assertThat(response.channel()).isEqualTo(channel);
-                });
+                    .post()
+                    .uri(BASE_URL)
+                    .header(RequestConstants.Headers.X_CORRELATION_ID, correlationId)
+                    .header(RequestConstants.Headers.X_CHANNEL, channel)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request)
+                    .exchange()
+                    .expectStatus()
+                    .isBadRequest()
+                    .expectBody(ErrorResponseDto.class)
+                    .value(response -> {
+                        assertThat(response.code()).isEqualTo("WEB_SUPPORT_002");
+                        assertThat(response.timestamp()).isNotNull();
+                        assertThat(response.message()).isEqualTo("Some invalid values were sent");
+                        assertThat(response.detail())
+                                .contains("propertyPath: name")
+                                .contains("errorMotive: must not be blank");
+                        assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+                        assertThat(response.requestId()).isNotNull();
+                        assertThat(response.correlationId()).isEqualTo(correlationId);
+                        assertThat(response.channel()).isEqualTo(channel);
+                    });
         }
 
         @Test
@@ -118,42 +116,41 @@ class DebtorControllerIT extends IntegrationTestController {
         void should_return_422_when_contacts_have_duplicate_value() {
             final var duplicateContactValue = "johndoe@example.com";
             final var request = DtoBuilder.buildCreateDebtorRequestDto()
-                .contacts(List.of(
-                    CreateDebtorContactRequestDto.builder()
-                        .contactType(ContactType.EMAIL)
-                        .contactValue(duplicateContactValue)
-                        .priority(1)
-                        .build(),
-                    CreateDebtorContactRequestDto.builder()
-                        .contactType(ContactType.EMAIL)
-                        .contactValue(duplicateContactValue)
-                        .priority(2)
-                        .build()
-                ))
-                .build();
+                    .contacts(List.of(
+                            CreateDebtorContactRequestDto.builder()
+                                    .contactType(ContactType.EMAIL)
+                                    .contactValue(duplicateContactValue)
+                                    .priority(1)
+                                    .build(),
+                            CreateDebtorContactRequestDto.builder()
+                                    .contactType(ContactType.EMAIL)
+                                    .contactValue(duplicateContactValue)
+                                    .priority(2)
+                                    .build()))
+                    .build();
 
             final var correlationId = "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11";
             final var channel = "integration-test";
             webTestClient
-                .post()
-                .uri(BASE_URL)
-                .header(RequestConstants.Headers.X_CORRELATION_ID, correlationId)
-                .header(RequestConstants.Headers.X_CHANNEL, channel)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange()
-                .expectStatus()
-                .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value())
-                .expectBody(ErrorResponseDto.class)
-                .value(response -> {
-                    assertThat(response.code()).isEqualTo("DEBTOR_BUSINESS_001");
-                    assertThat(response.timestamp()).isNotNull();
-                    assertThat(response.message()).isEqualTo("Informed contact list has duplicate contact value");
-                    assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value());
-                    assertThat(response.requestId()).isNotNull();
-                    assertThat(response.correlationId()).isEqualTo(correlationId);
-                    assertThat(response.channel()).isEqualTo(channel);
-                });
+                    .post()
+                    .uri(BASE_URL)
+                    .header(RequestConstants.Headers.X_CORRELATION_ID, correlationId)
+                    .header(RequestConstants.Headers.X_CHANNEL, channel)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request)
+                    .exchange()
+                    .expectStatus()
+                    .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value())
+                    .expectBody(ErrorResponseDto.class)
+                    .value(response -> {
+                        assertThat(response.code()).isEqualTo("DEBTOR_BUSINESS_001");
+                        assertThat(response.timestamp()).isNotNull();
+                        assertThat(response.message()).isEqualTo("Informed contact list has duplicate contact value");
+                        assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value());
+                        assertThat(response.requestId()).isNotNull();
+                        assertThat(response.correlationId()).isEqualTo(correlationId);
+                        assertThat(response.channel()).isEqualTo(channel);
+                    });
         }
 
         @Test
@@ -161,89 +158,81 @@ class DebtorControllerIT extends IntegrationTestController {
         void should_return_422_when_contacts_have_duplicate_priority() {
             final int duplicatePriority = 1;
             final var request = DtoBuilder.buildCreateDebtorRequestDto()
-                .contacts(List.of(
-                    CreateDebtorContactRequestDto.builder()
-                        .contactType(ContactType.EMAIL)
-                        .contactValue("johndoe@example.com")
-                        .priority(duplicatePriority)
-                        .build(),
-                    CreateDebtorContactRequestDto.builder()
-                        .contactType(ContactType.EMAIL)
-                        .contactValue("janedoe@example.com")
-                        .priority(duplicatePriority)
-                        .build()
-                ))
-                .build();
+                    .contacts(List.of(
+                            CreateDebtorContactRequestDto.builder()
+                                    .contactType(ContactType.EMAIL)
+                                    .contactValue("johndoe@example.com")
+                                    .priority(duplicatePriority)
+                                    .build(),
+                            CreateDebtorContactRequestDto.builder()
+                                    .contactType(ContactType.EMAIL)
+                                    .contactValue("janedoe@example.com")
+                                    .priority(duplicatePriority)
+                                    .build()))
+                    .build();
 
             final var correlationId = "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11";
             final var channel = "integration-test";
             webTestClient
-                .post()
-                .uri(BASE_URL)
-                .header(RequestConstants.Headers.X_CORRELATION_ID, correlationId)
-                .header(RequestConstants.Headers.X_CHANNEL, channel)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange()
-                .expectStatus()
-                .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value())
-                .expectBody(ErrorResponseDto.class)
-                .value(response -> {
-                    assertThat(response.code()).isEqualTo("DEBTOR_BUSINESS_002");
-                    assertThat(response.timestamp()).isNotNull();
-                    assertThat(response.message()).isEqualTo("Informed contact list has duplicate contact priority");
-                    assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value());
-                    assertThat(response.requestId()).isNotNull();
-                    assertThat(response.correlationId()).isEqualTo(correlationId);
-                    assertThat(response.channel()).isEqualTo(channel);
-                });
+                    .post()
+                    .uri(BASE_URL)
+                    .header(RequestConstants.Headers.X_CORRELATION_ID, correlationId)
+                    .header(RequestConstants.Headers.X_CHANNEL, channel)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request)
+                    .exchange()
+                    .expectStatus()
+                    .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value())
+                    .expectBody(ErrorResponseDto.class)
+                    .value(response -> {
+                        assertThat(response.code()).isEqualTo("DEBTOR_BUSINESS_002");
+                        assertThat(response.timestamp()).isNotNull();
+                        assertThat(response.message())
+                                .isEqualTo("Informed contact list has duplicate contact priority");
+                        assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value());
+                        assertThat(response.requestId()).isNotNull();
+                        assertThat(response.correlationId()).isEqualTo(correlationId);
+                        assertThat(response.channel()).isEqualTo(channel);
+                    });
         }
 
         @ParameterizedTest
         @DisplayName("should return 400 when contact value is not a valid email")
-        @ValueSource(strings = {
-            "not-a-valid-email",
-            "user@",
-            "@example.com",
-            "user@.com",
-            "user@example"
-        })
+        @ValueSource(strings = {"not-a-valid-email", "user@", "@example.com", "user@.com", "user@example"})
         void should_return_400_when_contact_value_is_invalid_email(final String invalidEmail) {
             final var request = DtoBuilder.buildCreateDebtorRequestDto()
-                .contacts(List.of(
-                    CreateDebtorContactRequestDto.builder()
-                        .contactType(ContactType.EMAIL)
-                        .contactValue(invalidEmail)
-                        .priority(1)
-                        .build()
-                ))
-                .build();
+                    .contacts(List.of(CreateDebtorContactRequestDto.builder()
+                            .contactType(ContactType.EMAIL)
+                            .contactValue(invalidEmail)
+                            .priority(1)
+                            .build()))
+                    .build();
 
             final var correlationId = "bf5ef8a2-5af2-4adf-8b58-d186fe01cd11";
             final var channel = "integration-test";
             webTestClient
-                .post()
-                .uri(BASE_URL)
-                .header(RequestConstants.Headers.X_CORRELATION_ID, correlationId)
-                .header(RequestConstants.Headers.X_CHANNEL, channel)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange()
-                .expectStatus()
-                .isBadRequest()
-                .expectBody(ErrorResponseDto.class)
-                .value(response -> {
-                    assertThat(response.code()).isEqualTo("WEB_SUPPORT_002");
-                    assertThat(response.timestamp()).isNotNull();
-                    assertThat(response.message()).isEqualTo("Some invalid values were sent");
-                    assertThat(response.detail())
-                        .contains("propertyPath: contacts[0].contactValue")
-                        .contains("errorMotive: must be a valid EMAIL address");
-                    assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-                    assertThat(response.requestId()).isNotNull();
-                    assertThat(response.correlationId()).isEqualTo(correlationId);
-                    assertThat(response.channel()).isEqualTo(channel);
-                });
+                    .post()
+                    .uri(BASE_URL)
+                    .header(RequestConstants.Headers.X_CORRELATION_ID, correlationId)
+                    .header(RequestConstants.Headers.X_CHANNEL, channel)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request)
+                    .exchange()
+                    .expectStatus()
+                    .isBadRequest()
+                    .expectBody(ErrorResponseDto.class)
+                    .value(response -> {
+                        assertThat(response.code()).isEqualTo("WEB_SUPPORT_002");
+                        assertThat(response.timestamp()).isNotNull();
+                        assertThat(response.message()).isEqualTo("Some invalid values were sent");
+                        assertThat(response.detail())
+                                .contains("propertyPath: contacts[0].contactValue")
+                                .contains("errorMotive: must be a valid EMAIL address");
+                        assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+                        assertThat(response.requestId()).isNotNull();
+                        assertThat(response.correlationId()).isEqualTo(correlationId);
+                        assertThat(response.channel()).isEqualTo(channel);
+                    });
         }
 
         @Test
@@ -252,27 +241,27 @@ class DebtorControllerIT extends IntegrationTestController {
             final var request = DtoBuilder.buildCreateDebtorRequestDto().build();
 
             webTestClient
-                .post()
-                .uri(BASE_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange()
-                .expectStatus()
-                .isBadRequest()
-                .expectBody(ErrorResponseDto.class)
-                .value(response -> {
-                    assertThat(response.code()).isEqualTo("WEB_SUPPORT_002");
-                    assertThat(response.timestamp()).isNotNull();
-                    assertThat(response.message()).isEqualTo("Some invalid values were sent");
-                    assertThat(response.detail())
-                        .contains("Missing headers")
-                        .contains(RequestConstants.Headers.X_CORRELATION_ID)
-                        .contains(RequestConstants.Headers.X_CHANNEL);
-                    assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-                    assertThat(response.requestId()).isNotNull();
-                    assertThat(response.correlationId()).isNull();
-                    assertThat(response.channel()).isNull();
-                });
+                    .post()
+                    .uri(BASE_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request)
+                    .exchange()
+                    .expectStatus()
+                    .isBadRequest()
+                    .expectBody(ErrorResponseDto.class)
+                    .value(response -> {
+                        assertThat(response.code()).isEqualTo("WEB_SUPPORT_002");
+                        assertThat(response.timestamp()).isNotNull();
+                        assertThat(response.message()).isEqualTo("Some invalid values were sent");
+                        assertThat(response.detail())
+                                .contains("Missing headers")
+                                .contains(RequestConstants.Headers.X_CORRELATION_ID)
+                                .contains(RequestConstants.Headers.X_CHANNEL);
+                        assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+                        assertThat(response.requestId()).isNotNull();
+                        assertThat(response.correlationId()).isNull();
+                        assertThat(response.channel()).isNull();
+                    });
         }
     }
 }

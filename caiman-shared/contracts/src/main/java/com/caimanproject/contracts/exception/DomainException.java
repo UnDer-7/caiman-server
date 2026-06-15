@@ -22,6 +22,6 @@ public abstract class DomainException extends CaimanException {
 
     @Override
     protected final LogLevel getLogLevel() {
-        return  LogLevel.ERROR;
+        return LogLevel.ERROR;
     }
 }

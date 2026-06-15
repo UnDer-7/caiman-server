@@ -20,8 +20,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 @SpringBootTest(classes = CaimanApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class IntegrationTestController {
 
-    static final PostgreSQLContainer POSTGRES_CONTAINER =
-        new PostgreSQLContainer("postgres:17-alpine");
+    static final PostgreSQLContainer POSTGRES_CONTAINER = new PostgreSQLContainer("postgres:17-alpine");
 
     static {
         POSTGRES_CONTAINER.start();

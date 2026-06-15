@@ -54,5 +54,4 @@ public enum LogField {
             return "{} ".repeat(total);
         }
     }
-
 }

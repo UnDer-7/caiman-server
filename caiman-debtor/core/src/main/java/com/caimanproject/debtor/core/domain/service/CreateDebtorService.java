@@ -7,13 +7,12 @@ import com.caimanproject.debtor.core.domain.model.DebtorContact;
 import com.caimanproject.debtor.core.port.in.CreateDebtorUseCase;
 import com.caimanproject.debtor.core.port.in.command.CreateDebtorCommand;
 import com.caimanproject.debtor.core.port.out.DebtorPersistenceGateway;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.argument.StructuredArguments;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,37 +24,37 @@ class CreateDebtorService implements CreateDebtorUseCase {
     @Override
     public Debtor execute(final CreateDebtorCommand command) {
         log.info(
-            LogField.Placeholders.THREE.getPlaceholder(),
-            StructuredArguments.kv(LogField.MSG.label(), "creating debtor"),
-            StructuredArguments.kv(LogField.DEBTOR_NAME.label(), command.name()),
-            StructuredArguments.kv(LogField.CONTACTS_COUNT.label(), command.contacts().size())
-        );
+                LogField.Placeholders.THREE.getPlaceholder(),
+                StructuredArguments.kv(LogField.MSG.label(), "creating debtor"),
+                StructuredArguments.kv(LogField.DEBTOR_NAME.label(), command.name()),
+                StructuredArguments.kv(
+                        LogField.CONTACTS_COUNT.label(), command.contacts().size()));
 
         final var contacts = command.contacts().stream()
-            .map(contact -> DebtorContact.createBuilder()
-                .contactType(contact.contactType())
-                .contactValue(contact.contactValue())
-                .priority(contact.priority())
-                .build())
-            .toList();
+                .map(contact -> DebtorContact.createBuilder()
+                        .contactType(contact.contactType())
+                        .contactValue(contact.contactValue())
+                        .priority(contact.priority())
+                        .build())
+                .toList();
         validateContacts(contacts);
 
         final var debtor = Debtor.createBuilder()
-            .name(command.name())
-            .notes(command.notes())
-            .notificationsEnabled(command.notificationsEnabled())
-            .contacts(contacts)
-            .build();
+                .name(command.name())
+                .notes(command.notes())
+                .notificationsEnabled(command.notificationsEnabled())
+                .contacts(contacts)
+                .build();
 
         final var saved = debtorPersistenceGateway.save(debtor);
 
         log.info(
-            LogField.Placeholders.FOUR.getPlaceholder(),
-            StructuredArguments.kv(LogField.MSG.label(), "debtor created"),
-            StructuredArguments.kv(LogField.DEBTOR_ID.label(), saved.getId().orElseThrow()),
-            StructuredArguments.kv(LogField.DEBTOR_NAME.label(), command.name()),
-            StructuredArguments.kv(LogField.CONTACTS_COUNT.label(), command.contacts().size())
-        );
+                LogField.Placeholders.FOUR.getPlaceholder(),
+                StructuredArguments.kv(LogField.MSG.label(), "debtor created"),
+                StructuredArguments.kv(LogField.DEBTOR_ID.label(), saved.getId().orElseThrow()),
+                StructuredArguments.kv(LogField.DEBTOR_NAME.label(), command.name()),
+                StructuredArguments.kv(
+                        LogField.CONTACTS_COUNT.label(), command.contacts().size()));
 
         return saved;
     }
@@ -64,20 +63,19 @@ class CreateDebtorService implements CreateDebtorUseCase {
         final List<DebtorContact> duplicateContactsByPriority = Debtor.getDuplicateContactsByPriority(contacts);
         if (!duplicateContactsByPriority.isEmpty()) {
             final var msg = duplicateContactsByPriority.stream()
-                .map(dc -> "contactType: %s - contactValue: %s - priority: %s".formatted(
-                    dc.getContactType(), dc.getContactValue(), dc.getPriority()))
-                .collect(Collectors.joining(" | "));
+                    .map(dc -> "contactType: %s - contactValue: %s - priority: %s"
+                            .formatted(dc.getContactType(), dc.getContactValue(), dc.getPriority()))
+                    .collect(Collectors.joining(" | "));
             throw BusinessExceptionCode.DUPLICATE_CONTACT_BY_PRIORITY.createException("Duplicate Contacts: " + msg);
         }
 
         final List<DebtorContact> duplicateContactsByValue = Debtor.getDuplicateContactsByValue(contacts);
         if (!duplicateContactsByValue.isEmpty()) {
             final var msg = duplicateContactsByValue.stream()
-                .map(dc -> "contactType: %s - contactValue: %s - priority: %s".formatted(
-                    dc.getContactType(), dc.getContactValue(), dc.getPriority()))
-                .collect(Collectors.joining(" | "));
+                    .map(dc -> "contactType: %s - contactValue: %s - priority: %s"
+                            .formatted(dc.getContactType(), dc.getContactValue(), dc.getPriority()))
+                    .collect(Collectors.joining(" | "));
             throw BusinessExceptionCode.DUPLICATE_CONTACT_BY_VALUE.createException("Duplicate Contacts: " + msg);
         }
     }
-
 }

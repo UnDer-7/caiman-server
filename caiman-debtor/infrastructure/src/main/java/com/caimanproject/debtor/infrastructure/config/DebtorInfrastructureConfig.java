@@ -24,9 +24,9 @@ public class DebtorInfrastructureConfig {
     @PostConstruct
     public void registerAuditListeners() {
         EventListenerRegistry registry = entityManagerFactory
-            .unwrap(SessionFactoryImpl.class)
-            .getServiceRegistry()
-            .getService(EventListenerRegistry.class);
+                .unwrap(SessionFactoryImpl.class)
+                .getServiceRegistry()
+                .getService(EventListenerRegistry.class);
 
         AuditHibernateListener listener = new AuditHibernateListener();
         registry.appendListeners(EventType.PRE_INSERT, listener);

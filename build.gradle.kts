@@ -1,5 +1,5 @@
-import org.gradle.testing.jacoco.tasks.JacocoReport
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
+import org.gradle.testing.jacoco.tasks.JacocoReport
 
 plugins {
     java
@@ -8,11 +8,18 @@ plugins {
     alias(libs.plugins.spring.dependency.management) apply false
     alias(libs.plugins.graalvm.native) apply false
     alias(libs.plugins.hibernate.orm) apply false
+    alias(libs.plugins.spotless)
 }
 
-val springBootVersion = libs.versions.spring.boot.get()
-val springdocVersion = libs.versions.springdoc.openapi.get()
-val logstashEncoderVersion = libs.versions.logstash.logback.encoder.get()
+val springBootVersion =
+    libs.versions.spring.boot
+        .get()
+val springdocVersion =
+    libs.versions.springdoc.openapi
+        .get()
+val logstashEncoderVersion =
+    libs.versions.logstash.logback.encoder
+        .get()
 val jacocoToolVersion = libs.versions.jacoco.get()
 
 repositories {
@@ -26,14 +33,15 @@ jacoco {
 // Classes with no meaningful coverage value: bootstrap, wiring, exceptions, generated code.
 // Use *Foo*.class (not *Foo.class) so Ant glob's trailing * also matches inner-class suffixes
 // like $Inner — e.g. "**/*Config*.class" covers both FooConfig.class and FooConfig$Bar.class.
-val jacocoExcludes = listOf(
-    "**/CaimanApplication.class",
-    "**/exception/**",
-    "**/*Config*.class",       // @Configuration / @ConfigurationProperties + their inner classes
-    "**/*Initializer.class",
-    "**/*Constants*.class",    // constant holders + their inner classes
-    "**/*MapperImpl.class",
-)
+val jacocoExcludes =
+    listOf(
+        "**/CaimanApplication.class",
+        "**/exception/**",
+        "**/*Config*.class", // @Configuration / @ConfigurationProperties + their inner classes
+        "**/*Initializer.class",
+        "**/*Constants*.class", // constant holders + their inner classes
+        "**/*MapperImpl.class",
+    )
 
 subprojects {
     apply(plugin = "java")
@@ -139,9 +147,11 @@ tasks.register<JacocoReport>("jacocoRootReport") {
     sourceDirectories.setFrom(
         files(
             reportableProjects.map { subproject ->
-                subproject.extensions.getByType<SourceSetContainer>()["main"].allSource.srcDirs
-            }
-        )
+                subproject.extensions
+                    .getByType<SourceSetContainer>()["main"]
+                    .allSource.srcDirs
+            },
+        ),
     )
     classDirectories.setFrom(
         files(
@@ -151,29 +161,75 @@ tasks.register<JacocoReport>("jacocoRootReport") {
                         exclude(jacocoExcludes)
                     }
                 }
-            }
-        )
+            },
+        ),
     )
     executionData.setFrom(
         files(
             subprojects.flatMap { subproject ->
-                subproject.tasks.withType<Test>()
+                subproject.tasks
+                    .withType<Test>()
                     .filter { it.name != "nativeTest" }
                     .mapNotNull { testTask ->
                         testTask.extensions.findByType<JacocoTaskExtension>()?.destinationFile
                     }
-            }
-        )
+            },
+        ),
     )
 
     reports {
         xml.required.set(true)
         html.required.set(true)
         xml.outputLocation.set(
-            rootProject.layout.buildDirectory.file("reports/jacoco/aggregate/jacoco.xml")
+            rootProject.layout.buildDirectory.file("reports/jacoco/aggregate/jacoco.xml"),
         )
         html.outputLocation.set(
-            rootProject.layout.buildDirectory.dir("reports/jacoco/aggregate/html")
+            rootProject.layout.buildDirectory.dir("reports/jacoco/aggregate/html"),
         )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Spotless — code formatting
+//
+// Check:  ./gradlew spotlessCheck
+// Apply:  ./gradlew spotlessApply
+// ─────────────────────────────────────────────────────────────────────────────
+spotless {
+    format("misc") {
+        target(
+            ".gitignore",
+            ".gitattributes",
+            ".env",
+            ".sdkmanrc",
+            "docker-entrypoint.sh",
+            "Dockerfile.jvm",
+            "Dockerfile.native",
+            "lombok.config",
+        )
+        trimTrailingWhitespace()
+        endWithNewline()
+        leadingTabsToSpaces(4)
+    }
+
+    // Makefile requires tab indentation — keep separate from spaces-based misc format
+    format("makefile") {
+        target("Makefile")
+        trimTrailingWhitespace()
+        endWithNewline()
+        leadingSpacesToTabs()
+    }
+
+    java {
+        target("**/*.java")
+        palantirJavaFormat("2.89.0").style("PALANTIR").formatJavadoc(true)
+        removeUnusedImports()
+        // Regular imports first, then org.awaitility statics, then all other statics
+        importOrder("", "\\#org.awaitility.Awaitility", "\\#")
+    }
+
+    kotlinGradle {
+        target("**/*.kts")
+        ktlint()
     }
 }

@@ -1,17 +1,25 @@
 package com.caimanproject.web.filter;
 
 import com.caimanproject.contracts.exception.CaimanException;
-import com.caimanproject.contracts.exception.ErrorHttpStatus;
-import com.caimanproject.contracts.exception.ExceptionCode;
 import com.caimanproject.contracts.exception.LogField;
 import com.caimanproject.contracts.util.RequestConstants;
 import com.caimanproject.web.dto.response.ErrorResponseDto;
-import com.caimanproject.web.exception.EntrypointInvalidValuesException;
 import com.caimanproject.web.exception.WebSupportExceptionCode;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springdoc.core.properties.SpringDocConfigProperties;
@@ -24,18 +32,6 @@ import org.springframework.http.MediaType;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import tools.jackson.databind.ObjectMapper;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @Order(2)
@@ -62,10 +58,7 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
         this.springDocConfigProperties = springDocConfigProperties;
         this.objectMapper = objectMapper;
 
-        final var customIgnoredPath = List.of(
-            "/favicon.ico",
-            managementBasePath,
-            managementBasePath + "/**");
+        final var customIgnoredPath = List.of("/favicon.ico", managementBasePath, managementBasePath + "/**");
 
         this.ignoredPaths = Stream.of(getApiDocsPaths(), getSwaggerUiPaths(), customIgnoredPath)
                 .flatMap(Collection::stream)
@@ -129,8 +122,9 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
 
     private void sendInvalidUuidErrorResponse(final HttpServletResponse response, final String invalidValue)
             throws IOException {
-        final var errorResponse = WebSupportExceptionCode.INVALID_VALUES.createException("Header '%s' must be a valid UUID format. Received: '%s'"
-                .formatted(RequestConstants.Headers.X_CORRELATION_ID, invalidValue));
+        final var errorResponse = WebSupportExceptionCode.INVALID_VALUES.createException(
+                "Header '%s' must be a valid UUID format. Received: '%s'"
+                        .formatted(RequestConstants.Headers.X_CORRELATION_ID, invalidValue));
 
         errorResponse.executeLogging();
 
@@ -142,8 +136,8 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
 
     private void sendMissingHeadersErrorResponse(final HttpServletResponse response, final List<String> missingHeaders)
             throws IOException {
-        final var errorResponse =
-            WebSupportExceptionCode.INVALID_VALUES.createException("Missing headers. Headers: %s are required".formatted(missingHeaders));
+        final var errorResponse = WebSupportExceptionCode.INVALID_VALUES.createException(
+                "Missing headers. Headers: %s are required".formatted(missingHeaders));
 
         errorResponse.executeLogging();
 
@@ -173,24 +167,24 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
 
     private static ErrorResponseDto buildErrorResponse(final CaimanException invalidValues) {
         final Function<LogField, String> getFromMDC = field -> Optional.of(field)
-            .map(LogField::label)
-            .map(MDC::get)
-            .filter(Predicate.not(String::isBlank))
-            .orElse(null);
+                .map(LogField::label)
+                .map(MDC::get)
+                .filter(Predicate.not(String::isBlank))
+                .orElse(null);
 
         final String requestId = getFromMDC.apply(LogField.REQUEST_ID);
         final String correlationId = getFromMDC.apply(LogField.CORRELATION_ID);
         final String channel = getFromMDC.apply(LogField.CHANNEL);
 
         return ErrorResponseDto.builder()
-            .code(invalidValues.getExceptionCode().getFullCode())
-            .timestamp(invalidValues.getTimestamp())
-            .message(invalidValues.getExceptionCode().getMessage())
-            .detail(invalidValues.getDetail().orElse(null))
-            .httpStatusCode(invalidValues.getHttpStatusCode())
-            .requestId(requestId)
-            .correlationId(correlationId)
-            .channel(channel)
-            .build();
+                .code(invalidValues.getExceptionCode().getFullCode())
+                .timestamp(invalidValues.getTimestamp())
+                .message(invalidValues.getExceptionCode().getMessage())
+                .detail(invalidValues.getDetail().orElse(null))
+                .httpStatusCode(invalidValues.getHttpStatusCode())
+                .requestId(requestId)
+                .correlationId(correlationId)
+                .channel(channel)
+                .build();
     }
 }

@@ -1,10 +1,9 @@
 package com.caimanproject.debtor.core.domain.model;
 
-import lombok.Builder;
-import lombok.ToString;
-
 import java.time.Instant;
 import java.util.Optional;
+import lombok.Builder;
+import lombok.ToString;
 
 @ToString
 public class Audit {

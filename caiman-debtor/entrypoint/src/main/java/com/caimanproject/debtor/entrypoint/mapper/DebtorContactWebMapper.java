@@ -10,9 +10,9 @@ import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(
-    componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
-    uses = {OptionalMapper.class, AuditWebMapper.class},
-    unmappedTargetPolicy = ReportingPolicy.ERROR)
+        componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
+        uses = {OptionalMapper.class, AuditWebMapper.class},
+        unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface DebtorContactWebMapper {
 
     CreateDebtorContactCommand toCommand(CreateDebtorContactRequestDto dto);

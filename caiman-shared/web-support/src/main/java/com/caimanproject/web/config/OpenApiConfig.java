@@ -16,6 +16,7 @@ import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.media.UUIDSchema;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.responses.ApiResponse;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.customizers.OpenApiCustomizer;
@@ -24,8 +25,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.method.HandlerMethod;
-
-import java.util.Objects;
 
 @Slf4j
 @Configuration
@@ -50,21 +49,21 @@ public class OpenApiConfig {
             }
 
             final Parameter correlationIdParam = new Parameter()
-                .in("header")
-                .name(RequestConstants.Headers.X_CORRELATION_ID)
-                .description(
-                    "Unique identifier for tracking the request across services. Must be a valid UUID format.")
-                .required(true)
-                .schema(new UUIDSchema())
-                .example("550e8400-e29b-41d4-a716-446655440000");
+                    .in("header")
+                    .name(RequestConstants.Headers.X_CORRELATION_ID)
+                    .description(
+                            "Unique identifier for tracking the request across services. Must be a valid UUID format.")
+                    .required(true)
+                    .schema(new UUIDSchema())
+                    .example("550e8400-e29b-41d4-a716-446655440000");
 
             final Parameter channelParam = new Parameter()
-                .in("header")
-                .name(RequestConstants.Headers.X_CHANNEL)
-                .description("Channel/Client that originated the request (e.g., Web, Telegram, WhatsApp)")
-                .required(true)
-                .schema(new StringSchema())
-                .example("Web");
+                    .in("header")
+                    .name(RequestConstants.Headers.X_CHANNEL)
+                    .description("Channel/Client that originated the request (e.g., Web, Telegram, WhatsApp)")
+                    .required(true)
+                    .schema(new StringSchema())
+                    .example("Web");
 
             operation.addParametersItem(correlationIdParam);
             operation.addParametersItem(channelParam);
@@ -93,12 +92,13 @@ public class OpenApiConfig {
         operation
                 .getResponses()
                 .addApiResponse(
-                    Integer.toString(HttpStatus.INTERNAL_SERVER_ERROR.value()), buildInternalServerErrorResponse());
+                        Integer.toString(HttpStatus.INTERNAL_SERVER_ERROR.value()), buildInternalServerErrorResponse());
     }
 
     private ApiResponse buildBadRequestResponse() {
         return new ApiResponse()
-                .description("Invalid request. One or more fields failed format or presence validation. See `detail` for a field-level breakdown.")
+                .description(
+                        "Invalid request. One or more fields failed format or presence validation. See `detail` for a field-level breakdown.")
                 .content(new Content()
                         .addMediaType(
                                 org.springframework.http.MediaType.APPLICATION_JSON_VALUE,
@@ -147,7 +147,8 @@ public class OpenApiConfig {
                                                 "internal validation error",
                                                 new Example()
                                                         .summary("internal validation error")
-                                                        .description("An internal validation error occurred. Check application logs for details.")
+                                                        .description(
+                                                                "An internal validation error occurred. Check application logs for details.")
                                                         .value("""
                                                             {
                                                               "code": "DEBTOR_DOMAIN_001",
@@ -161,7 +162,8 @@ public class OpenApiConfig {
                                                 "unexpected error",
                                                 new Example()
                                                         .summary("unexpected error")
-                                                        .description("An unexpected error occurred. Check application logs for details.")
+                                                        .description(
+                                                                "An unexpected error occurred. Check application logs for details.")
                                                         .value("""
                                                             {
                                                               "code": "WEB_SUPPORT_001",

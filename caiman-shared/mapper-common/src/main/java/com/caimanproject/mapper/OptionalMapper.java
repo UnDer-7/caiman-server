@@ -1,14 +1,11 @@
 package com.caimanproject.mapper;
 
 import com.caimanproject.contracts.util.Constants;
+import java.util.Optional;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 
-import java.util.Optional;
-
-@Mapper(
-    componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
-    unmappedTargetPolicy = ReportingPolicy.ERROR)
+@Mapper(componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL, unmappedTargetPolicy = ReportingPolicy.ERROR)
 @SuppressWarnings("java:S2789")
 public class OptionalMapper {
 
