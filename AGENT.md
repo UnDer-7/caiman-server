@@ -454,6 +454,34 @@ After fix, dependency tree must show NO `->` substitutions between bounded-conte
 
 ---
 
+### Build fails with "Did not resolve" — dependency lockfiles out of date
+
+**Symptom:** Any Gradle task that resolves dependencies (compile, test, bootJar, nativeCompile, etc.) fails with:
+
+```
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Could not resolve all files for configuration ':caiman-app:runtimeClasspath'.
+> Did not resolve 'org.example:some-lib:4.0.6' which has been forced / substituted to a different version: '4.1.0'
+```
+
+**Root cause:** Dependency locking is enabled (`dependencyLocking { lockAllConfigurations() }` in `build.gradle.kts`). Each subproject has a committed `gradle.lockfile` that pins exact versions. When a dependency version changes — via a direct bump in `libs.versions.toml`, a Spring Boot BOM upgrade, or any transitive version shift — the lockfile diverges from the resolved graph. Gradle refuses to proceed.
+
+**Fix:** Regenerate all lockfiles and commit them:
+
+```bash
+make security/update-locks
+# or directly:
+./gradlew updateDependencyLocks --write-locks -q
+```
+
+Then commit every `gradle.lockfile` that changed alongside the dependency change that triggered this.
+
+**Note:** This error is intentional — it means a dependency version changed without explicit acknowledgment. The lockfile is the security control that prevents unvetted dependency upgrades from silently entering the build.
+
+---
+
 ### Domain model builders must use `restoreBuilder` / `createBuilder` naming
 
 **Rule:** Domain model classes that need two Lombok builders (one for DB restoration, one for creation) **must** follow this exact naming convention:

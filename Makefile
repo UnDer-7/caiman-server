@@ -187,9 +187,84 @@ version/set:
 ## fmt/check: Check code formatting (fails if any file needs reformatting)
 .PHONY: fmt/check
 fmt/check:
-	./gradlew spotlessCheck
+	./gradlew spotlessCheck --rerun-tasks
 
 ## fmt/apply: Apply code formatting to all source files
 .PHONY: fmt/apply
 fmt/apply:
-	./gradlew spotlessApply
+	./gradlew spotlessApply --rerun-tasks
+
+
+
+
+# ==================================================================================== #
+## ===== ANALYSIS =====
+# ==================================================================================== #
+## sonar: Publish analysis results to SonarCloud (run 'make test/coverage' first, requires SONAR_TOKEN env var)
+.PHONY: sonar
+sonar:
+	@echo ">>> Publishing analysis to SonarCloud..."
+	@if [ -z "$$SONAR_TOKEN" ]; then \
+		echo "ERROR: SONAR_TOKEN environment variable is not set"; \
+		echo "Set it: export SONAR_TOKEN=your_token"; \
+		exit 1; \
+	fi
+	@if [ ! -f "build/reports/jacoco/aggregate/jacoco.xml" ]; then \
+		echo "ERROR: JaCoCo coverage report not found"; \
+		echo "Run 'make test/coverage' first to generate coverage data"; \
+		exit 1; \
+	fi
+	./gradlew sonar -Dsonar.token=$$SONAR_TOKEN --rerun-tasks
+	@echo ">>> Analysis published!"
+	@echo ">>> https://sonarcloud.io/dashboard?id=UnDer-7_caiman-server"
+
+
+
+
+# ==================================================================================== #
+## ===== SECURITY =====
+# ==================================================================================== #
+## security/update-locks: Regenerate Gradle dependency lockfiles (run after any dependency change, then commit)
+.PHONY: security/update-locks
+security/update-locks:
+	./gradlew updateDependencyLocks --write-locks -q
+	@echo ">>> Lockfiles updated. Commit the gradle.lockfile changes."
+
+## security/scan/deps: Generate SBOM and scan Java dependencies + GitHub Actions workflows
+.PHONY: security/scan/deps
+security/scan/deps:
+	@for cmd in syft grype; do \
+		if ! command -v $$cmd >/dev/null 2>&1; then \
+			echo "ERROR: $$cmd not found in PATH"; \
+			echo "Install Syft: https://oss.anchore.com/docs/installation/syft/#installer-script"; \
+			echo "Install Grype: https://oss.anchore.com/docs/installation/grype/#installer-script"; \
+			exit 1; \
+		fi; \
+	done
+	@echo ">>> Generating SBOM..."
+	syft scan dir:. -o syft-json=sbom.json \
+		--exclude './.gradle' \
+		--exclude './build' \
+		--exclude './**/build'
+	@echo ">>> Scanning dependencies..."
+	grype sbom:./sbom.json --fail-on high
+	@echo ">>> Scanning GitHub Actions workflows..."
+	grype dir:./.github/workflows --fail-on high
+
+## security/scan/base-images: Scan base Docker images for known vulnerabilities
+.PHONY: security/scan/base-images
+security/scan/base-images:
+	@if ! command -v grype >/dev/null 2>&1; then \
+		echo "ERROR: grype not found in PATH"; \
+		echo "Install: curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin"; \
+		exit 1; \
+	fi
+	@JVM_IMAGE=$$(grep "^FROM" Dockerfile.jvm | awk 'NR==1{print $$2}') && \
+	NATIVE_IMAGE=$$(grep "^FROM" Dockerfile.native | awk 'NR==1{print $$2}') && \
+	PG_IMAGE=$$(grep "image: postgres" local/docker-compose.yml | awk 'NR==1{print $$2}') && \
+	echo ">>> Scanning JVM base image (Dockerfile.jvm)..." && \
+	grype registry:$$JVM_IMAGE --fail-on high && \
+	echo ">>> Scanning native base image (Dockerfile.native)..." && \
+	grype registry:$$NATIVE_IMAGE --fail-on high && \
+	echo ">>> Scanning PostgreSQL image (local/docker-compose.yml)..." && \
+	grype $$PG_IMAGE --fail-on high

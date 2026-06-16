@@ -1,0 +1,283 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  quality-and-security:
+    name: Code Quality and Security Analysis
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
+        with:
+          fetch-depth: 0  # Fetch all history for SonarCloud analysis
+
+      - name: Setup GraalVM 25 (Oracle)
+        uses: graalvm/setup-graalvm@790e28947b79a9c09c3391c0f18bf8d0f102ed69 #v1.4.4
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: 'gradle'
+
+      - name: Run tests and generate coverage report
+        run: make test/coverage
+
+      - name: Install Syft and Grype
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin v1.45.1
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin v0.114.0
+
+      - name: Scan dependencies and workflows
+        run: make security/scan/deps
+
+      - name: Scan base images
+        run: make security/scan/base-images
+
+      - name: Publish SonarCloud analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: make sonar
+
+  tag-and-release:
+    name: Tag and Release
+    runs-on: ubuntu-latest
+    needs: quality-and-security
+
+    permissions:
+      contents: write
+
+    outputs:
+      version: ${{ steps.project-version.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
+
+      - name: Setup GraalVM 25 (Oracle)
+        uses: graalvm/setup-graalvm@790e28947b79a9c09c3391c0f18bf8d0f102ed69 #v1.4.4
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: 'gradle'
+
+      - name: Verify GraalVM installation
+        run: |
+          echo "GRAALVM_HOME: $GRAALVM_HOME"
+          echo "JAVA_HOME: $JAVA_HOME"
+          java -version
+
+      - name: Get current project version
+        id: project-version
+        run: |
+          VERSION=$(make version)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Current project version: $VERSION"
+
+      - name: Check if tag already exists
+        id: check-tag
+        run: |
+          VERSION="${{ steps.project-version.outputs.version }}"
+
+          if git ls-remote --tags origin | grep -q "refs/tags/$VERSION$"; then
+            echo "::error::Tag $VERSION already exists in the repository!"
+            echo ""
+            echo "❌ A release for version $VERSION has already been created."
+            echo ""
+            echo "💡 This should not happen if the pull request pipeline is working correctly."
+            echo "   The version validation should have prevented this."
+            echo ""
+            echo "Possible causes:"
+            echo "  1. The tag was created manually"
+            echo "  2. A previous deploy workflow run already created this tag"
+            echo "  3. The pull request pipeline was bypassed"
+            exit 1
+          fi
+
+          echo "✅ Tag $VERSION does not exist, proceeding with release"
+
+      - name: Build GraalVM native image and JAR
+        run: make build/artifacts
+
+      - name: Find build artifacts
+        id: artifacts
+        run: |
+          JAR_FILE=$(find caiman-app/build/libs -name "*.jar" -type f | head -n 1)
+          NATIVE_FILE="caiman-app/build/native/nativeCompile/caiman-app"
+
+          if [ -z "$JAR_FILE" ]; then
+            echo "::error::JAR file not found in caiman-app/build/libs/"
+            exit 1
+          fi
+
+          if [ ! -f "$NATIVE_FILE" ]; then
+            echo "::error::Native binary not found at $NATIVE_FILE"
+            exit 1
+          fi
+
+          echo "jar_file=$JAR_FILE" >> $GITHUB_OUTPUT
+          echo "native_file=$NATIVE_FILE" >> $GITHUB_OUTPUT
+          echo "Found JAR: $JAR_FILE"
+          echo "Found native binary: $NATIVE_FILE"
+
+      - name: Extract CHANGELOG for current version
+        id: changelog
+        run: |
+          VERSION="${{ steps.project-version.outputs.version }}"
+          CHANGELOG_FILE="CHANGELOG.md"
+
+          CHANGELOG_CONTENT=$(sed -n "/^## \[$VERSION\]/,/^## \[/p" "$CHANGELOG_FILE" | sed '$d')
+
+          if [ -z "$CHANGELOG_CONTENT" ]; then
+            CHANGELOG_CONTENT=$(sed -n "/^## \[$VERSION\]/,\$p" "$CHANGELOG_FILE")
+          fi
+
+          CHANGELOG_CONTENT=$(echo "$CHANGELOG_CONTENT" | tail -n +2)
+
+          echo "$CHANGELOG_CONTENT" > changelog_body.txt
+          echo "✅ Extracted CHANGELOG for version $VERSION"
+
+      - name: Create Git tag
+        run: |
+          VERSION="${{ steps.project-version.outputs.version }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin "$VERSION"
+
+          echo "✅ Created and pushed tag $VERSION"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 #v2.2.0
+        with:
+          tag_name: ${{ steps.project-version.outputs.version }}
+          name: ${{ steps.project-version.outputs.version }}
+          body_path: changelog_body.txt
+          files: |
+            ${{ steps.artifacts.outputs.jar_file }}
+            ${{ steps.artifacts.outputs.native_file }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload build artifacts for Docker
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 #v5.0.0
+        with:
+          name: build-artifacts
+          path: |
+            caiman-app/build/libs/
+            caiman-app/build/native/nativeCompile/
+          retention-days: 1
+
+  deploy-image:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    needs: tag-and-release
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
+
+      - name: Setup GraalVM 25 (Oracle)
+        uses: graalvm/setup-graalvm@790e28947b79a9c09c3391c0f18bf8d0f102ed69 #v1.4.4
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: 'gradle'
+
+      - name: Get project version
+        id: project-version
+        run: |
+          VERSION=${{ needs.tag-and-release.outputs.version }}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Project version: $VERSION"
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
+        with:
+          name: build-artifacts
+          path: .
+
+      - name: Verify downloaded artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          JAR_FILE=$(find caiman-app/build/libs -name "*.jar" -type f | head -n 1)
+          NATIVE_FILE="caiman-app/build/native/nativeCompile/caiman-app"
+
+          if [ -z "$JAR_FILE" ]; then
+            echo "::error::JAR file not found!"
+            exit 1
+          fi
+
+          if [ ! -f "$NATIVE_FILE" ]; then
+            echo "::error::Native binary not found!"
+            exit 1
+          fi
+
+          chmod +x "$NATIVE_FILE"
+
+          echo "✅ JAR file: $JAR_FILE"
+          echo "✅ Native binary: $NATIVE_FILE"
+
+      - name: Build JVM Docker image
+        run: |
+          echo "Building JVM Docker image..."
+          make build/jar/docker
+          echo "✅ JVM image built: under7/caiman-server:${{ steps.project-version.outputs.version }}-jvm"
+
+      - name: Build native Docker image
+        run: |
+          echo "Building native Docker image..."
+          make build/native/docker
+          echo "✅ Native image built: under7/caiman-server:${{ steps.project-version.outputs.version }}-native"
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef #v3.6.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push JVM image to Docker Hub
+        run: |
+          IMAGE_NAME="under7/caiman-server:${{ steps.project-version.outputs.version }}-jvm"
+          echo "Pushing $IMAGE_NAME..."
+          docker push $IMAGE_NAME
+          echo "✅ JVM image pushed successfully"
+
+      - name: Push native image to Docker Hub
+        run: |
+          IMAGE_NAME="under7/caiman-server:${{ steps.project-version.outputs.version }}-native"
+          echo "Pushing $IMAGE_NAME..."
+          docker push $IMAGE_NAME
+          echo "✅ Native image pushed successfully"
+
+      - name: Tag and push latest images
+        run: |
+          VERSION="${{ steps.project-version.outputs.version }}"
+          JVM_IMAGE="under7/caiman-server:${VERSION}-jvm"
+          NATIVE_IMAGE="under7/caiman-server:${VERSION}-native"
+
+          docker tag $JVM_IMAGE under7/caiman-server:latest-jvm
+          docker push under7/caiman-server:latest-jvm
+          echo "✅ Tagged and pushed under7/caiman-server:latest-jvm"
+
+          docker tag $NATIVE_IMAGE under7/caiman-server:latest-native
+          docker push under7/caiman-server:latest-native
+          echo "✅ Tagged and pushed under7/caiman-server:latest-native"
+
+          # latest points to native (smaller, faster startup)
+          docker tag $NATIVE_IMAGE under7/caiman-server:latest
+          docker push under7/caiman-server:latest
+          echo "✅ Tagged and pushed under7/caiman-server:latest"

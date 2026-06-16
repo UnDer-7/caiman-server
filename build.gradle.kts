@@ -1,5 +1,6 @@
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
 import org.gradle.testing.jacoco.tasks.JacocoReport
+import org.sonarqube.gradle.SonarExtension
 
 plugins {
     java
@@ -9,6 +10,7 @@ plugins {
     alias(libs.plugins.graalvm.native) apply false
     alias(libs.plugins.hibernate.orm) apply false
     alias(libs.plugins.spotless)
+    alias(libs.plugins.sonarqube)
 }
 
 val springBootVersion =
@@ -63,6 +65,10 @@ subprojects {
 
     repositories {
         mavenCentral()
+    }
+
+    dependencyLocking {
+        lockAllConfigurations()
     }
 
     configure<io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension> {
@@ -125,6 +131,21 @@ subprojects {
         "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
         "testRuntimeOnly"("ch.qos.logback:logback-classic")
     }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dependency locking — update lockfiles: ./gradlew updateDependencyLocks --write-locks
+// ─────────────────────────────────────────────────────────────────────────────
+tasks.register("updateDependencyLocks") {
+    notCompatibleWithConfigurationCache("Dependency locking does not support configuration cache")
+    description = "Regenerates gradle.lockfile for all subprojects. Run with --write-locks."
+    group = "verification"
+    doFirst {
+        require(gradle.startParameter.isWriteDependencyLocks) {
+            "Must run with --write-locks flag: ./gradlew updateDependencyLocks --write-locks"
+        }
+    }
+    dependsOn(subprojects.map { "${it.path}:dependencies" })
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -233,5 +254,60 @@ spotless {
     kotlinGradle {
         target("**/*.kts")
         ktlint()
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SonarCloud — static analysis + coverage upload
+//
+// Run:  make sonar  (requires SONAR_TOKEN env var and prior 'make test/coverage')
+// Dashboard: https://sonarcloud.io/dashboard?id=UnDer-7_caiman-server
+//
+// Each subproject auto-detects its own sonar.sources/sonar.tests.
+// The aggregate JaCoCo XML is pushed to every subproject so SonarCloud receives
+// full coverage data per module. Sonar silently ignores entries in the XML that
+// don't belong to the module being analyzed — no double-indexing, no BUILD FAILED.
+// ─────────────────────────────────────────────────────────────────────────────
+sonar {
+    properties {
+        property("sonar.projectKey", "UnDer-7_caiman-server")
+        property("sonar.organization", "under-7")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property(
+            "sonar.coverage.exclusions",
+            listOf(
+                "**/CaimanApplication.*",
+                "**/exception/**",
+                "**/*Config*",
+                "**/*Initializer*",
+                "**/*Constants*",
+                "**/*MapperImpl*",
+            ).joinToString(","),
+        )
+    }
+}
+
+// Push the aggregate JaCoCo XML and compiled class dirs to every subproject so
+// each module reports accurate coverage without manual per-module jacoco tasks.
+gradle.projectsEvaluated {
+    val aggregateXml = rootProject.layout.buildDirectory
+        .file("reports/jacoco/aggregate/jacoco.xml")
+        .get()
+        .asFile
+        .absolutePath
+
+    reportableProjects.forEach { subproject ->
+        subproject.extensions.findByType<SonarExtension>()
+            ?.properties {
+                property("sonar.coverage.jacoco.xmlReportPaths", aggregateXml)
+                property(
+                    "sonar.java.binaries",
+                    subproject.layout.buildDirectory
+                        .dir("classes/java/main")
+                        .get()
+                        .asFile
+                        .absolutePath,
+                )
+            }
     }
 }

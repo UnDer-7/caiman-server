@@ -48,3 +48,4 @@ build/
 *.db-journal
 logs/
 /META-INF/
+sbom.json
