@@ -53,6 +53,7 @@ jobs:
 
     permissions:
       contents: write
+      id-token: write  # Sigstore OIDC keyless signing
 
     outputs:
       version: ${{ steps.project-version.outputs.version }}
@@ -128,6 +129,23 @@ jobs:
           echo "Found JAR: $JAR_FILE"
           echo "Found native binary: $NATIVE_FILE"
 
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 #v4.1.2
+        with:
+          cosign-release: 'v3.1.1'  # cosign @ 7914231b348c4057891edeb321772aad3ed04fce
+
+      - name: Sign release artifacts
+        id: sign
+        run: |
+          JAR_FILE="${{ steps.artifacts.outputs.jar_file }}"
+          NATIVE_FILE="${{ steps.artifacts.outputs.native_file }}"
+
+          cosign sign-blob --yes --output-signature "${JAR_FILE}.sig" "${JAR_FILE}"
+          cosign sign-blob --yes --output-signature "${NATIVE_FILE}.sig" "${NATIVE_FILE}"
+
+          echo "jar_sig=${JAR_FILE}.sig" >> $GITHUB_OUTPUT
+          echo "native_sig=${NATIVE_FILE}.sig" >> $GITHUB_OUTPUT
+
       - name: Extract CHANGELOG for current version
         id: changelog
         run: |
@@ -166,6 +184,8 @@ jobs:
           files: |
             ${{ steps.artifacts.outputs.jar_file }}
             ${{ steps.artifacts.outputs.native_file }}
+            ${{ steps.sign.outputs.jar_sig }}
+            ${{ steps.sign.outputs.native_sig }}
           draft: false
           prerelease: false
         env:
@@ -184,6 +204,9 @@ jobs:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
     needs: tag-and-release
+
+    permissions:
+      id-token: write  # Sigstore OIDC keyless attestation
 
     steps:
       - name: Checkout code
@@ -281,3 +304,18 @@ jobs:
           docker tag $NATIVE_IMAGE under7/caiman-server:latest
           docker push under7/caiman-server:latest
           echo "✅ Tagged and pushed under7/caiman-server:latest"
+
+      - name: Install Syft
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin v1.45.1
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 #v4.1.2
+        with:
+          cosign-release: 'v3.1.1'  # cosign @ 7914231b348c4057891edeb321772aad3ed04fce
+
+      - name: Attest images
+        run: |
+          VERSION="${{ steps.project-version.outputs.version }}"
+          syft attest --output cyclonedx-json under7/caiman-server:${VERSION}-jvm
+          syft attest --output cyclonedx-json under7/caiman-server:${VERSION}-native
