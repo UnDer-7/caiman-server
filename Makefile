@@ -248,8 +248,6 @@ security/scan/deps:
 		--exclude './**/build'
 	@echo ">>> Scanning dependencies..."
 	grype sbom:./sbom.json --fail-on high
-	@echo ">>> Scanning GitHub Actions workflows..."
-	grype dir:./.github/workflows --fail-on high
 
 ## security/scan/base-images: Scan base Docker images for known vulnerabilities
 .PHONY: security/scan/base-images

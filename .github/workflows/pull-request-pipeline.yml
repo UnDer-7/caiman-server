@@ -270,6 +270,18 @@ jobs:
           echo "JAVA_HOME: $JAVA_HOME"
           java -version
 
+      - name: Get date for Grype DB cache key
+        id: date
+        run: echo "date=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
+
+      - name: Cache Grype vulnerability DB
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae #v5.0.5
+        with:
+          path: ~/.cache/grype/db
+          key: grype-db-v0.114.0-${{ steps.date.outputs.date }}
+          restore-keys: |
+            grype-db-v0.114.0-
+
       - name: Install Syft and Grype
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin v1.45.1
