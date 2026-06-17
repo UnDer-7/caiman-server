@@ -510,6 +510,8 @@ Every third-party GitHub Action used in this project **must** be wrapped in a lo
 2. Workflows reference the local wrapper (`uses: ./.github/actions/<wrapper-name>`), never the external action directly.
 3. The SHA lives in exactly one file (the wrapper). Updating the external action = changing one line in one file.
 
+**Exception — `actions/checkout`:** Local composite actions can only be resolved after the repository is checked out. Since `actions/checkout` is always the first step of every job (the bootstrap step), it cannot be wrapped — the wrapper file wouldn't exist on disk yet. Use `actions/checkout@<SHA> #vX.Y.Z` directly in every workflow job's first step.
+
 **Why SHA pins, not tags:** Tags are mutable — an attacker or maintainer can move them without warning. A SHA is immutable. Tags are allowed only inside the wrapper as a human-readable comment (`#v1.4.4`), never as the functional ref.
 
 ### Wrapper structure
@@ -544,7 +546,7 @@ Caller in workflow:
 
 | Wrapper | Wraps | SHA comment |
 |---|---|---|
-| `.github/actions/checkout` | `actions/checkout` | #v6.0.0 |
+| *(none — used directly)* | `actions/checkout` | #v6.0.0 — exception, see above |
 | `.github/actions/setup-graalvm` | `graalvm/setup-graalvm` | #v1.4.4 |
 | `.github/actions/cache` | `actions/cache` | #v5.0.5 |
 | `.github/actions/install-cosign` | `sigstore/cosign-installer` | #v4.1.2 |

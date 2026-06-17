@@ -16,9 +16,9 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: ./.github/actions/checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
         with:
-          fetch-depth: '0'
+          fetch-depth: 0
 
       - name: Setup GraalVM 25 (Oracle)
         uses: ./.github/actions/setup-graalvm
@@ -83,7 +83,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: ./.github/actions/checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
 
       - name: Setup GraalVM 25 (Oracle)
         uses: ./.github/actions/setup-graalvm
@@ -244,7 +244,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: ./.github/actions/checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
 
       - name: Setup GraalVM 25 (Oracle)
         uses: ./.github/actions/setup-graalvm
