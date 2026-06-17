@@ -159,7 +159,7 @@ build/native/docker:
 ## version: Show current project version
 .PHONY: version
 version:
-	@grep -oP 'version = "\K[^"]+' build.gradle.kts | head -1
+	@echo $(PROJECT_VERSION)
 
 ## version/set: Set project version  (usage: make version/set 0.1.2)
 .PHONY: version/set
@@ -243,6 +243,8 @@ security/scan/deps:
 	done
 	@echo ">>> Generating SBOM..."
 	syft scan dir:. -o syft-json=sbom.json \
+		--name $(PROJECT_NAME) \
+		--version $(PROJECT_VERSION) \
 		--exclude './.gradle' \
 		--exclude './build' \
 		--exclude './**/build'
