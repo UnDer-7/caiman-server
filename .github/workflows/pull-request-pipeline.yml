@@ -4,10 +4,13 @@ on:
   pull_request:
     types: [opened, labeled, synchronize, reopened]
 
+permissions:
+  contents: read
+
 jobs:
   version-validation:
     name: Version Validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     # Only run if PR has 'run-pipe' label
     if: contains(github.event.pull_request.labels.*.name, 'run-pipe')
@@ -202,7 +205,7 @@ jobs:
 
   coding-style:
     name: Coding Style
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     needs: version-validation
     if: success()
@@ -245,7 +248,7 @@ jobs:
 
   quality:
     name: Quality Analysis
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     needs: coding-style
     if: success()
