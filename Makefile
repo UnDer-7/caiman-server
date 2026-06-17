@@ -243,8 +243,8 @@ security/scan/deps:
 	done
 	@echo ">>> Generating SBOM..."
 	syft scan dir:. -o syft-json=sbom.json \
-		--name $(PROJECT_NAME) \
-		--version $(PROJECT_VERSION) \
+		--source-name $(PROJECT_NAME) \
+		--source-version $(PROJECT_VERSION) \
 		--exclude './.gradle' \
 		--exclude './build' \
 		--exclude './**/build'
