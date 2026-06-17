@@ -1,0 +1,39 @@
+name: Create GitHub Release
+description: Wraps softprops/action-gh-release with a pinned SHA.
+
+inputs:
+  tag-name:
+    required: true
+    description: Release tag
+  name:
+    required: true
+    description: Release title
+  body-path:
+    required: true
+    description: Path to file containing release body
+  files:
+    required: true
+    description: Release assets (glob patterns, newline-separated)
+  draft:
+    required: false
+    default: 'false'
+  prerelease:
+    required: false
+    default: 'false'
+  github-token:
+    required: true
+    description: GitHub token for creating the release
+
+runs:
+  using: composite
+  steps:
+    - uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 #v2.2.0
+      with:
+        tag_name: ${{ inputs.tag-name }}
+        name: ${{ inputs.name }}
+        body_path: ${{ inputs.body-path }}
+        files: ${{ inputs.files }}
+        draft: ${{ inputs.draft }}
+        prerelease: ${{ inputs.prerelease }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}

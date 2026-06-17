@@ -16,17 +16,14 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
+        uses: ./.github/actions/checkout
         with:
-          fetch-depth: 0  # Fetch all history for SonarCloud analysis
+          fetch-depth: '0'
 
       - name: Setup GraalVM 25 (Oracle)
-        uses: graalvm/setup-graalvm@790e28947b79a9c09c3391c0f18bf8d0f102ed69 #v1.4.4
+        uses: ./.github/actions/setup-graalvm
         with:
-          java-version: '25'
-          distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          cache: 'gradle'
 
       - name: Run tests and generate coverage report
         run: make test/coverage
@@ -36,7 +33,7 @@ jobs:
         run: echo "date=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
 
       - name: Cache Grype vulnerability DB
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae #v5.0.5
+        uses: ./.github/actions/cache
         with:
           path: ~/.cache/grype/db
           key: grype-db-${{ vars.GRYPE_VERSION }}-${{ steps.date.outputs.date }}
@@ -44,9 +41,9 @@ jobs:
             grype-db-${{ vars.GRYPE_VERSION }}-
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 #v4.1.2
+        uses: ./.github/actions/install-cosign
         with:
-          cosign-release: ${{ vars.COSIGN_VERSION }}
+          cosign-version: ${{ vars.COSIGN_VERSION }}
 
       - name: Setup Anchore tools (Syft + Grype)
         uses: ./.github/actions/setup-anchore-tools
@@ -61,11 +58,11 @@ jobs:
         run: make security/scan/base-images
 
       - name: Upload SBOM for release
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 #v5.0.0
+        uses: ./.github/actions/upload-artifact
         with:
           name: sbom
           path: sbom.json
-          retention-days: 1
+          retention-days: '1'
 
       - name: Publish SonarCloud analysis
         env:
@@ -86,15 +83,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
+        uses: ./.github/actions/checkout
 
       - name: Setup GraalVM 25 (Oracle)
-        uses: graalvm/setup-graalvm@790e28947b79a9c09c3391c0f18bf8d0f102ed69 #v1.4.4
+        uses: ./.github/actions/setup-graalvm
         with:
-          java-version: '25'
-          distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          cache: 'gradle'
 
       - name: Verify GraalVM installation
         run: |
@@ -156,19 +150,19 @@ jobs:
           echo "Found native binary: $NATIVE_FILE"
 
       - name: Download SBOM from security scan
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
+        uses: ./.github/actions/download-artifact
         with:
           name: sbom
-          path: .
+          path: '.'
 
       - name: Set SBOM path output
         id: sbom
         run: echo "sbom_file=sbom.json" >> $GITHUB_OUTPUT
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 #v4.1.2
+        uses: ./.github/actions/install-cosign
         with:
-          cosign-release: ${{ vars.COSIGN_VERSION }}
+          cosign-version: ${{ vars.COSIGN_VERSION }}
 
       - name: Sign release artifacts
         id: sign
@@ -215,11 +209,11 @@ jobs:
           echo "✅ Created and pushed tag $VERSION"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 #v2.2.0
+        uses: ./.github/actions/create-github-release
         with:
-          tag_name: ${{ steps.project-version.outputs.version }}
+          tag-name: ${{ steps.project-version.outputs.version }}
           name: ${{ steps.project-version.outputs.version }}
-          body_path: changelog_body.txt
+          body-path: changelog_body.txt
           files: |
             ${{ steps.artifacts.outputs.jar_file }}
             ${{ steps.artifacts.outputs.native_file }}
@@ -227,19 +221,18 @@ jobs:
             ${{ steps.sign.outputs.native_sig }}
             ${{ steps.sbom.outputs.sbom_file }}
             ${{ steps.sign.outputs.sbom_sig }}
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          draft: 'false'
+          prerelease: 'false'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload build artifacts for Docker
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 #v5.0.0
+        uses: ./.github/actions/upload-artifact
         with:
           name: build-artifacts
           path: |
             caiman-app/build/libs/
             caiman-app/build/native/nativeCompile/
-          retention-days: 1
+          retention-days: '1'
 
   deploy-image:
     name: Build and Push Docker Images
@@ -251,15 +244,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
+        uses: ./.github/actions/checkout
 
       - name: Setup GraalVM 25 (Oracle)
-        uses: graalvm/setup-graalvm@790e28947b79a9c09c3391c0f18bf8d0f102ed69 #v1.4.4
+        uses: ./.github/actions/setup-graalvm
         with:
-          java-version: '25'
-          distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          cache: 'gradle'
 
       - name: Get project version
         id: project-version
@@ -269,10 +259,10 @@ jobs:
           echo "Project version: $VERSION"
 
       - name: Download build artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
+        uses: ./.github/actions/download-artifact
         with:
           name: build-artifacts
-          path: .
+          path: '.'
 
       - name: Verify downloaded artifacts
         run: |
@@ -308,7 +298,7 @@ jobs:
           echo "✅ Native image built: under7/caiman-server:${{ steps.project-version.outputs.version }}-native"
 
       - name: Login to Docker Hub
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef #v3.6.0
+        uses: ./.github/actions/docker-login
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -347,9 +337,9 @@ jobs:
           echo "✅ Tagged and pushed under7/caiman-server:latest"
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 #v4.1.2
+        uses: ./.github/actions/install-cosign
         with:
-          cosign-release: ${{ vars.COSIGN_VERSION }}
+          cosign-version: ${{ vars.COSIGN_VERSION }}
 
       - name: Setup Anchore tools (Syft + Grype)
         uses: ./.github/actions/setup-anchore-tools

@@ -1,0 +1,17 @@
+name: Setup GraalVM
+description: Wraps graalvm/setup-graalvm with a pinned SHA. Always installs Java 25 Oracle GraalVM with Gradle cache.
+
+inputs:
+  github-token:
+    required: true
+    description: GitHub token for GraalVM download rate limiting
+
+runs:
+  using: composite
+  steps:
+    - uses: graalvm/setup-graalvm@790e28947b79a9c09c3391c0f18bf8d0f102ed69 #v1.4.4
+      with:
+        java-version: '25'
+        distribution: 'graalvm'
+        github-token: ${{ inputs.github-token }}
+        cache: 'gradle'

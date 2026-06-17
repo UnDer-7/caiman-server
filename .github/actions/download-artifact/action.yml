@@ -1,0 +1,19 @@
+name: Download Artifact
+description: Wraps actions/download-artifact with a pinned SHA.
+
+inputs:
+  name:
+    required: true
+    description: Artifact name to download
+  path:
+    required: false
+    default: '.'
+    description: Destination directory
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
+      with:
+        name: ${{ inputs.name }}
+        path: ${{ inputs.path }}

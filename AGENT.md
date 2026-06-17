@@ -500,6 +500,76 @@ public DomainClass(String name, ...) { ... }
 
 ---
 
+## GitHub Actions — Composite Action Wrappers
+
+Every third-party GitHub Action used in this project **must** be wrapped in a local Composite Action. Direct use of external actions in workflow files is not allowed.
+
+### Rule
+
+1. Create `.github/actions/<wrapper-name>/action.yml` — a composite action that delegates to the external action with a **SHA-pinned** ref.
+2. Workflows reference the local wrapper (`uses: ./.github/actions/<wrapper-name>`), never the external action directly.
+3. The SHA lives in exactly one file (the wrapper). Updating the external action = changing one line in one file.
+
+**Why SHA pins, not tags:** Tags are mutable — an attacker or maintainer can move them without warning. A SHA is immutable. Tags are allowed only inside the wrapper as a human-readable comment (`#v1.4.4`), never as the functional ref.
+
+### Wrapper structure
+
+```yaml
+name: Setup GraalVM
+description: Wraps graalvm/setup-graalvm with a pinned SHA.
+
+inputs:
+  github-token:
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: graalvm/setup-graalvm@790e28947b79a9c09c3391c0f18bf8d0f102ed69 #v1.4.4
+      with:
+        java-version: '25'
+        distribution: 'graalvm'
+        github-token: ${{ inputs.github-token }}
+        cache: 'gradle'
+```
+
+Caller in workflow:
+```yaml
+- uses: ./.github/actions/setup-graalvm
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### Current wrappers
+
+| Wrapper | Wraps | SHA comment |
+|---|---|---|
+| `.github/actions/checkout` | `actions/checkout` | #v6.0.0 |
+| `.github/actions/setup-graalvm` | `graalvm/setup-graalvm` | #v1.4.4 |
+| `.github/actions/cache` | `actions/cache` | #v5.0.5 |
+| `.github/actions/install-cosign` | `sigstore/cosign-installer` | #v4.1.2 |
+| `.github/actions/upload-artifact` | `actions/upload-artifact` | #v5.0.0 |
+| `.github/actions/download-artifact` | `actions/download-artifact` | #v6.0.0 |
+| `.github/actions/create-github-release` | `softprops/action-gh-release` | #v2.2.0 |
+| `.github/actions/docker-login` | `docker/login-action` | #v3.6.0 |
+| `.github/actions/setup-anchore-tools` | Anchore Syft + Grype (custom download + verify) | — |
+
+### Adding a new external action
+
+1. Create `.github/actions/<name>/action.yml` with the SHA-pinned `uses:` and the tag as comment.
+2. Expose only the inputs/outputs that callers actually need.
+3. Reference the wrapper from all workflow files.
+4. Never reference the external action directly in a workflow.
+
+### Updating an external action
+
+1. Find the new commit SHA on the action's GitHub page (`git log` or the releases page).
+2. Update the single `uses:` line in `.github/actions/<name>/action.yml`.
+3. Update the tag comment on the same line.
+4. No workflow file changes needed.
+
+---
+
 ## Documentation — always read before implementing
 
 All business decisions, domain rules, and technical choices are documented in `./docs`. **Always consult the relevant documentation before writing or modifying any code.**

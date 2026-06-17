@@ -1,0 +1,15 @@
+name: Checkout
+description: Wraps actions/checkout with a pinned SHA.
+
+inputs:
+  fetch-depth:
+    required: false
+    default: '1'
+    description: Number of commits to fetch (0 = full history)
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
+      with:
+        fetch-depth: ${{ inputs.fetch-depth }}

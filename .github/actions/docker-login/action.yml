@@ -1,0 +1,18 @@
+name: Docker Login
+description: Wraps docker/login-action with a pinned SHA.
+
+inputs:
+  username:
+    required: true
+    description: Docker Hub username
+  password:
+    required: true
+    description: Docker Hub token or password
+
+runs:
+  using: composite
+  steps:
+    - uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef #v3.6.0
+      with:
+        username: ${{ inputs.username }}
+        password: ${{ inputs.password }}
