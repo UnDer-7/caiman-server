@@ -39,11 +39,12 @@ runs:
         SYFT_VERSION="${{ inputs.syft-version }}"
         SYFT_BARE="${SYFT_VERSION#v}"
         SYFT_BASE="https://github.com/anchore/syft/releases/download/${SYFT_VERSION}"
+        SYFT_FILENAME="syft_${SYFT_BARE}_linux_amd64.tar.gz"
 
-        curl -fsSL "${SYFT_BASE}/syft_${SYFT_BARE}_linux_amd64.tar.gz"    -o syft.tar.gz
-        curl -fsSL "${SYFT_BASE}/syft_${SYFT_BARE}_checksums.txt"          -o syft_checksums.txt
-        curl -fsSL "${SYFT_BASE}/syft_${SYFT_BARE}_checksums.txt.pem"      -o syft_checksums.txt.pem
-        curl -fsSL "${SYFT_BASE}/syft_${SYFT_BARE}_checksums.txt.sig"      -o syft_checksums.txt.sig
+        curl -fsSL "${SYFT_BASE}/${SYFT_FILENAME}"                     -o "${SYFT_FILENAME}"
+        curl -fsSL "${SYFT_BASE}/syft_${SYFT_BARE}_checksums.txt"      -o syft_checksums.txt
+        curl -fsSL "${SYFT_BASE}/syft_${SYFT_BARE}_checksums.txt.pem"  -o syft_checksums.txt.pem
+        curl -fsSL "${SYFT_BASE}/syft_${SYFT_BARE}_checksums.txt.sig"  -o syft_checksums.txt.sig
 
         cosign verify-blob syft_checksums.txt \
           --certificate syft_checksums.txt.pem \
@@ -53,9 +54,9 @@ runs:
 
         sha256sum --ignore-missing -c syft_checksums.txt
 
-        tar -xzf syft.tar.gz syft
+        tar -xzf "${SYFT_FILENAME}" syft
         mv syft "$HOME/.anchore/bin/syft"
-        rm -f syft.tar.gz syft_checksums.txt syft_checksums.txt.pem syft_checksums.txt.sig
+        rm -f "${SYFT_FILENAME}" syft_checksums.txt syft_checksums.txt.pem syft_checksums.txt.sig
 
     - name: Download and verify Grype
       if: steps.cache-anchore.outputs.cache-hit != 'true'
@@ -64,11 +65,12 @@ runs:
         GRYPE_VERSION="${{ inputs.grype-version }}"
         GRYPE_BARE="${GRYPE_VERSION#v}"
         GRYPE_BASE="https://github.com/anchore/grype/releases/download/${GRYPE_VERSION}"
+        GRYPE_FILENAME="grype_${GRYPE_BARE}_linux_amd64.tar.gz"
 
-        curl -fsSL "${GRYPE_BASE}/grype_${GRYPE_BARE}_linux_amd64.tar.gz"  -o grype.tar.gz
-        curl -fsSL "${GRYPE_BASE}/grype_${GRYPE_BARE}_checksums.txt"        -o grype_checksums.txt
-        curl -fsSL "${GRYPE_BASE}/grype_${GRYPE_BARE}_checksums.txt.pem"    -o grype_checksums.txt.pem
-        curl -fsSL "${GRYPE_BASE}/grype_${GRYPE_BARE}_checksums.txt.sig"    -o grype_checksums.txt.sig
+        curl -fsSL "${GRYPE_BASE}/${GRYPE_FILENAME}"                     -o "${GRYPE_FILENAME}"
+        curl -fsSL "${GRYPE_BASE}/grype_${GRYPE_BARE}_checksums.txt"     -o grype_checksums.txt
+        curl -fsSL "${GRYPE_BASE}/grype_${GRYPE_BARE}_checksums.txt.pem" -o grype_checksums.txt.pem
+        curl -fsSL "${GRYPE_BASE}/grype_${GRYPE_BARE}_checksums.txt.sig" -o grype_checksums.txt.sig
 
         cosign verify-blob grype_checksums.txt \
           --certificate grype_checksums.txt.pem \
@@ -78,9 +80,9 @@ runs:
 
         sha256sum --ignore-missing -c grype_checksums.txt
 
-        tar -xzf grype.tar.gz grype
+        tar -xzf "${GRYPE_FILENAME}" grype
         mv grype "$HOME/.anchore/bin/grype"
-        rm -f grype.tar.gz grype_checksums.txt grype_checksums.txt.pem grype_checksums.txt.sig
+        rm -f "${GRYPE_FILENAME}" grype_checksums.txt grype_checksums.txt.pem grype_checksums.txt.sig
 
     - name: Add Anchore tools to PATH
       shell: bash
