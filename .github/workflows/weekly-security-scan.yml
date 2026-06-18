@@ -58,6 +58,16 @@ jobs:
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           SCAN_DATE=$(TZ=UTC date '+%Y-%m-%d %H:%M:%S UTC')
 
+          # Plain-text body (multipart fallback — prevents spam classification)
+          {
+            printf 'Security Scan Failed — Vulnerabilities Detected\n\n'
+            printf 'Workflow:  %s\n' "${{ github.workflow }}"
+            printf 'Run:       %s\n' "$RUN_URL"
+            printf 'Date/Time: %s\n' "$SCAN_DATE"
+            printf '\n--- Scan Output ---\n\n'
+            cat scan-output.txt
+          } > email-body.txt
+
           cat > email-body.html << 'EOF'
           <!DOCTYPE html>
           <html lang="en">
@@ -132,6 +142,7 @@ jobs:
           subject: "[Caiman] Security Scan Failed - Vulnerabilities Detected"
           from: ${{ vars.SMTP_FROM }}
           to: ${{ vars.NOTIFICATION_EMAIL }}
+          body: file://email-body.txt
           html_body: file://email-body.html
 
       - name: Fail job after notification
