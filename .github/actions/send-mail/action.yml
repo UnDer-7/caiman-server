@@ -26,6 +26,9 @@ inputs:
   from:
     required: true
     description: Sender email address or "Name <email>"
+  body:
+    required: false
+    description: Plain-text body (used as the text/plain part in multipart emails — always provide alongside html_body to avoid spam filters)
   html_body:
     required: false
     description: HTML body of the email (use file://path to read from a file)
@@ -43,4 +46,5 @@ runs:
         subject: ${{ inputs.subject }}
         to: ${{ inputs.to }}
         from: ${{ inputs.from }}
+        body: ${{ inputs.body }}
         html_body: ${{ inputs.html_body }}
