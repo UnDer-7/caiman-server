@@ -1,0 +1,139 @@
+name: Weekly Security Scan
+
+on:
+  schedule:
+    - cron: '0 12 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
+
+      - name: Setup GraalVM 25 (Oracle)
+        uses: ./.github/actions/setup-graalvm
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get date for Grype DB cache key
+        id: date
+        run: echo "date=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
+
+      - name: Cache Grype vulnerability DB
+        uses: ./.github/actions/cache
+        with:
+          path: ~/.cache/grype/db
+          key: grype-db-${{ vars.GRYPE_VERSION }}-${{ steps.date.outputs.date }}
+          restore-keys: |
+            grype-db-${{ vars.GRYPE_VERSION }}-
+
+      - name: Install cosign
+        uses: ./.github/actions/install-cosign
+        with:
+          cosign-version: ${{ vars.COSIGN_VERSION }}
+
+      - name: Setup Anchore tools (Syft + Grype)
+        uses: ./.github/actions/setup-anchore-tools
+        with:
+          syft-version: ${{ vars.SYFT_VERSION }}
+          grype-version: ${{ vars.GRYPE_VERSION }}
+
+      - name: Scan dependencies and workflows
+        id: scan
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          make security/scan/deps 2>&1 | tee scan-output.txt
+
+      - name: Build alert email
+        if: steps.scan.outcome == 'failure'
+        run: |
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          SCAN_DATE=$(TZ=UTC date '+%Y-%m-%d %H:%M:%S UTC')
+
+          cat > email-body.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              body { font-family: Arial, sans-serif; color: #333; margin: 0; padding: 0; }
+              .header { background-color: #b71c1c; color: #fff; padding: 20px 24px; }
+              .header h2 { margin: 0; font-size: 20px; }
+              .content { padding: 24px; }
+              .field { margin-bottom: 12px; }
+              .label { font-weight: bold; color: #555; }
+              .value { margin-left: 8px; }
+              a { color: #1565c0; }
+              .divider { border: none; border-top: 1px solid #ddd; margin: 20px 0; }
+              .output-title { font-weight: bold; color: #555; margin-bottom: 8px; }
+              pre {
+                background: #f5f5f5;
+                border-left: 4px solid #b71c1c;
+                padding: 16px;
+                font-size: 12px;
+                font-family: 'Courier New', monospace;
+                overflow: auto;
+                white-space: pre;
+                margin: 0;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h2>Security Scan Failed &mdash; Vulnerabilities Detected</h2>
+            </div>
+            <div class="content">
+              <div class="field">
+                <span class="label">Workflow:</span>
+          EOF
+
+          printf '      <span class="value">%s</span>\n    </div>\n' \
+            "${{ github.workflow }}" >> email-body.html
+
+          printf '      <div class="field"><span class="label">Run:</span> <span class="value"><a href="%s">%s</a></span></div>\n' \
+            "$RUN_URL" "$RUN_URL" >> email-body.html
+
+          printf '      <div class="field"><span class="label">Date / Time:</span> <span class="value">%s</span></div>\n' \
+            "$SCAN_DATE" >> email-body.html
+
+          cat >> email-body.html << 'EOF'
+              <hr class="divider">
+              <div class="output-title">Scan Output</div>
+              <pre>
+          EOF
+
+          # HTML-escape and append scan output
+          sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g' scan-output.txt >> email-body.html
+
+          cat >> email-body.html << 'EOF'
+              </pre>
+            </div>
+          </body>
+          </html>
+          EOF
+
+      - name: Send security alert email
+        if: steps.scan.outcome == 'failure'
+        uses: ./.github/actions/send-mail
+        with:
+          server_address: ${{ vars.SMTP_SERVER }}
+          server_port: ${{ vars.SMTP_PORT }}
+          secure: ${{ vars.SMTP_SECURE }}
+          username: ${{ vars.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "[Caiman] Security Scan Failed - Vulnerabilities Detected"
+          from: ${{ vars.SMTP_FROM }}
+          to: ${{ vars.NOTIFICATION_EMAIL }}
+          html_body: file://email-body.html
+
+      - name: Fail job after notification
+        if: steps.scan.outcome == 'failure'
+        run: exit 1

@@ -1,0 +1,29 @@
+name: Cache
+description: Wraps actions/cache with a pinned SHA.
+
+inputs:
+  path:
+    required: true
+    description: Paths to cache
+  key:
+    required: true
+    description: Cache key
+  restore-keys:
+    required: false
+    default: ''
+    description: Fallback restore keys (newline-separated)
+
+outputs:
+  cache-hit:
+    description: Whether an exact cache hit occurred
+    value: ${{ steps.cache.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    - id: cache
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae #v5.0.5
+      with:
+        path: ${{ inputs.path }}
+        key: ${{ inputs.key }}
+        restore-keys: ${{ inputs.restore-keys }}

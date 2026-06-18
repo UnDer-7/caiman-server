@@ -290,14 +290,16 @@ sonar {
 // Push the aggregate JaCoCo XML and compiled class dirs to every subproject so
 // each module reports accurate coverage without manual per-module jacoco tasks.
 gradle.projectsEvaluated {
-    val aggregateXml = rootProject.layout.buildDirectory
-        .file("reports/jacoco/aggregate/jacoco.xml")
-        .get()
-        .asFile
-        .absolutePath
+    val aggregateXml =
+        rootProject.layout.buildDirectory
+            .file("reports/jacoco/aggregate/jacoco.xml")
+            .get()
+            .asFile
+            .absolutePath
 
     reportableProjects.forEach { subproject ->
-        subproject.extensions.findByType<SonarExtension>()
+        subproject.extensions
+            .findByType<SonarExtension>()
             ?.properties {
                 property("sonar.coverage.jacoco.xmlReportPaths", aggregateXml)
                 property(

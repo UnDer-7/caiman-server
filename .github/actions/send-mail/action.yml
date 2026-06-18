@@ -1,0 +1,46 @@
+name: Send Mail
+description: Wraps dawidd6/action-send-mail with a pinned SHA.
+
+inputs:
+  server_address:
+    required: true
+    description: SMTP server address
+  server_port:
+    required: true
+    description: SMTP server port (e.g. 587)
+  secure:
+    required: false
+    description: Whether the connection uses TLS (true/false)
+  username:
+    required: true
+    description: SMTP username for authentication
+  password:
+    required: true
+    description: SMTP password for authentication
+  subject:
+    required: true
+    description: Email subject line
+  to:
+    required: true
+    description: Recipient email address(es), comma-separated
+  from:
+    required: true
+    description: Sender email address or "Name <email>"
+  html_body:
+    required: false
+    description: HTML body of the email (use file://path to read from a file)
+
+runs:
+  using: composite
+  steps:
+    - uses: dawidd6/action-send-mail@42942bc2f8fba4e611b459a018967a6a7c78c68c #v17
+      with:
+        server_address: ${{ inputs.server_address }}
+        server_port: ${{ inputs.server_port }}
+        secure: ${{ inputs.secure }}
+        username: ${{ inputs.username }}
+        password: ${{ inputs.password }}
+        subject: ${{ inputs.subject }}
+        to: ${{ inputs.to }}
+        from: ${{ inputs.from }}
+        html_body: ${{ inputs.html_body }}
