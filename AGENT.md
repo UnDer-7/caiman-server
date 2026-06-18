@@ -523,6 +523,7 @@ description: Wraps graalvm/setup-graalvm with a pinned SHA.
 inputs:
   github-token:
     required: true
+    description: GitHub token used for GraalVM setup and cache authentication
 
 runs:
   using: composite
@@ -555,13 +556,15 @@ Caller in workflow:
 | `.github/actions/create-github-release` | `softprops/action-gh-release` | #v2.2.0 |
 | `.github/actions/docker-login` | `docker/login-action` | #v3.6.0 |
 | `.github/actions/setup-anchore-tools` | Anchore Syft + Grype (custom download + verify) | — |
+| `.github/actions/send-mail` | `dawidd6/action-send-mail` | #v17 |
 
 ### Adding a new external action
 
 1. Create `.github/actions/<name>/action.yml` with the SHA-pinned `uses:` and the tag as comment.
 2. Expose only the inputs/outputs that callers actually need.
-3. Reference the wrapper from all workflow files.
-4. Never reference the external action directly in a workflow.
+3. Every input must include a `description` field — without it the wrapper is unusable as self-documentation.
+4. Reference the wrapper from all workflow files.
+5. Never reference the external action directly in a workflow.
 
 ### Updating an external action
 
