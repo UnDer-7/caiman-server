@@ -1,0 +1,23 @@
+name: Upload Artifact
+description: Wraps actions/upload-artifact with a pinned SHA.
+
+inputs:
+  name:
+    required: true
+    description: Artifact name
+  path:
+    required: true
+    description: Files or directories to upload (glob patterns, newline-separated)
+  retention-days:
+    required: false
+    default: '1'
+    description: Number of days to retain the artifact
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 #v5.0.0
+      with:
+        name: ${{ inputs.name }}
+        path: ${{ inputs.path }}
+        retention-days: ${{ inputs.retention-days }}

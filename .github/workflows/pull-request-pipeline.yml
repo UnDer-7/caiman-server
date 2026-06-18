@@ -4,10 +4,13 @@ on:
   pull_request:
     types: [opened, labeled, synchronize, reopened]
 
+permissions:
+  contents: read
+
 jobs:
   version-validation:
     name: Version Validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     # Only run if PR has 'run-pipe' label
     if: contains(github.event.pull_request.labels.*.name, 'run-pipe')
@@ -17,12 +20,9 @@ jobs:
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
 
       - name: Setup GraalVM 25 (Oracle)
-        uses: graalvm/setup-graalvm@790e28947b79a9c09c3391c0f18bf8d0f102ed69 #v1.4.4
+        uses: ./.github/actions/setup-graalvm
         with:
-          java-version: '25'
-          distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          cache: 'gradle'
 
       - name: Get current project version
         id: project-version
@@ -202,7 +202,7 @@ jobs:
 
   coding-style:
     name: Coding Style
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     needs: version-validation
     if: success()
@@ -212,12 +212,9 @@ jobs:
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
 
       - name: Setup GraalVM 25 (Oracle)
-        uses: graalvm/setup-graalvm@790e28947b79a9c09c3391c0f18bf8d0f102ed69 #v1.4.4
+        uses: ./.github/actions/setup-graalvm
         with:
-          java-version: '25'
-          distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          cache: 'gradle'
 
       - name: Verify GraalVM installation
         run: |
@@ -245,7 +242,7 @@ jobs:
 
   quality:
     name: Quality Analysis
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     needs: coding-style
     if: success()
@@ -254,15 +251,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
         with:
-          fetch-depth: 0  # Fetch all history for SonarCloud analysis
+          fetch-depth: 0
 
       - name: Setup GraalVM 25 (Oracle)
-        uses: graalvm/setup-graalvm@790e28947b79a9c09c3391c0f18bf8d0f102ed69 #v1.4.4
+        uses: ./.github/actions/setup-graalvm
         with:
-          java-version: '25'
-          distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          cache: 'gradle'
 
       - name: Verify GraalVM installation
         run: |
@@ -275,17 +269,23 @@ jobs:
         run: echo "date=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
 
       - name: Cache Grype vulnerability DB
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae #v5.0.5
+        uses: ./.github/actions/cache
         with:
           path: ~/.cache/grype/db
-          key: grype-db-v0.114.0-${{ steps.date.outputs.date }}
+          key: grype-db-${{ vars.GRYPE_VERSION }}-${{ steps.date.outputs.date }}
           restore-keys: |
-            grype-db-v0.114.0-
+            grype-db-${{ vars.GRYPE_VERSION }}-
 
-      - name: Install Syft and Grype
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin v1.45.1
-          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin v0.114.0
+      - name: Install cosign
+        uses: ./.github/actions/install-cosign
+        with:
+          cosign-version: ${{ vars.COSIGN_VERSION }}
+
+      - name: Setup Anchore tools (Syft + Grype)
+        uses: ./.github/actions/setup-anchore-tools
+        with:
+          syft-version: ${{ vars.SYFT_VERSION }}
+          grype-version: ${{ vars.GRYPE_VERSION }}
 
       - name: Scan dependencies and workflows
         run: make security/scan/deps
