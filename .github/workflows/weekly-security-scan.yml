@@ -156,7 +156,7 @@ jobs:
             --state open \
             --search "$ISSUE_TITLE" \
             --json number,title \
-            --jq --arg t "$ISSUE_TITLE" '.[] | select(.title == $t) | .number' | head -1)
+            | jq -r --arg t "$ISSUE_TITLE" '.[] | select(.title == $t) | .number' | head -1)
 
           if [ -z "$EXISTING" ]; then
             gh issue create \
