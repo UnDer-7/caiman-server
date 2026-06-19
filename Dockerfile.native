@@ -1,5 +1,5 @@
 # Prereq: ./gradlew :caiman-app:nativeCompile
-# debian:bookworm-slim — digest pins exact image, tag is for human reference only
+# debian:bookworm-slim - Repo: https://hub.docker.com/_/debian
 FROM debian@sha256:96e378d7e6531ac9a15ad505478fcc2e69f371b10f5cdf87857c4b8188404716
 
 LABEL org.opencontainers.image.title="caiman-server" \

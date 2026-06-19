@@ -1,6 +1,7 @@
 services:
   caiman_server_database:
-    image: postgres:17-alpine
+    # postgres:18-alpine - Repo: https://hub.docker.com/_/postgres
+    image: postgres:18-alpine@sha256:1b1689b20d16a014a3d195653381cf2caa75a41a92d93b255a9d6ea29fd353aa
     container_name: caiman_server_database
     restart: unless-stopped
     ports:
@@ -11,7 +12,7 @@ services:
       POSTGRES_PASSWORD: admin_pass
       POSTGRES_DB: caiman_server
     volumes:
-      - caiman_server_database_vlm:/var/lib/postgresql/data
+      - caiman_server_database_vlm:/var/lib/postgresql
 
 volumes:
   caiman_server_database_vlm:

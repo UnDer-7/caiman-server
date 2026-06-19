@@ -16,7 +16,8 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 #v5.0.0
+    # v5.0.0 - Repo: https://github.com/actions/upload-artifact
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
         name: ${{ inputs.name }}
         path: ${{ inputs.path }}

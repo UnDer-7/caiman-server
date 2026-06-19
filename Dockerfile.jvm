@@ -3,7 +3,7 @@
 # All subsequent stages extend this to avoid duplicating
 # user creation and to share a single cached layer.
 # ============================================================
-# bellsoft/liberica-openjre-alpine:25-cds — digest pins exact image, tag is for human reference only
+# bellsoft/liberica-openjre-alpine:25-cds - Repo: https://hub.docker.com/r/bellsoft/liberica-openjre-alpine
 FROM bellsoft/liberica-openjre-alpine@sha256:08f48d80457dd78d2238149d59f83dc49d66c30fe9610b9303e14a2525ebd607 AS base
 RUN addgroup -g 1000 -S caiman && adduser -u 1000 -S caiman -G caiman
 
