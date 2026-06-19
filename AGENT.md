@@ -471,7 +471,7 @@ Could not resolve all files for configuration ':caiman-app:runtimeClasspath'.
 **Fix:** Regenerate all lockfiles and commit them:
 
 ```bash
-make security/update-locks
+just security-update-locks
 # or directly:
 ./gradlew updateDependencyLocks --write-locks -q
 ```
@@ -556,6 +556,7 @@ Caller in workflow:
 | `.github/actions/create-github-release` | `softprops/action-gh-release` | #v2.2.0 |
 | `.github/actions/docker-login` | `docker/login-action` | #v3.6.0 |
 | `.github/actions/setup-anchore-tools` | Anchore Syft + Grype (custom download + verify) | — |
+| `.github/actions/install-just` | `taiki-e/install-action` | #v2.82.0 |
 | `.github/actions/send-mail` | `dawidd6/action-send-mail` | #v17 |
 
 ### Adding a new external action
@@ -651,7 +652,7 @@ All business decisions, domain rules, and technical choices are documented in `.
     class CreateDebtorSQLiteIT { ... }
     ```
 
-    Run commands: `make test/unit`, `make test/integration/jvm`, `make test` (both JVM), `make test/integration/native` (GraalVM native, requires Docker).
+    Run commands: `just test-unit`, `just test-integration-jvm`, `just test` (both JVM), `just test-integration-native` (GraalVM native, requires Docker).
 
 14. **No wildcard imports (`*`).** All imports must be fully qualified. The only exception is test source files, where wildcard imports are allowed exclusively for assertion and mock libraries.
 

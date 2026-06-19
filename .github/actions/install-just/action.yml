@@ -1,0 +1,9 @@
+name: Install just
+description: Wraps taiki-e/install-action with a pinned SHA to install just 1.53.0.
+
+runs:
+  using: composite
+  steps:
+    - uses: taiki-e/install-action@b8cecb83565409bcc297b2df6e77f030b2a468d5 #v2.82.0
+      with:
+        tool: just@1.53.0
