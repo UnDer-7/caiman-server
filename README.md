@@ -6,4 +6,4 @@ Self-hosted personal billing management backend. See `AGENT.md` and `docs/` for 
 
 Install [Syft](https://github.com/anchore/syft) and [Grype](https://github.com/anchore/grype):
 
-Then run: `make security/scan/deps` or `make security/scan/base-images`
+Then run: `just security-scan-deps` or `just security-scan-base-images`

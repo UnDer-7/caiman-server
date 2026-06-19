@@ -24,10 +24,13 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install just
+        uses: ./.github/actions/install-just
+
       - name: Get current project version
         id: project-version
         run: |
-          VERSION=$(make version)
+          VERSION=$(just version)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Current project version: $VERSION"
 
@@ -111,9 +114,9 @@ jobs:
           echo "💡 You must bump the version to be greater than $LATEST_VERSION"
           echo ""
           echo "Following Semantic Versioning:"
-          echo "  - Patch release (bug fixes): make version/set v<patch+1>"
-          echo "  - Minor release (new features): make version/set v<minor+1>.0"
-          echo "  - Major release (breaking changes): make version/set v<major+1>.0.0"
+          echo "  - Patch release (bug fixes): just version-set v<patch+1>"
+          echo "  - Minor release (new features): just version-set v<minor+1>.0"
+          echo "  - Major release (breaking changes): just version-set v<major+1>.0.0"
           echo ""
           echo "After updating the version, commit and push the changes."
           exit 1
@@ -222,9 +225,12 @@ jobs:
           echo "JAVA_HOME: $JAVA_HOME"
           java -version
 
+      - name: Install just
+        uses: ./.github/actions/install-just
+
       - name: Check code formatting
         id: format-check
-        run: make fmt/check
+        run: just fmt-check
         continue-on-error: true
 
       - name: Format check failed
@@ -235,7 +241,7 @@ jobs:
           echo "❌ To resolve this issue, format the code following the project guidelines."
           echo ""
           echo "💡 You can run the following command to automatically format the code:"
-          echo "   make fmt/apply"
+          echo "   just fmt-apply"
           echo ""
           echo "After that, commit and push the formatted code."
           exit 1
@@ -264,6 +270,9 @@ jobs:
           echo "JAVA_HOME: $JAVA_HOME"
           java -version
 
+      - name: Install just
+        uses: ./.github/actions/install-just
+
       - name: Get date for Grype DB cache key
         id: date
         run: echo "date=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
@@ -288,17 +297,17 @@ jobs:
           grype-version: ${{ vars.GRYPE_VERSION }}
 
       - name: Scan dependencies and workflows
-        run: make security/scan/deps
+        run: just security-scan-deps
 
       - name: Scan base images
-        run: make security/scan/base-images
+        run: just security-scan-base-images
 
       - name: Run tests
         id: test
-        run: make test/coverage
+        run: just test-coverage
 
       - name: Publish to SonarCloud
         if: steps.test.outcome == 'success'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: make sonar
+        run: just sonar

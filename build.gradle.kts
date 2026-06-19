@@ -234,14 +234,6 @@ spotless {
         leadingTabsToSpaces(4)
     }
 
-    // Makefile requires tab indentation — keep separate from spaces-based misc format
-    format("makefile") {
-        target("Makefile")
-        trimTrailingWhitespace()
-        endWithNewline()
-        leadingSpacesToTabs()
-    }
-
     java {
         target("**/*.java")
         palantirJavaFormat("2.89.0").style("PALANTIR").formatJavadoc(true)
@@ -260,7 +252,6 @@ spotless {
 // ─────────────────────────────────────────────────────────────────────────────
 // SonarCloud — static analysis + coverage upload
 //
-// Run:  make sonar  (requires SONAR_TOKEN env var and prior 'make test/coverage')
 // Dashboard: https://sonarcloud.io/dashboard?id=UnDer-7_caiman-server
 //
 // Each subproject auto-detects its own sonar.sources/sonar.tests.

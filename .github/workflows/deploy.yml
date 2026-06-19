@@ -25,8 +25,11 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install just
+        uses: ./.github/actions/install-just
+
       - name: Run tests and generate coverage report
-        run: make test/coverage
+        run: just test-coverage
 
       - name: Get date for Grype DB cache key
         id: date
@@ -52,10 +55,10 @@ jobs:
           grype-version: ${{ vars.GRYPE_VERSION }}
 
       - name: Scan dependencies and workflows
-        run: make security/scan/deps
+        run: just security-scan-deps
 
       - name: Scan base images
-        run: make security/scan/base-images
+        run: just security-scan-base-images
 
       - name: Upload SBOM for release
         uses: ./.github/actions/upload-artifact
@@ -67,7 +70,7 @@ jobs:
       - name: Publish SonarCloud analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: make sonar
+        run: just sonar
 
   tag-and-release:
     name: Tag and Release
@@ -96,10 +99,13 @@ jobs:
           echo "JAVA_HOME: $JAVA_HOME"
           java -version
 
+      - name: Install just
+        uses: ./.github/actions/install-just
+
       - name: Get current project version
         id: project-version
         run: |
-          VERSION=$(make version)
+          VERSION=$(just version)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Current project version: $VERSION"
 
@@ -126,7 +132,7 @@ jobs:
           echo "✅ Tag $VERSION does not exist, proceeding with release"
 
       - name: Build GraalVM native image and JAR
-        run: make build/artifacts
+        run: just build-artifacts
 
       - name: Find build artifacts
         id: artifacts
@@ -251,6 +257,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install just
+        uses: ./.github/actions/install-just
+
       - name: Get project version
         id: project-version
         run: |
@@ -288,13 +297,13 @@ jobs:
       - name: Build JVM Docker image
         run: |
           echo "Building JVM Docker image..."
-          make build/jar/docker
+          just build-jar-docker
           echo "✅ JVM image built: under7/caiman-server:${{ steps.project-version.outputs.version }}-jvm"
 
       - name: Build native Docker image
         run: |
           echo "Building native Docker image..."
-          make build/native/docker
+          just build-native-docker
           echo "✅ Native image built: under7/caiman-server:${{ steps.project-version.outputs.version }}-native"
 
       - name: Login to Docker Hub

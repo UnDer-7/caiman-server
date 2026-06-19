@@ -23,6 +23,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install just
+        uses: ./.github/actions/install-just
+
       - name: Get date for Grype DB cache key
         id: date
         run: echo "date=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
@@ -51,7 +54,7 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          make security/scan/deps 2>&1 | tee scan-output.txt
+          just security-scan-deps 2>&1 | tee scan-output.txt
 
       - name: Build alert email
         if: steps.scan.outcome == 'failure'
