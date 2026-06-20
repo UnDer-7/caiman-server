@@ -1,10 +1,5 @@
 package com.caimanproject.debtor.infrastructure.database.adapter;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.caimanproject.debtor.core.test.builder.DebtorDomainBuilder;
 import com.caimanproject.debtor.infrastructure.database.entity.DebtorEntity;
 import com.caimanproject.debtor.infrastructure.database.mapper.AuditEntityMapper;
@@ -26,6 +21,11 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 @UnitTest
 @ExtendWith(MockitoExtension.class)
 class DebtorPersistenceAdapterTest {
@@ -43,15 +43,12 @@ class DebtorPersistenceAdapterTest {
     AuditEntityMapper auditEntityMapper = new AuditEntityMapperImpl(optionalMapper);
 
     @Spy
-    DebtorContactEntityMapper debtorContactEntityMapper = new DebtorContactEntityMapperImpl(auditEntityMapper, idMapper);
+    DebtorContactEntityMapper debtorContactEntityMapper =
+            new DebtorContactEntityMapperImpl(auditEntityMapper, idMapper);
 
     @Spy
-    DebtorEntityMapper debtorEntityMapper = new DebtorEntityMapperImpl(
-        optionalMapper,
-        debtorContactEntityMapper,
-        auditEntityMapper,
-        idMapper
-    );
+    DebtorEntityMapper debtorEntityMapper =
+            new DebtorEntityMapperImpl(optionalMapper, debtorContactEntityMapper, auditEntityMapper, idMapper);
 
     @InjectMocks
     DebtorPersistenceAdapter adapter;

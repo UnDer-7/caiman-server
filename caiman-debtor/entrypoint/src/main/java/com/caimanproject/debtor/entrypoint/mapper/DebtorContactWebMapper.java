@@ -12,8 +12,8 @@ import org.mapstruct.ReportingPolicy;
 
 @Mapper(
         componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
-    injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-    uses = {OptionalMapper.class, AuditWebMapper.class},
+        injectionStrategy = InjectionStrategy.CONSTRUCTOR,
+        uses = {OptionalMapper.class, AuditWebMapper.class},
         unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface DebtorContactWebMapper {
 

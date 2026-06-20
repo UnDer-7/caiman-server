@@ -10,8 +10,8 @@ import org.mapstruct.ReportingPolicy;
 
 @Mapper(
         componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
-    injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-    uses = OptionalMapper.class,
+        injectionStrategy = InjectionStrategy.CONSTRUCTOR,
+        uses = OptionalMapper.class,
         unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface AuditWebMapper {
 

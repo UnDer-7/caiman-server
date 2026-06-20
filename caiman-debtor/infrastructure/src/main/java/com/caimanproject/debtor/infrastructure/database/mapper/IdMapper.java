@@ -4,7 +4,6 @@ import com.caimanproject.contracts.util.Constants;
 import com.caimanproject.mapper.OptionalMapper;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
