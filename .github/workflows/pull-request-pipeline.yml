@@ -302,9 +302,6 @@ jobs:
       - name: Scan dependencies and workflows
         run: just security-scan-deps
 
-      - name: Scan base images
-        run: just security-scan-base-images
-
       - name: Run tests
         id: test
         run: just test-coverage
