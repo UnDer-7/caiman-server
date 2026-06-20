@@ -36,7 +36,8 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: dawidd6/action-send-mail@42942bc2f8fba4e611b459a018967a6a7c78c68c #v17
+    # v17 - Repo: https://github.com/dawidd6/action-send-mail
+    - uses: dawidd6/action-send-mail@42942bc2f8fba4e611b459a018967a6a7c78c68c
       with:
         server_address: ${{ inputs.server_address }}
         server_port: ${{ inputs.server_port }}
