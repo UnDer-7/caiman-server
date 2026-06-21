@@ -6,7 +6,7 @@ import com.caimanproject.debtor.core.domain.types.ContactType;
 import com.caimanproject.debtor.core.port.in.command.CreateDebtorContactCommand;
 import com.caimanproject.debtor.core.port.out.DebtorPersistenceGateway;
 import com.caimanproject.debtor.core.test.builder.CommandBuilder;
-import com.caimanproject.debtor.core.test.builder.DomainBuilder;
+import com.caimanproject.debtor.core.test.builder.DebtorDomainBuilder;
 import com.caimanproject.test.annotation.UnitTest;
 import java.util.List;
 import java.util.stream.Stream;
@@ -93,7 +93,7 @@ class CreateDebtorServiceTest {
         void should_save_and_return_debtor_when_valid_command() {
             // Given
             final var command = CommandBuilder.buildCreateDebtorCommandFull().build();
-            final var savedDebtor = DomainBuilder.buildDebtorFull().build();
+            final var savedDebtor = DebtorDomainBuilder.buildDebtorFull().build();
             Mockito.when(debtorPersistenceGateway.save(Mockito.any())).thenReturn(savedDebtor);
 
             // When

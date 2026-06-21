@@ -8,9 +8,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public final class DomainBuilder {
+public final class DebtorDomainBuilder {
 
-    private DomainBuilder() {
+    private DebtorDomainBuilder() {
         throw new IllegalStateException("Utility class");
     }
 

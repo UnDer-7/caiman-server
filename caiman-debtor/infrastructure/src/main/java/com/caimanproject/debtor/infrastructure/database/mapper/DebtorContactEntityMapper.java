@@ -5,12 +5,14 @@ import com.caimanproject.debtor.core.domain.model.DebtorContact;
 import com.caimanproject.debtor.infrastructure.database.entity.DebtorContactEntity;
 import com.caimanproject.mapper.OptionalMapper;
 import java.util.Collection;
+import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(
         componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
+        injectionStrategy = InjectionStrategy.CONSTRUCTOR,
         uses = {OptionalMapper.class, AuditEntityMapper.class, IdMapper.class},
         unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface DebtorContactEntityMapper {

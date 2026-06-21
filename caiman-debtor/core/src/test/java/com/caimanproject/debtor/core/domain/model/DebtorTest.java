@@ -2,7 +2,7 @@ package com.caimanproject.debtor.core.domain.model;
 
 import com.caimanproject.debtor.core.domain.exception.domain.DomainExceptionCode;
 import com.caimanproject.debtor.core.domain.types.ContactType;
-import com.caimanproject.debtor.core.test.builder.DomainBuilder;
+import com.caimanproject.debtor.core.test.builder.DebtorDomainBuilder;
 import com.caimanproject.test.annotation.UnitTest;
 import java.util.List;
 import java.util.UUID;
@@ -51,33 +51,33 @@ class DebtorTest {
         static Stream<Arguments> should_return_empty_when_no_duplicates__cases() {
             return Stream.of(
                     Arguments.of(List.of(
-                            DomainBuilder.buildDebtorContactFull()
+                            DebtorDomainBuilder.buildDebtorContactFull()
                                     .contactType(ContactType.EMAIL)
                                     .contactValue("johndoe11@gmail.com")
                                     .priority(0)
                                     .build(),
-                            DomainBuilder.buildDebtorContactFull()
+                            DebtorDomainBuilder.buildDebtorContactFull()
                                     .contactType(ContactType.EMAIL)
                                     .contactValue("johndoe22@gmail.com")
                                     .priority(1)
                                     .build(),
-                            DomainBuilder.buildDebtorContactFull()
+                            DebtorDomainBuilder.buildDebtorContactFull()
                                     .contactType(ContactType.EMAIL)
                                     .contactValue("marty@gmail.com")
                                     .priority(2)
                                     .build())),
                     Arguments.of(List.of(
-                            DomainBuilder.buildDebtorContactFull()
+                            DebtorDomainBuilder.buildDebtorContactFull()
                                     .contactType(ContactType.EMAIL)
                                     .contactValue("johndoe11@gmail.com")
                                     .priority(0)
                                     .build(),
-                            DomainBuilder.buildDebtorContactFull()
+                            DebtorDomainBuilder.buildDebtorContactFull()
                                     .contactType(ContactType.EMAIL)
                                     .contactValue("marty@gmail.com")
                                     .priority(1)
                                     .build())),
-                    Arguments.of(List.of(DomainBuilder.buildDebtorContactFull()
+                    Arguments.of(List.of(DebtorDomainBuilder.buildDebtorContactFull()
                             .contactType(ContactType.EMAIL)
                             .contactValue("johndoe11@gmail.com")
                             .priority(0)
@@ -116,33 +116,33 @@ class DebtorTest {
         static Stream<Arguments> should_return_empty_when_no_duplicates__cases() {
             return Stream.of(
                     Arguments.of(List.of(
-                            DomainBuilder.buildDebtorContactFull()
+                            DebtorDomainBuilder.buildDebtorContactFull()
                                     .contactType(ContactType.EMAIL)
                                     .contactValue("johndoe@gmail.com")
                                     .priority(0)
                                     .build(),
-                            DomainBuilder.buildDebtorContactFull()
+                            DebtorDomainBuilder.buildDebtorContactFull()
                                     .contactType(ContactType.EMAIL)
                                     .contactValue("marty@gmail.com")
                                     .priority(1)
                                     .build(),
-                            DomainBuilder.buildDebtorContactFull()
+                            DebtorDomainBuilder.buildDebtorContactFull()
                                     .contactType(ContactType.EMAIL)
                                     .contactValue("other@gmail.com")
                                     .priority(2)
                                     .build())),
                     Arguments.of(List.of(
-                            DomainBuilder.buildDebtorContactFull()
+                            DebtorDomainBuilder.buildDebtorContactFull()
                                     .contactType(ContactType.EMAIL)
                                     .contactValue("johndoe@gmail.com")
                                     .priority(0)
                                     .build(),
-                            DomainBuilder.buildDebtorContactFull()
+                            DebtorDomainBuilder.buildDebtorContactFull()
                                     .contactType(ContactType.EMAIL)
                                     .contactValue("marty@gmail.com")
                                     .priority(1)
                                     .build())),
-                    Arguments.of(List.of(DomainBuilder.buildDebtorContactFull()
+                    Arguments.of(List.of(DebtorDomainBuilder.buildDebtorContactFull()
                             .contactType(ContactType.EMAIL)
                             .contactValue("johndoe@gmail.com")
                             .priority(0)
@@ -208,12 +208,12 @@ class DebtorTest {
                                 .notes("Lorem ipsum")
                                 .notificationsEnabled(true)
                                 .contacts(List.of(
-                                        DomainBuilder.buildDebtorContactFull()
+                                        DebtorDomainBuilder.buildDebtorContactFull()
                                                 .contactType(ContactType.EMAIL)
                                                 .contactValue("johndoe@gmail.com")
                                                 .priority(0)
                                                 .build(),
-                                        DomainBuilder.buildDebtorContactFull()
+                                        DebtorDomainBuilder.buildDebtorContactFull()
                                                 .contactType(ContactType.EMAIL)
                                                 .contactValue("johndoe2@gmail.com")
                                                 .priority(1)
@@ -239,7 +239,7 @@ class DebtorTest {
                         .notificationsEnabled(true)
                         .active(true)
                         .contacts(contacts)
-                        .audit(DomainBuilder.buildAuditFull().build());
+                        .audit(DebtorDomainBuilder.buildAuditFull().build());
 
                 // When
                 final var abstractThrowableAssert = Assertions.assertThatThrownBy(debtorBuilder::build);
@@ -263,7 +263,7 @@ class DebtorTest {
                         .notificationsEnabled(true)
                         .active(true)
                         .contacts(contacts)
-                        .audit(DomainBuilder.buildAuditFull().build());
+                        .audit(DebtorDomainBuilder.buildAuditFull().build());
 
                 // When
                 final var abstractThrowableAssert = Assertions.assertThatThrownBy(debtorBuilder::build);
@@ -284,17 +284,17 @@ class DebtorTest {
                                 .notificationsEnabled(true)
                                 .active(true)
                                 .contacts(List.of(
-                                        DomainBuilder.buildDebtorContactFull()
+                                        DebtorDomainBuilder.buildDebtorContactFull()
                                                 .contactType(ContactType.EMAIL)
                                                 .contactValue("johndoe@gmail.com")
                                                 .priority(0)
                                                 .build(),
-                                        DomainBuilder.buildDebtorContactFull()
+                                        DebtorDomainBuilder.buildDebtorContactFull()
                                                 .contactType(ContactType.EMAIL)
                                                 .contactValue("johndoe2@gmail.com")
                                                 .priority(1)
                                                 .build()))
-                                .audit(DomainBuilder.buildAuditFull().build())
+                                .audit(DebtorDomainBuilder.buildAuditFull().build())
                                 .build())
                         .doesNotThrowAnyException();
             }
@@ -305,17 +305,17 @@ class DebtorTest {
         return Stream.of(
                 Arguments.of(
                         List.of(
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe11@gmail.com")
                                         .priority(0)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe11@gmail.com")
                                         .priority(1)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("marty@gmail.com")
                                         .priority(2)
@@ -323,27 +323,27 @@ class DebtorTest {
                         List.of("johndoe11@gmail.com")),
                 Arguments.of(
                         List.of(
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe11@gmail.com")
                                         .priority(0)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe11@gmail.com")
                                         .priority(1)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe22@gmail.com")
                                         .priority(2)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe22@gmail.com")
                                         .priority(3)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("marty@gmail.com")
                                         .priority(4)
@@ -351,17 +351,17 @@ class DebtorTest {
                         List.of("johndoe11@gmail.com", "johndoe22@gmail.com")),
                 Arguments.of(
                         List.of(
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe11@gmail.com")
                                         .priority(0)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe11@gmail.com")
                                         .priority(1)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe11@gmail.com")
                                         .priority(2)
@@ -369,17 +369,17 @@ class DebtorTest {
                         List.of("johndoe11@gmail.com")),
                 Arguments.of(
                         List.of(
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe@gmail.com")
                                         .priority(0)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe@gmail.com")
                                         .priority(1)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("other@gmail.com")
                                         .priority(2)
@@ -387,27 +387,27 @@ class DebtorTest {
                         List.of("johndoe@gmail.com")),
                 Arguments.of(
                         List.of(
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("joji@gmail.com")
                                         .priority(0)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe11@gmail.com")
                                         .priority(1)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe11@gmail.com")
                                         .priority(2)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("marty@gmail.com")
                                         .priority(3)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("marty@gmail.com")
                                         .priority(4)
@@ -419,17 +419,17 @@ class DebtorTest {
         return Stream.of(
                 Arguments.of(
                         List.of(
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe@gmail.com")
                                         .priority(0)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("marty@gmail.com")
                                         .priority(0)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("other@gmail.com")
                                         .priority(1)
@@ -437,22 +437,22 @@ class DebtorTest {
                         List.of("johndoe@gmail.com")),
                 Arguments.of(
                         List.of(
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe@gmail.com")
                                         .priority(0)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("marty@gmail.com")
                                         .priority(0)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("other@gmail.com")
                                         .priority(1)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("carol@gmail.com")
                                         .priority(1)
@@ -460,17 +460,17 @@ class DebtorTest {
                         List.of("johndoe@gmail.com", "other@gmail.com")),
                 Arguments.of(
                         List.of(
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe1@gmail.com")
                                         .priority(1)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe2@gmail.com")
                                         .priority(1)
                                         .build(),
-                                DomainBuilder.buildDebtorContactFull()
+                                DebtorDomainBuilder.buildDebtorContactFull()
                                         .contactType(ContactType.EMAIL)
                                         .contactValue("johndoe@gmail.com")
                                         .priority(0)
