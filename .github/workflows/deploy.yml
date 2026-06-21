@@ -137,7 +137,7 @@ jobs:
       - name: Find build artifacts
         id: artifacts
         run: |
-          JAR_FILE=$(find caiman-app/build/libs -name "*.jar" -type f | head -n 1)
+          JAR_FILE=$(find caiman-app/build/libs -name "*.jar" ! -name "*-plain.jar" -type f | head -n 1)
           NATIVE_FILE="caiman-app/build/native/nativeCompile/caiman-app"
 
           if [ -z "$JAR_FILE" ]; then
@@ -320,7 +320,7 @@ jobs:
       - name: Find build artifacts
         id: artifacts
         run: |
-          JAR_FILE=$(find caiman-app/build/libs -name "*.jar" -type f | head -n 1)
+          JAR_FILE=$(find caiman-app/build/libs -name "*.jar" ! -name "*-plain.jar" -type f | head -n 1)
           NATIVE_FILE="caiman-app/build/native/nativeCompile/caiman-app"
 
           if [ -z "$JAR_FILE" ]; then
