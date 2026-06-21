@@ -176,13 +176,13 @@ jobs:
           NATIVE_FILE="${{ steps.artifacts.outputs.native_file }}"
           SBOM_FILE="${{ steps.sbom.outputs.sbom_file }}"
 
-          cosign sign-blob --yes --output-signature "${JAR_FILE}.sig" "${JAR_FILE}"
-          cosign sign-blob --yes --output-signature "${NATIVE_FILE}.sig" "${NATIVE_FILE}"
-          cosign sign-blob --yes --output-signature "${SBOM_FILE}.sig" "${SBOM_FILE}"
+          cosign sign-blob --yes --bundle "${JAR_FILE}.bundle" "${JAR_FILE}"
+          cosign sign-blob --yes --bundle "${NATIVE_FILE}.bundle" "${NATIVE_FILE}"
+          cosign sign-blob --yes --bundle "${SBOM_FILE}.bundle" "${SBOM_FILE}"
 
-          echo "jar_sig=${JAR_FILE}.sig" >> $GITHUB_OUTPUT
-          echo "native_sig=${NATIVE_FILE}.sig" >> $GITHUB_OUTPUT
-          echo "sbom_sig=${SBOM_FILE}.sig" >> $GITHUB_OUTPUT
+          echo "jar_sig=${JAR_FILE}.bundle" >> $GITHUB_OUTPUT
+          echo "native_sig=${NATIVE_FILE}.bundle" >> $GITHUB_OUTPUT
+          echo "sbom_sig=${SBOM_FILE}.bundle" >> $GITHUB_OUTPUT
 
       - name: Extract CHANGELOG for current version
         id: changelog
