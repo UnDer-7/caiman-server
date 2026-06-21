@@ -70,17 +70,19 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: just sonar
 
-  tag-and-release:
-    name: Tag and Release
+  build:
+    name: Build Artifacts
     runs-on: ubuntu-26.04
     needs: quality-and-security
 
     permissions:
-      contents: write
-      id-token: write  # Sigstore OIDC keyless signing
+      contents: read
+      actions: write  # Upload build artifacts
 
     outputs:
       version: ${{ steps.project-version.outputs.version }}
+      jar_file: ${{ steps.artifacts.outputs.jar_file }}
+      native_file: ${{ steps.artifacts.outputs.native_file }}
 
     steps:
       - name: Checkout code
@@ -109,7 +111,6 @@ jobs:
           echo "Current project version: $VERSION"
 
       - name: Check if tag already exists
-        id: check-tag
         run: |
           VERSION="${{ steps.project-version.outputs.version }}"
 
@@ -136,7 +137,7 @@ jobs:
       - name: Find build artifacts
         id: artifacts
         run: |
-          JAR_FILE=$(find caiman-app/build/libs -name "*.jar" -type f | head -n 1)
+          JAR_FILE=$(find caiman-app/build/libs -name "*.jar" ! -name "*-plain.jar" -type f | head -n 1)
           NATIVE_FILE="caiman-app/build/native/nativeCompile/caiman-app"
 
           if [ -z "$JAR_FILE" ]; then
@@ -154,83 +155,7 @@ jobs:
           echo "Found JAR: $JAR_FILE"
           echo "Found native binary: $NATIVE_FILE"
 
-      - name: Download SBOM from security scan
-        uses: ./.github/actions/download-artifact
-        with:
-          name: sbom
-          path: '.'
-
-      - name: Set SBOM path output
-        id: sbom
-        run: echo "sbom_file=sbom.json" >> $GITHUB_OUTPUT
-
-      - name: Install cosign
-        uses: ./.github/actions/install-cosign
-        with:
-          cosign-version: ${{ vars.COSIGN_VERSION }}
-
-      - name: Sign release artifacts
-        id: sign
-        run: |
-          JAR_FILE="${{ steps.artifacts.outputs.jar_file }}"
-          NATIVE_FILE="${{ steps.artifacts.outputs.native_file }}"
-          SBOM_FILE="${{ steps.sbom.outputs.sbom_file }}"
-
-          cosign sign-blob --yes --bundle "${JAR_FILE}.bundle" "${JAR_FILE}"
-          cosign sign-blob --yes --bundle "${NATIVE_FILE}.bundle" "${NATIVE_FILE}"
-          cosign sign-blob --yes --bundle "${SBOM_FILE}.bundle" "${SBOM_FILE}"
-
-          echo "jar_sig=${JAR_FILE}.bundle" >> $GITHUB_OUTPUT
-          echo "native_sig=${NATIVE_FILE}.bundle" >> $GITHUB_OUTPUT
-          echo "sbom_sig=${SBOM_FILE}.bundle" >> $GITHUB_OUTPUT
-
-      - name: Extract CHANGELOG for current version
-        id: changelog
-        run: |
-          VERSION="${{ steps.project-version.outputs.version }}"
-          CHANGELOG_FILE="CHANGELOG.md"
-
-          CHANGELOG_CONTENT=$(sed -n "/^## \[$VERSION\]/,/^## \[/p" "$CHANGELOG_FILE" | sed '$d')
-
-          if [ -z "$CHANGELOG_CONTENT" ]; then
-            CHANGELOG_CONTENT=$(sed -n "/^## \[$VERSION\]/,\$p" "$CHANGELOG_FILE")
-          fi
-
-          CHANGELOG_CONTENT=$(echo "$CHANGELOG_CONTENT" | tail -n +2)
-
-          echo "$CHANGELOG_CONTENT" > changelog_body.txt
-          echo "✅ Extracted CHANGELOG for version $VERSION"
-
-      - name: Create Git tag
-        run: |
-          VERSION="${{ steps.project-version.outputs.version }}"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          git tag -a "$VERSION" -m "Release $VERSION"
-          git push origin "$VERSION"
-
-          echo "✅ Created and pushed tag $VERSION"
-
-      - name: Create GitHub Release
-        uses: ./.github/actions/create-github-release
-        with:
-          tag-name: ${{ steps.project-version.outputs.version }}
-          name: ${{ steps.project-version.outputs.version }}
-          body-path: changelog_body.txt
-          files: |
-            ${{ steps.artifacts.outputs.jar_file }}
-            ${{ steps.artifacts.outputs.native_file }}
-            ${{ steps.sign.outputs.jar_sig }}
-            ${{ steps.sign.outputs.native_sig }}
-            ${{ steps.sbom.outputs.sbom_file }}
-            ${{ steps.sign.outputs.sbom_sig }}
-          draft: 'false'
-          prerelease: 'false'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload build artifacts for Docker
+      - name: Upload build artifacts
         uses: ./.github/actions/upload-artifact
         with:
           name: build-artifacts
@@ -242,7 +167,7 @@ jobs:
   deploy-image:
     name: Build and Push Docker Images
     runs-on: ubuntu-26.04
-    needs: tag-and-release
+    needs: build
 
     permissions:
       id-token: write  # Sigstore OIDC keyless attestation
@@ -263,7 +188,7 @@ jobs:
       - name: Get project version
         id: project-version
         run: |
-          VERSION=${{ needs.tag-and-release.outputs.version }}
+          VERSION=${{ needs.build.outputs.version }}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Project version: $VERSION"
 
@@ -271,7 +196,7 @@ jobs:
         uses: ./.github/actions/download-artifact
         with:
           name: build-artifacts
-          path: '.'
+          path: 'caiman-app/build'
 
       - name: Verify downloaded artifacts
         run: |
@@ -361,3 +286,174 @@ jobs:
           VERSION="${{ steps.project-version.outputs.version }}"
           syft attest --output cyclonedx-json under7/caiman-server:${VERSION}-jvm
           syft attest --output cyclonedx-json under7/caiman-server:${VERSION}-native
+
+  tag-and-release:
+    name: Tag and Release
+    runs-on: ubuntu-26.04
+    needs: [build, deploy-image]
+
+    permissions:
+      contents: write
+      id-token: write  # Sigstore OIDC keyless signing
+
+    steps:
+      - name: Checkout code
+        # v7.0.0 - Repo: https://github.com/actions/checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Install just
+        uses: ./.github/actions/install-just
+
+      - name: Get project version
+        id: project-version
+        run: |
+          VERSION=${{ needs.build.outputs.version }}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Project version: $VERSION"
+
+      - name: Download build artifacts
+        uses: ./.github/actions/download-artifact
+        with:
+          name: build-artifacts
+          path: 'caiman-app/build'
+
+      - name: Find build artifacts
+        id: artifacts
+        run: |
+          JAR_FILE=$(find caiman-app/build/libs -name "*.jar" ! -name "*-plain.jar" -type f | head -n 1)
+          NATIVE_FILE="caiman-app/build/native/nativeCompile/caiman-app"
+
+          if [ -z "$JAR_FILE" ]; then
+            echo "::error::JAR file not found in caiman-app/build/libs/"
+            exit 1
+          fi
+
+          if [ ! -f "$NATIVE_FILE" ]; then
+            echo "::error::Native binary not found at $NATIVE_FILE"
+            exit 1
+          fi
+
+          echo "jar_file=$JAR_FILE" >> $GITHUB_OUTPUT
+          echo "native_file=$NATIVE_FILE" >> $GITHUB_OUTPUT
+
+      - name: Rename artifacts for release
+        id: release-artifacts
+        run: |
+          VERSION="${{ steps.project-version.outputs.version }}"
+          JAR_DEST="caiman-app-${VERSION}.jar"
+          NATIVE_DEST="caiman-app-${VERSION}-linux-amd64"
+
+          cp "${{ steps.artifacts.outputs.jar_file }}" "$JAR_DEST"
+          cp "${{ steps.artifacts.outputs.native_file }}" "$NATIVE_DEST"
+          chmod +x "$NATIVE_DEST"
+
+          echo "jar_file=$JAR_DEST" >> $GITHUB_OUTPUT
+          echo "native_file=$NATIVE_DEST" >> $GITHUB_OUTPUT
+          echo "✅ JAR: $JAR_DEST"
+          echo "✅ Native: $NATIVE_DEST"
+
+      - name: Download SBOM from security scan
+        uses: ./.github/actions/download-artifact
+        with:
+          name: sbom
+          path: '.'
+
+      - name: Set SBOM path output
+        id: sbom
+        run: echo "sbom_file=sbom.json" >> $GITHUB_OUTPUT
+
+      - name: Install cosign
+        uses: ./.github/actions/install-cosign
+        with:
+          cosign-version: ${{ vars.COSIGN_VERSION }}
+
+      - name: Sign release artifacts
+        id: sign
+        run: |
+          JAR_FILE="${{ steps.release-artifacts.outputs.jar_file }}"
+          NATIVE_FILE="${{ steps.release-artifacts.outputs.native_file }}"
+          SBOM_FILE="${{ steps.sbom.outputs.sbom_file }}"
+
+          cosign sign-blob --yes --bundle "${JAR_FILE}.bundle" "${JAR_FILE}"
+          cosign sign-blob --yes --bundle "${NATIVE_FILE}.bundle" "${NATIVE_FILE}"
+          cosign sign-blob --yes --bundle "${SBOM_FILE}.bundle" "${SBOM_FILE}"
+
+          echo "jar_sig=${JAR_FILE}.bundle" >> $GITHUB_OUTPUT
+          echo "native_sig=${NATIVE_FILE}.bundle" >> $GITHUB_OUTPUT
+          echo "sbom_sig=${SBOM_FILE}.bundle" >> $GITHUB_OUTPUT
+
+      - name: Extract CHANGELOG for current version
+        run: |
+          VERSION="${{ steps.project-version.outputs.version }}"
+          CHANGELOG_FILE="CHANGELOG.md"
+
+          CHANGELOG_CONTENT=$(sed -n "/^## \[$VERSION\]/,/^## \[/p" "$CHANGELOG_FILE" | sed '$d')
+
+          if [ -z "$CHANGELOG_CONTENT" ]; then
+            CHANGELOG_CONTENT=$(sed -n "/^## \[$VERSION\]/,\$p" "$CHANGELOG_FILE")
+          fi
+
+          CHANGELOG_CONTENT=$(echo "$CHANGELOG_CONTENT" | tail -n +2)
+
+          JAR_NAME="caiman-app-${VERSION}.jar"
+          NATIVE_NAME="caiman-app-${VERSION}-linux-amd64"
+
+          printf '%s\n' "${CHANGELOG_CONTENT}" > changelog_body.txt
+
+          cat >> changelog_body.txt << EOF
+
+          ## Docker Images
+          
+          > For details on available tags and how to choose between JVM and native, see the (Docker Images guide - TODO).
+          
+          | Flavor | Image |
+          |--------|-------|
+          | Native (default) | \`under7/caiman-server:${VERSION}-native\` |
+          | JVM | \`under7/caiman-server:${VERSION}-jvm\` |
+          
+          [View all tags on Docker Hub](https://hub.docker.com/r/under7/caiman-server/tags?name=${VERSION})
+          
+          ## Assets
+          
+          > Not sure which file to download? See the (installation guide - TODO).
+          
+          | Asset | Description |
+          |-------|-------------|
+          | \`${JAR_NAME}\` | JVM executable — requires Java 25+ (JRE) on the host. Runs on any OS. |
+          | \`${JAR_NAME}.bundle\` | Cosign signature bundle for the JAR — verify with \`cosign verify-blob\`. |
+          | \`${NATIVE_NAME}\` | Native binary for Linux x86-64 — no JVM required, runs standalone. Faster startup, lower memory. |
+          | \`${NATIVE_NAME}.bundle\` | Cosign signature bundle for the native binary — verify with \`cosign verify-blob\`. |
+          | \`sbom.json\` | Software Bill of Materials (CycloneDX) — full list of dependencies included in this release. |
+          | \`sbom.json.bundle\` | Cosign signature bundle for the SBOM — verify with \`cosign verify-blob\`. |
+          EOF
+
+          echo "✅ Extracted CHANGELOG for version $VERSION"
+
+      - name: Create Git tag
+        run: |
+          VERSION="${{ steps.project-version.outputs.version }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin "$VERSION"
+
+          echo "✅ Created and pushed tag $VERSION"
+
+      - name: Create GitHub Release
+        uses: ./.github/actions/create-github-release
+        with:
+          tag-name: ${{ steps.project-version.outputs.version }}
+          name: ${{ steps.project-version.outputs.version }}
+          body-path: changelog_body.txt
+          files: |
+            ${{ steps.release-artifacts.outputs.jar_file }}
+            ${{ steps.release-artifacts.outputs.native_file }}
+            ${{ steps.sign.outputs.jar_sig }}
+            ${{ steps.sign.outputs.native_sig }}
+            ${{ steps.sbom.outputs.sbom_file }}
+            ${{ steps.sign.outputs.sbom_sig }}
+          draft: 'false'
+          prerelease: 'false'
+          github-token: ${{ secrets.GITHUB_TOKEN }}

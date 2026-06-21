@@ -83,7 +83,7 @@ build-artifacts:
     set -a
     source .env
     set +a
-    ./gradlew :caiman-app:nativeCompile :caiman-app:bootJar -x test --rerun-tasks
+    ./gradlew clean :caiman-app:nativeCompile :caiman-app:bootJar -x test --rerun-tasks
     END=$(date +%s)
     ELAPSED=$((END-START))
     echo "Artifacts built in $((ELAPSED/3600))h $(((ELAPSED%3600)/60))m $((ELAPSED%60))s"
