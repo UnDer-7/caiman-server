@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   version-validation:
     name: Version Validation
@@ -35,174 +39,11 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Current project version: $VERSION"
 
-      - name: Get latest version tag
-        id: latest-tag
-        run: |
-          LATEST_TAG=$(git ls-remote --tags ${{ github.server_url }}/${{ github.repository }}.git | \
-            grep -oP 'refs/tags/\Kv[0-9]+\.[0-9]+\.[0-9]+$' | \
-            sort -V | \
-            tail -n 1)
-
-          if [ -z "$LATEST_TAG" ]; then
-            echo "latest_version=0.0.0" >> $GITHUB_OUTPUT
-            echo "No existing version tags found. Starting from 0.0.0"
-          else
-            echo "latest_version=$LATEST_TAG" >> $GITHUB_OUTPUT
-            echo "Latest published version: $LATEST_TAG"
-          fi
-
-      - name: Compare versions (Semantic Versioning)
-        id: compare-versions
-        run: |
-          CURRENT_VERSION="${{ steps.project-version.outputs.version }}"
-          LATEST_VERSION="${{ steps.latest-tag.outputs.latest_version }}"
-
-          # Strip 'v' prefix before numeric comparison
-          CURRENT_SEMVER="${CURRENT_VERSION#v}"
-          LATEST_SEMVER="${LATEST_VERSION#v}"
-
-          compare_versions() {
-            if [ "$1" = "$2" ]; then
-              echo "equal"
-              return
-            fi
-
-            IFS='.' read -r -a current <<< "$1"
-            IFS='.' read -r -a latest <<< "$2"
-
-            if [ "${current[0]}" -gt "${latest[0]}" ]; then
-              echo "greater"; return
-            elif [ "${current[0]}" -lt "${latest[0]}" ]; then
-              echo "less"; return
-            fi
-
-            if [ "${current[1]}" -gt "${latest[1]}" ]; then
-              echo "greater"; return
-            elif [ "${current[1]}" -lt "${latest[1]}" ]; then
-              echo "less"; return
-            fi
-
-            if [ "${current[2]}" -gt "${latest[2]}" ]; then
-              echo "greater"; return
-            elif [ "${current[2]}" -lt "${latest[2]}" ]; then
-              echo "less"; return
-            fi
-
-            echo "equal"
-          }
-
-          COMPARISON=$(compare_versions "$CURRENT_SEMVER" "$LATEST_SEMVER")
-          echo "comparison=$COMPARISON" >> $GITHUB_OUTPUT
-          echo "Version comparison: $CURRENT_VERSION vs $LATEST_VERSION = $COMPARISON"
-
-      - name: Fail if version is not greater than latest
-        if: steps.compare-versions.outputs.comparison != 'greater'
-        run: |
-          CURRENT_VERSION="${{ steps.project-version.outputs.version }}"
-          LATEST_VERSION="${{ steps.latest-tag.outputs.latest_version }}"
-          COMPARISON="${{ steps.compare-versions.outputs.comparison }}"
-
-          echo "::error::Version validation failed!"
-          echo ""
-
-          if [ "$COMPARISON" = "equal" ]; then
-            echo "❌ Current version $CURRENT_VERSION is equal to the latest published version."
-          else
-            echo "❌ Current version $CURRENT_VERSION is LESS than the latest published version $LATEST_VERSION."
-          fi
-
-          echo ""
-          echo "💡 You must bump the version to be greater than $LATEST_VERSION"
-          echo ""
-          echo "Following Semantic Versioning:"
-          echo "  - Patch release (bug fixes): just version-set v<patch+1>"
-          echo "  - Minor release (new features): just version-set v<minor+1>.0"
-          echo "  - Major release (breaking changes): just version-set v<major+1>.0.0"
-          echo ""
-          echo "After updating the version, commit and push the changes."
-          exit 1
+      - name: Validate version
+        run: bash .github/scripts/validate-version.sh "${{ steps.project-version.outputs.version }}"
 
       - name: Validate CHANGELOG.md entry
-        id: changelog-validation
-        run: |
-          CURRENT_VERSION="${{ steps.project-version.outputs.version }}"
-          CHANGELOG_FILE="CHANGELOG.md"
-
-          if [ ! -f "$CHANGELOG_FILE" ]; then
-            echo "changelog_valid=false" >> $GITHUB_OUTPUT
-            echo "changelog_error=missing_file" >> $GITHUB_OUTPUT
-            echo "::error::CHANGELOG.md file not found!"
-            exit 0
-          fi
-
-          if ! grep -q "^## \[$CURRENT_VERSION\]" "$CHANGELOG_FILE"; then
-            echo "changelog_valid=false" >> $GITHUB_OUTPUT
-            echo "changelog_error=missing_version_header" >> $GITHUB_OUTPUT
-            echo "::error::Version $CURRENT_VERSION not found in CHANGELOG.md!"
-            exit 0
-          fi
-
-          VERSION_SECTION=$(sed -n "/^## \[$CURRENT_VERSION\]/,/^## \[/p" "$CHANGELOG_FILE" | sed '$d')
-
-          if [ -z "$VERSION_SECTION" ]; then
-            VERSION_SECTION=$(sed -n "/^## \[$CURRENT_VERSION\]/,\$p" "$CHANGELOG_FILE")
-          fi
-
-          if ! echo "$VERSION_SECTION" | grep -q "^####"; then
-            echo "changelog_valid=false" >> $GITHUB_OUTPUT
-            echo "changelog_error=missing_changes" >> $GITHUB_OUTPUT
-            echo "::error::No changes documented for version $CURRENT_VERSION in CHANGELOG.md!"
-            exit 0
-          fi
-
-          echo "changelog_valid=true" >> $GITHUB_OUTPUT
-          echo "✅ CHANGELOG.md properly documented for version $CURRENT_VERSION"
-
-      - name: Fail if CHANGELOG.md is not properly documented
-        if: steps.changelog-validation.outputs.changelog_valid != 'true'
-        run: |
-          CURRENT_VERSION="${{ steps.project-version.outputs.version }}"
-          ERROR_TYPE="${{ steps.changelog-validation.outputs.changelog_error }}"
-
-          echo "::error::CHANGELOG validation failed!"
-          echo ""
-
-          if [ "$ERROR_TYPE" = "missing_file" ]; then
-            echo "❌ CHANGELOG.md file does not exist in the repository."
-            echo ""
-            echo "💡 Create a CHANGELOG.md file in the root of the project."
-          elif [ "$ERROR_TYPE" = "missing_version_header" ]; then
-            echo "❌ Version $CURRENT_VERSION is not documented in CHANGELOG.md."
-            echo ""
-            echo "💡 Add a version header to CHANGELOG.md:"
-            echo "   ## [$CURRENT_VERSION] - $(date +%Y-%m-%d)"
-            echo ""
-            echo "Example structure:"
-            echo "   ## [$CURRENT_VERSION] - $(date +%Y-%m-%d)"
-            echo "   "
-            echo "   ### Added"
-            echo "   "
-            echo "   #### Feature Name"
-            echo "   - Description of changes"
-          elif [ "$ERROR_TYPE" = "missing_changes" ]; then
-            echo "❌ Version $CURRENT_VERSION exists in CHANGELOG.md but has no documented changes."
-            echo ""
-            echo "💡 Add at least one change description using #### headers:"
-            echo ""
-            echo "Example:"
-            echo "   ## [$CURRENT_VERSION] - $(date +%Y-%m-%d)"
-            echo "   "
-            echo "   ### Added"
-            echo "   "
-            echo "   #### New Feature API"
-            echo "   - \`POST /api/new-endpoint\` - Description of the endpoint"
-          fi
-
-          echo ""
-          echo "📖 Follow the Keep a Changelog format: https://keepachangelog.com/"
-          echo ""
-          echo "After updating CHANGELOG.md, commit and push the changes."
-          exit 1
+        run: bash .github/scripts/validate-changelog.sh "${{ steps.project-version.outputs.version }}"
 
   coding-style:
     name: Coding Style
@@ -307,7 +148,6 @@ jobs:
         run: just test-coverage
 
       - name: Publish to SonarCloud
-        if: steps.test.outcome == 'success'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: just sonar

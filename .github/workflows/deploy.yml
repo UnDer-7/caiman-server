@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   quality-and-security:
     name: Code Quality and Security Analysis
@@ -28,6 +32,16 @@ jobs:
 
       - name: Install just
         uses: ./.github/actions/install-just
+
+      - name: Get current project version
+        run: |
+          VERSION=$(just version)
+          echo "Current project version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+        id: project-version
+
+      - name: Validate version
+        run: bash .github/scripts/validate-version.sh "${{ steps.project-version.outputs.version }}"
 
       - name: Run tests and generate coverage report
         run: just test-coverage
@@ -110,50 +124,12 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Current project version: $VERSION"
 
-      - name: Check if tag already exists
-        run: |
-          VERSION="${{ steps.project-version.outputs.version }}"
-
-          if git ls-remote --tags origin | grep -q "refs/tags/$VERSION$"; then
-            echo "::error::Tag $VERSION already exists in the repository!"
-            echo ""
-            echo "❌ A release for version $VERSION has already been created."
-            echo ""
-            echo "💡 This should not happen if the pull request pipeline is working correctly."
-            echo "   The version validation should have prevented this."
-            echo ""
-            echo "Possible causes:"
-            echo "  1. The tag was created manually"
-            echo "  2. A previous deploy workflow run already created this tag"
-            echo "  3. The pull request pipeline was bypassed"
-            exit 1
-          fi
-
-          echo "✅ Tag $VERSION does not exist, proceeding with release"
-
       - name: Build GraalVM native image and JAR
         run: just build-artifacts
 
       - name: Find build artifacts
         id: artifacts
-        run: |
-          JAR_FILE=$(find caiman-app/build/libs -name "*.jar" ! -name "*-plain.jar" -type f | head -n 1)
-          NATIVE_FILE="caiman-app/build/native/nativeCompile/caiman-app"
-
-          if [ -z "$JAR_FILE" ]; then
-            echo "::error::JAR file not found in caiman-app/build/libs/"
-            exit 1
-          fi
-
-          if [ ! -f "$NATIVE_FILE" ]; then
-            echo "::error::Native binary not found at $NATIVE_FILE"
-            exit 1
-          fi
-
-          echo "jar_file=$JAR_FILE" >> $GITHUB_OUTPUT
-          echo "native_file=$NATIVE_FILE" >> $GITHUB_OUTPUT
-          echo "Found JAR: $JAR_FILE"
-          echo "Found native binary: $NATIVE_FILE"
+        run: bash .github/scripts/find-build-artifacts.sh
 
       - name: Upload build artifacts
         uses: ./.github/actions/upload-artifact
@@ -177,18 +153,13 @@ jobs:
         # v7.0.0 - Repo: https://github.com/actions/checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
-      - name: Setup GraalVM 25 (Oracle)
-        uses: ./.github/actions/setup-graalvm
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Install just
         uses: ./.github/actions/install-just
 
       - name: Get project version
         id: project-version
         run: |
-          VERSION=${{ needs.build.outputs.version }}
+          VERSION="${{ needs.build.outputs.version }}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Project version: $VERSION"
 
@@ -199,25 +170,7 @@ jobs:
           path: 'caiman-app/build'
 
       - name: Verify downloaded artifacts
-        run: |
-          echo "Downloaded artifacts:"
-          JAR_FILE=$(find caiman-app/build/libs -name "*.jar" -type f | head -n 1)
-          NATIVE_FILE="caiman-app/build/native/nativeCompile/caiman-app"
-
-          if [ -z "$JAR_FILE" ]; then
-            echo "::error::JAR file not found!"
-            exit 1
-          fi
-
-          if [ ! -f "$NATIVE_FILE" ]; then
-            echo "::error::Native binary not found!"
-            exit 1
-          fi
-
-          chmod +x "$NATIVE_FILE"
-
-          echo "✅ JAR file: $JAR_FILE"
-          echo "✅ Native binary: $NATIVE_FILE"
+        run: bash .github/scripts/verify-downloaded-artifacts.sh
 
       - name: Build JVM Docker image
         run: |
@@ -307,7 +260,7 @@ jobs:
       - name: Get project version
         id: project-version
         run: |
-          VERSION=${{ needs.build.outputs.version }}
+          VERSION="${{ needs.build.outputs.version }}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Project version: $VERSION"
 
@@ -319,22 +272,7 @@ jobs:
 
       - name: Find build artifacts
         id: artifacts
-        run: |
-          JAR_FILE=$(find caiman-app/build/libs -name "*.jar" ! -name "*-plain.jar" -type f | head -n 1)
-          NATIVE_FILE="caiman-app/build/native/nativeCompile/caiman-app"
-
-          if [ -z "$JAR_FILE" ]; then
-            echo "::error::JAR file not found in caiman-app/build/libs/"
-            exit 1
-          fi
-
-          if [ ! -f "$NATIVE_FILE" ]; then
-            echo "::error::Native binary not found at $NATIVE_FILE"
-            exit 1
-          fi
-
-          echo "jar_file=$JAR_FILE" >> $GITHUB_OUTPUT
-          echo "native_file=$NATIVE_FILE" >> $GITHUB_OUTPUT
+        run: bash .github/scripts/find-build-artifacts.sh
 
       - name: Rename artifacts for release
         id: release-artifacts
@@ -383,51 +321,7 @@ jobs:
           echo "sbom_sig=${SBOM_FILE}.bundle" >> $GITHUB_OUTPUT
 
       - name: Extract CHANGELOG for current version
-        run: |
-          VERSION="${{ steps.project-version.outputs.version }}"
-          CHANGELOG_FILE="CHANGELOG.md"
-
-          CHANGELOG_CONTENT=$(sed -n "/^## \[$VERSION\]/,/^## \[/p" "$CHANGELOG_FILE" | sed '$d')
-
-          if [ -z "$CHANGELOG_CONTENT" ]; then
-            CHANGELOG_CONTENT=$(sed -n "/^## \[$VERSION\]/,\$p" "$CHANGELOG_FILE")
-          fi
-
-          CHANGELOG_CONTENT=$(echo "$CHANGELOG_CONTENT" | tail -n +2)
-
-          JAR_NAME="caiman-app-${VERSION}.jar"
-          NATIVE_NAME="caiman-app-${VERSION}-linux-amd64"
-
-          printf '%s\n' "${CHANGELOG_CONTENT}" > changelog_body.txt
-
-          cat >> changelog_body.txt << EOF
-
-          ## Docker Images
-          
-          > For details on available tags and how to choose between JVM and native, see the (Docker Images guide - TODO).
-          
-          | Flavor | Image |
-          |--------|-------|
-          | Native (default) | \`under7/caiman-server:${VERSION}-native\` |
-          | JVM | \`under7/caiman-server:${VERSION}-jvm\` |
-          
-          [View all tags on Docker Hub](https://hub.docker.com/r/under7/caiman-server/tags?name=${VERSION})
-          
-          ## Assets
-          
-          > Not sure which file to download? See the (installation guide - TODO).
-          
-          | Asset | Description |
-          |-------|-------------|
-          | \`${JAR_NAME}\` | JVM executable — requires Java 25+ (JRE) on the host. Runs on any OS. |
-          | \`${JAR_NAME}.bundle\` | Cosign signature bundle for the JAR — verify with \`cosign verify-blob\`. |
-          | \`${NATIVE_NAME}\` | Native binary for Linux x86-64 — no JVM required, runs standalone. Faster startup, lower memory. |
-          | \`${NATIVE_NAME}.bundle\` | Cosign signature bundle for the native binary — verify with \`cosign verify-blob\`. |
-          | \`sbom.json\` | Software Bill of Materials (CycloneDX) — full list of dependencies included in this release. |
-          | \`sbom.json.bundle\` | Cosign signature bundle for the SBOM — verify with \`cosign verify-blob\`. |
-          EOF
-
-          echo "✅ Extracted CHANGELOG for version $VERSION"
+        run: bash .github/scripts/extract-changelog.sh "${{ steps.project-version.outputs.version }}"
 
       - name: Create Git tag
         run: |
