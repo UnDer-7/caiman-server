@@ -4,7 +4,7 @@
 
 project-name    := "caiman-server"
 registry-host   := "under7"
-project-version := `./gradlew :caiman-app:properties -q --console=plain 2>/dev/null | grep '^version:' | awk '{print $2}'`
+project-version := `grep -oP '(?<=version = ")[^"]*' build.gradle.kts`
 
 # ====================================================================================
 # DEFAULT
@@ -156,8 +156,8 @@ version:
 # Set project version (usage: just version-set 0.1.2)
 [group: "version"]
 version-set new-version:
-    sed -i 's/version = "[^"]*"/version = "{{new-version}}"/' build.gradle.kts
-    @echo "Version → {{new-version}}"
+    @sed -i 's/version = "[^"]*"/version = "{{new-version}}"/' build.gradle.kts
+    @echo "Version {{project-version}} → {{new-version}}"
 
 # ====================================================================================
 # CODING STYLE

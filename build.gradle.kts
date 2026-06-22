@@ -55,7 +55,7 @@ subprojects {
     }
 
     group = "com.caimanproject"
-    version = "v0.0.1"
+    version = "v0.0.2"
 
     java {
         toolchain {
