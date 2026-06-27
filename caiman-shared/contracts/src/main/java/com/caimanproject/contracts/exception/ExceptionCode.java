@@ -24,9 +24,11 @@ public interface ExceptionCode {
         APP,
         WEB_SUPPORT,
 
-        BILLING,
         NOTIFICATION,
         PAYMENT,
+
+        BILLING_DOMAIN,
+        BILLING_BUSINESS,
 
         DEBTOR_DOMAIN,
         DEBTOR_BUSINESS,

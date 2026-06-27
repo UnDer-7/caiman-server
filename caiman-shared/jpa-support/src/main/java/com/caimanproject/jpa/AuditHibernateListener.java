@@ -12,7 +12,8 @@ public class AuditHibernateListener implements PreInsertEventListener, PreUpdate
     public boolean onPreInsert(PreInsertEvent event) {
         if (event.getEntity() instanceof AuditableEntity entity) {
             Instant now = Instant.now();
-            AuditEmbeddable audit = AuditEmbeddable.builder().createdAt(now).updatedAt(now).build();
+            AuditEmbeddable audit =
+                    AuditEmbeddable.builder().createdAt(now).updatedAt(now).build();
             entity.setAudit(audit);
             setState(event.getState(), event.getPersister().getPropertyNames(), "audit", audit);
         }

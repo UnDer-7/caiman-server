@@ -63,9 +63,12 @@ public class Debtor {
             throw DomainExceptionCode.DUPLICATE_CONTACT_PRIORITY.createException("Repeated Contacts: " + msg);
         }
 
+        // Optional
         this.id = id;
-        this.name = validateOrThrows(name, "name");
         this.notes = notes;
+
+        // Required
+        this.name = validateOrThrows(name, "name");
         this.notificationsEnabled = validateOrThrows(notificationsEnabled, "notificationsEnabled");
         this.active = validateOrThrows(active, "active");
         this.contacts = Optional.ofNullable(contacts)

@@ -2,15 +2,15 @@ package com.caimanproject.debtor.infrastructure.database.adapter;
 
 import com.caimanproject.debtor.core.test.builder.DebtorDomainBuilder;
 import com.caimanproject.debtor.infrastructure.database.entity.DebtorEntity;
-import com.caimanproject.debtor.infrastructure.database.mapper.AuditEntityMapper;
-import com.caimanproject.debtor.infrastructure.database.mapper.AuditEntityMapperImpl;
+import com.caimanproject.debtor.infrastructure.database.mapper.DebtorAuditEntityMapper;
+import com.caimanproject.debtor.infrastructure.database.mapper.DebtorAuditEntityMapperImpl;
 import com.caimanproject.debtor.infrastructure.database.mapper.DebtorContactEntityMapper;
 import com.caimanproject.debtor.infrastructure.database.mapper.DebtorContactEntityMapperImpl;
 import com.caimanproject.debtor.infrastructure.database.mapper.DebtorEntityMapper;
 import com.caimanproject.debtor.infrastructure.database.mapper.DebtorEntityMapperImpl;
-import com.caimanproject.debtor.infrastructure.database.mapper.IdMapper;
-import com.caimanproject.debtor.infrastructure.database.mapper.IdMapperImpl;
+import com.caimanproject.mapper.IdMapper;
 import com.caimanproject.debtor.infrastructure.database.repository.DebtorRepository;
+import com.caimanproject.mapper.IdMapperImpl;
 import com.caimanproject.mapper.OptionalMapper;
 import com.caimanproject.mapper.OptionalMapperImpl;
 import com.caimanproject.test.annotation.UnitTest;
@@ -40,15 +40,15 @@ class DebtorPersistenceAdapterTest {
     OptionalMapper optionalMapper = new OptionalMapperImpl();
 
     @Spy
-    AuditEntityMapper auditEntityMapper = new AuditEntityMapperImpl(optionalMapper);
+    DebtorAuditEntityMapper debtorAuditEntityMapper = new DebtorAuditEntityMapperImpl(optionalMapper);
 
     @Spy
     DebtorContactEntityMapper debtorContactEntityMapper =
-            new DebtorContactEntityMapperImpl(auditEntityMapper, idMapper);
+            new DebtorContactEntityMapperImpl(idMapper, debtorAuditEntityMapper);
 
     @Spy
     DebtorEntityMapper debtorEntityMapper =
-            new DebtorEntityMapperImpl(optionalMapper, debtorContactEntityMapper, auditEntityMapper, idMapper);
+            new DebtorEntityMapperImpl(optionalMapper, idMapper, debtorContactEntityMapper, debtorAuditEntityMapper);
 
     @InjectMocks
     DebtorPersistenceAdapter adapter;
