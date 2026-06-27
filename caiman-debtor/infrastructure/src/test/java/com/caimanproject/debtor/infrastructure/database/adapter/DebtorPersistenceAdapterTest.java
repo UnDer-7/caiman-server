@@ -8,8 +8,8 @@ import com.caimanproject.debtor.infrastructure.database.mapper.DebtorContactEnti
 import com.caimanproject.debtor.infrastructure.database.mapper.DebtorContactEntityMapperImpl;
 import com.caimanproject.debtor.infrastructure.database.mapper.DebtorEntityMapper;
 import com.caimanproject.debtor.infrastructure.database.mapper.DebtorEntityMapperImpl;
-import com.caimanproject.mapper.IdMapper;
 import com.caimanproject.debtor.infrastructure.database.repository.DebtorRepository;
+import com.caimanproject.mapper.IdMapper;
 import com.caimanproject.mapper.IdMapperImpl;
 import com.caimanproject.mapper.OptionalMapper;
 import com.caimanproject.mapper.OptionalMapperImpl;

@@ -20,6 +20,7 @@ default:
 alias c     := dev-compile
 alias t     := test-coverage
 alias tn    := test-integration-native
+alias f     := fmt-apply
 
 # ====================================================================================
 # DEV

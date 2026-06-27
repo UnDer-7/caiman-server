@@ -4,14 +4,13 @@ import com.caimanproject.billing.core.domain.exception.domain.DomainExceptionCod
 import com.caimanproject.billing.core.domain.types.CycleUnit;
 import com.caimanproject.billing.core.domain.types.TriggerType;
 import com.caimanproject.contracts.util.DomainValidation;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
-
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
 
 @Getter
 @ToString
@@ -38,8 +37,15 @@ public class ChargePlanNotificationConfig {
     private final Audit audit;
 
     @Builder(builderMethodName = "restoreBuilder", builderClassName = "RestoreBuilder")
-    public ChargePlanNotificationConfig(final UUID id, final ChargePlan chargePlan, final TriggerType triggerType, final Integer reminderInterval,
-        final CycleUnit reminderUnit, final Integer maxAttempts, final Boolean enabled, final Audit audit) {
+    public ChargePlanNotificationConfig(
+            final UUID id,
+            final ChargePlan chargePlan,
+            final TriggerType triggerType,
+            final Integer reminderInterval,
+            final CycleUnit reminderUnit,
+            final Integer maxAttempts,
+            final Boolean enabled,
+            final Audit audit) {
 
         // Optional
         this.id = id;
@@ -55,8 +61,13 @@ public class ChargePlanNotificationConfig {
     }
 
     @Builder(builderMethodName = "createBuilder", builderClassName = "CreateBuilder")
-    public ChargePlanNotificationConfig(final ChargePlan chargePlan, final TriggerType triggerType, final Integer reminderInterval,
-        final CycleUnit reminderUnit, final Integer maxAttempts, final Boolean enabled) {
+    public ChargePlanNotificationConfig(
+            final ChargePlan chargePlan,
+            final TriggerType triggerType,
+            final Integer reminderInterval,
+            final CycleUnit reminderUnit,
+            final Integer maxAttempts,
+            final Boolean enabled) {
         this(null, chargePlan, triggerType, reminderInterval, reminderUnit, maxAttempts, enabled, null);
     }
 

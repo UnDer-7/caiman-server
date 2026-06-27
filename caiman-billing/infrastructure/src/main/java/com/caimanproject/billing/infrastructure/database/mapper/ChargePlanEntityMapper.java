@@ -11,10 +11,16 @@ import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(
-    componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
-    injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-    uses = {OptionalMapper.class, IdMapper.class, BillingAuditEntityMapper.class, ChargePlanMemberEntityMapper.class, ChargePlanNotificationConfigEntityMapper.class},
-    unmappedTargetPolicy = ReportingPolicy.ERROR)
+        componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
+        injectionStrategy = InjectionStrategy.CONSTRUCTOR,
+        uses = {
+            OptionalMapper.class,
+            IdMapper.class,
+            BillingAuditEntityMapper.class,
+            ChargePlanMemberEntityMapper.class,
+            ChargePlanNotificationConfigEntityMapper.class
+        },
+        unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface ChargePlanEntityMapper {
 
     ChargePlan toModel(ChargePlanEntity entity);

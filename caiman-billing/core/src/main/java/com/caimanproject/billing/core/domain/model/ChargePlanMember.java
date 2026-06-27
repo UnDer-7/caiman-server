@@ -3,16 +3,15 @@ package com.caimanproject.billing.core.domain.model;
 import com.caimanproject.billing.core.domain.exception.domain.DomainExceptionCode;
 import com.caimanproject.billing.core.domain.types.ChargePlanMemberStatus;
 import com.caimanproject.contracts.util.DomainValidation;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.ToString;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @ToString
@@ -43,9 +42,17 @@ public class ChargePlanMember {
     private final Audit audit;
 
     @Builder(builderMethodName = "restoreBuilder", builderClassName = "RestoreBuilder")
-    public ChargePlanMember(final UUID id, final ChargePlan chargePlan, final String debtorId, final BigDecimal amountOverride,
-        final Integer rotationOrder, final ChargePlanMemberStatus status, final BigDecimal creditBalance, final Instant joinedAt,
-        final Instant leftAt, final Audit audit) {
+    public ChargePlanMember(
+            final UUID id,
+            final ChargePlan chargePlan,
+            final String debtorId,
+            final BigDecimal amountOverride,
+            final Integer rotationOrder,
+            final ChargePlanMemberStatus status,
+            final BigDecimal creditBalance,
+            final Instant joinedAt,
+            final Instant leftAt,
+            final Audit audit) {
 
         // Optional
         this.id = id;
@@ -62,11 +69,16 @@ public class ChargePlanMember {
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
     }
 
-
     @Builder(builderMethodName = "createBuilder", builderClassName = "CreateBuilder")
-    public ChargePlanMember(final ChargePlan chargePlan, final String debtorId, final BigDecimal amountOverride,
-        final Integer rotationOrder, final ChargePlanMemberStatus status, final BigDecimal creditBalance, final Instant joinedAt,
-        final Instant leftAt) {
+    public ChargePlanMember(
+            final ChargePlan chargePlan,
+            final String debtorId,
+            final BigDecimal amountOverride,
+            final Integer rotationOrder,
+            final ChargePlanMemberStatus status,
+            final BigDecimal creditBalance,
+            final Instant joinedAt,
+            final Instant leftAt) {
         this(null, chargePlan, debtorId, amountOverride, rotationOrder, status, creditBalance, joinedAt, leftAt, null);
     }
 

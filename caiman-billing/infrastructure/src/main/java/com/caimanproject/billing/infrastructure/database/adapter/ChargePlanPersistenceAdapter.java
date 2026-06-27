@@ -24,7 +24,8 @@ public class ChargePlanPersistenceAdapter implements ChargePlanPersistenceGatewa
     public ChargePlan save(final ChargePlan chargePlan) {
         final var chargePlanEntity = chargePlanEntityMapper.toEntity(chargePlan);
         final var chargePlanMembersEntity = chargePlanMemberEntityMapper.toEntity(chargePlan.getMembers());
-        final var chargePlanNotificationsEntity = chargePlanNotificationConfigEntityMapper.toEntity(chargePlan.getNotificationConfigs());
+        final var chargePlanNotificationsEntity =
+                chargePlanNotificationConfigEntityMapper.toEntity(chargePlan.getNotificationConfigs());
         chargePlanEntity.addMembers(chargePlanMembersEntity);
         chargePlanEntity.addNotificationConfigs(chargePlanNotificationsEntity);
 

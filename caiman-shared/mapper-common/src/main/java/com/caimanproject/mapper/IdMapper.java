@@ -1,7 +1,6 @@
 package com.caimanproject.mapper;
 
 import com.caimanproject.contracts.util.Constants;
-
 import java.util.Optional;
 import java.util.UUID;
 import org.mapstruct.InjectionStrategy;
