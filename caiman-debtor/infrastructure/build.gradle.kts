@@ -1,14 +1,3 @@
-plugins {
-    alias(libs.plugins.hibernate.orm)
-}
-
-hibernate {
-    enhancement {
-        enableLazyInitialization = true
-        enableDirtyTracking = true
-    }
-}
-
 dependencies {
     // ### Database ###
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -19,6 +8,7 @@ dependencies {
     testImplementation(testFixtures(project(":caiman-debtor-core")))
     implementation(project(":caiman-contracts"))
     implementation(project(":caiman-mapper-common"))
+    implementation(project(":caiman-jpa-support"))
 
     implementation(libs.mapstruct)
     annotationProcessor(libs.lombok.mapstruct.binding)

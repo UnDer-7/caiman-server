@@ -1,6 +1,7 @@
-package com.caimanproject.debtor.infrastructure.database.entity;
+package com.caimanproject.billing.infrastructure.database.entity;
 
-import com.caimanproject.debtor.core.domain.types.ContactType;
+import com.caimanproject.billing.core.domain.types.CycleUnit;
+import com.caimanproject.billing.core.domain.types.TriggerType;
 import com.caimanproject.jpa.AuditEmbeddable;
 import com.caimanproject.jpa.AuditableEntity;
 import jakarta.persistence.Column;
@@ -32,36 +33,40 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(
-        name = "debtor_contact",
+        name = "charge_plan_notification_config",
         uniqueConstraints = {
             @UniqueConstraint(
-                    name = "uq_dc_debtor_type_value",
-                    columnNames = {"debtor_id", "contact_type", "contact_value"}),
-            @UniqueConstraint(
-                    name = "uq_dc_debtor_type_priority",
-                    columnNames = {"debtor_id", "contact_type", "priority"})
+                    name = "uq_cpnc_plan_trigger",
+                    columnNames = {"charge_plan_id", "trigger_type"})
         })
-public class DebtorContactEntity implements AuditableEntity {
+public class ChargePlanNotificationConfigEntity implements AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", length = 36, nullable = false)
     private String id;
 
+    @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "debtor_id", nullable = false, foreignKey = @ForeignKey(name = "fk_dc_debtor"))
-    private DebtorEntity debtor;
+    @JoinColumn(name = "charge_plan_id", nullable = false, foreignKey = @ForeignKey(name = "fk_cpnc_charge_plan"))
+    private ChargePlanEntity chargePlan;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "contact_type", length = 50, nullable = false)
-    private ContactType contactType;
+    @Column(name = "trigger_type", length = 50, nullable = false)
+    private TriggerType triggerType;
 
-    @Column(name = "contact_value", length = 500, nullable = false)
-    private String contactValue;
+    @Column(name = "reminder_interval")
+    private Integer reminderInterval;
 
-    @Builder.Default
-    @Column(name = "priority", nullable = false)
-    private int priority = 1;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reminder_unit", length = 20)
+    private CycleUnit reminderUnit;
+
+    @Column(name = "max_attempts")
+    private Integer maxAttempts;
+
+    @Column(name = "enabled", nullable = false)
+    private Boolean enabled;
 
     @Embedded
     private AuditEmbeddable audit;

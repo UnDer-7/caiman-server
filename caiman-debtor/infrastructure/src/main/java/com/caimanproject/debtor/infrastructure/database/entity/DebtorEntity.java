@@ -1,6 +1,7 @@
 package com.caimanproject.debtor.infrastructure.database.entity;
 
-import com.caimanproject.debtor.infrastructure.database.config.AuditableEntity;
+import com.caimanproject.jpa.AuditEmbeddable;
+import com.caimanproject.jpa.AuditableEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
