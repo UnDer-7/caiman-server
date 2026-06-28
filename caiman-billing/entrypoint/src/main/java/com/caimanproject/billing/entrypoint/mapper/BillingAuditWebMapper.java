@@ -1,8 +1,8 @@
-package com.caimanproject.debtor.entrypoint.mapper;
+package com.caimanproject.billing.entrypoint.mapper;
 
+import com.caimanproject.billing.core.domain.model.Audit;
+import com.caimanproject.billing.entrypoint.payload.response.AuditResponseDto;
 import com.caimanproject.contracts.util.Constants;
-import com.caimanproject.debtor.core.domain.model.Audit;
-import com.caimanproject.debtor.entrypoint.payload.response.AuditResponseDto;
 import com.caimanproject.mapper.OptionalMapper;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
@@ -13,7 +13,7 @@ import org.mapstruct.ReportingPolicy;
         injectionStrategy = InjectionStrategy.CONSTRUCTOR,
         uses = OptionalMapper.class,
         unmappedTargetPolicy = ReportingPolicy.ERROR)
-public interface AuditWebMapper {
+public interface BillingAuditWebMapper {
 
     AuditResponseDto toDto(Audit model);
 }

@@ -1,0 +1,166 @@
+info:
+  name: newChargePlans
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{SERVER_URL}}/api/v1/charge-plans"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "YouYube Premium",
+        "description": "Familia YT",
+        "type": "ROTATING",
+        "status": "ACTIVE",
+        "proofValidationMode": "AI_AUTO",
+        "totalAmount": 54,
+        "dueToleranceDays": 2,
+        "cycleUnit": "MONTHLY",
+        "cycleInterval": 2,
+        "cycleAnchorDate": "2026-06-27",
+        "notificationsEnabled": true,
+        "notificationTime": "13:00:00",
+        "notificationTimezone": "America/Sao_Paulo",
+        "startsAt": "2026-06-28T13:18:04.502Z",
+        "endsAt": "2026-10-28T13:18:04.502Z",
+        "endWhenRecovered": 1005,
+        "notificationConfigs": [
+          {
+            "triggerType": "INVOICE_CREATED",
+            "reminderInterval": 2,
+            "reminderUnit": "DAILY",
+            "maxAttempts": 10,
+            "enabled": true
+          }
+        ],
+        "members": [
+          {
+            "debtorId": "ee25b455-9555-4d32-8cf7-6d283872966b",
+            "amountOverride": 0,
+            "rotationOrder": 0,
+            "status": "ACTIVE",
+            "creditBalance": 0,
+            "joinedAt": "2026-06-28T13:18:04.502Z"
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: success
+    request:
+      url: "{{SERVER_URL}}/api/v1/debtors"
+      method: POST
+      body:
+        type: json
+        data: |-
+          {
+              "name": "Gggwp",
+              "notes": "eu mesmo",
+              "notificationsEnabled": true,
+              "active": true,
+              "contacts": [
+                  {
+                      "contactType": "EMAIL",
+                      "contactValue": "mateus7532@gmail.com",
+                      "priority": 1
+                  }
+              ]
+          }
+    response:
+      status: 201
+      statusText: Created
+      headers:
+        - name: content-type
+          value: application/json
+        - name: content-length
+          value: "453"
+        - name: date
+          value: Tue, 09 Jun 2026 17:58:11 GMT
+        - name: keep-alive
+          value: timeout=60
+        - name: connection
+          value: keep-alive
+      body:
+        type: json
+        data: |-
+          {
+            "id": "6e5cdfb2-64c5-45d3-99bd-99c78983bc2a",
+            "name": "Gggwp",
+            "notes": "eu mesmo",
+            "notificationsEnabled": true,
+            "active": true,
+            "audit": {
+              "createdAt": "2026-06-09T17:58:11.318673998Z",
+              "updatedAt": "2026-06-09T17:58:11.318673998Z"
+            },
+            "contacts": [
+              {
+                "id": "85436e31-c25c-45f8-a742-330ed344d4fd",
+                "contactType": "EMAIL",
+                "contactValue": "mateus7532@gmail.com",
+                "priority": 1,
+                "audit": {
+                  "createdAt": "2026-06-09T17:58:11.324153731Z",
+                  "updatedAt": "2026-06-09T17:58:11.324153731Z"
+                }
+              }
+            ]
+          }
+  - name: fail | duplicate contact value
+    request:
+      url: "{{SERVER_URL}}/api/v1/debtors"
+      method: POST
+      body:
+        type: json
+        data: |-
+          {
+              "name": "Gggwp",
+              "notes": "eu mesmo",
+              "notificationsEnabled": true,
+              "active": true,
+              "contacts": [
+                  {
+                      "contactType": "EMAIL",
+                      "contactValue": "mateus7532@gmail.com",
+                      "priority": 1
+                  },
+                        {
+                      "contactType": "EMAIL",
+                      "contactValue": "mateus7532@gmail.com",
+                      "priority": 2
+                  }
+              ]
+          }
+    response:
+      status: 422
+      statusText: Unprocessable Entity
+      headers:
+        - name: content-type
+          value: application/json
+        - name: transfer-encoding
+          value: chunked
+        - name: date
+          value: Tue, 09 Jun 2026 17:58:44 GMT
+        - name: keep-alive
+          value: timeout=60
+        - name: connection
+          value: keep-alive
+      body:
+        type: json
+        data: |-
+          {
+            "code": "DEBTOR_001",
+            "timestamp": "2026-06-09T17:58:44.646783829Z",
+            "message": "Informed contact list has duplicate contact value",
+            "detail": "Duplicate Contacts: contactType: EMAIL - contactValue: mateus7532@gmail.com - priority: 1",
+            "httpStatusCode": 422
+          }

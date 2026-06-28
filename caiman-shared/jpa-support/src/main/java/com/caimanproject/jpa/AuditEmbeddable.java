@@ -1,4 +1,4 @@
-package com.caimanproject.debtor.infrastructure.database.entity;
+package com.caimanproject.jpa;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

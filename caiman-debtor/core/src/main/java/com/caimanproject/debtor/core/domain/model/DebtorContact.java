@@ -34,7 +34,10 @@ public class DebtorContact {
             final Integer priority,
             final Audit audit) {
 
+        // Optional
         this.id = id;
+
+        // Required
         this.contactType = validateOrThrows(contactType, "contactType");
         this.contactValue = validateOrThrows(contactValue, "contactValue");
         this.priority = validateOrThrows(priority, "priority");

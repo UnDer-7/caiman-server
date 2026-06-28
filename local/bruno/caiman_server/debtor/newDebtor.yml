@@ -10,7 +10,7 @@ http:
     type: json
     data: |-
       {
-          "name": "Gggwp",
+          "name": "mateus",
           "notes": "eu mesmo",
           "notificationsEnabled": true,
           "active": true,

@@ -1,6 +1,5 @@
-package com.caimanproject.debtor.infrastructure.database.config;
+package com.caimanproject.jpa;
 
-import com.caimanproject.debtor.infrastructure.database.entity.AuditEmbeddable;
 import java.time.Instant;
 import org.hibernate.event.spi.PreInsertEvent;
 import org.hibernate.event.spi.PreInsertEventListener;

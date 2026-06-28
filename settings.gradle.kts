@@ -11,6 +11,8 @@ include("caiman-mapper-spi")
 project(":caiman-mapper-spi").projectDir = file("caiman-shared/mapper-spi")
 include("caiman-mapper-common")
 project(":caiman-mapper-common").projectDir = file("caiman-shared/mapper-common")
+include("caiman-jpa-support")
+project(":caiman-jpa-support").projectDir = file("caiman-shared/jpa-support")
 
 include("caiman-debtor-core")
 project(":caiman-debtor-core").projectDir = file("caiman-debtor/core")

@@ -1,5 +1,11 @@
 # Caiman — Agent Instructions
 
+## CRITICAL: Language
+
+**All code, documentation, comments, commit messages, variable names, class names, test descriptions, and any other written artifact in this project must be in English.** No exceptions — Portuguese, Spanish, or any other language must not appear in the codebase.
+
+---
+
 ## CRITICAL: Spring Boot 4
 
 This project uses **Spring Boot 4**. Not Spring Boot 3. Most search results, Stack Overflow answers, and LLM training data reference Spring Boot 3 — that information is often **not applicable here**.
