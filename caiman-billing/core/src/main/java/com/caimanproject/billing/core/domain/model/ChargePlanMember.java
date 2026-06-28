@@ -20,8 +20,6 @@ public class ChargePlanMember {
     @Getter(AccessLevel.NONE)
     private final UUID id;
 
-    private final ChargePlan chargePlan;
-
     private final String debtorId;
 
     @Getter(AccessLevel.NONE)
@@ -44,7 +42,6 @@ public class ChargePlanMember {
     @Builder(builderMethodName = "restoreBuilder", builderClassName = "RestoreBuilder")
     public ChargePlanMember(
             final UUID id,
-            final ChargePlan chargePlan,
             final String debtorId,
             final BigDecimal amountOverride,
             final Integer rotationOrder,
@@ -61,7 +58,6 @@ public class ChargePlanMember {
         this.leftAt = leftAt;
 
         // Required
-        this.chargePlan = validateOrThrows(chargePlan, "chargePlan");
         this.debtorId = validateOrThrows(debtorId, "debtorId");
         this.status = validateOrThrows(status, "status");
         this.creditBalance = validateOrThrows(creditBalance, "creditBalance");
@@ -71,7 +67,6 @@ public class ChargePlanMember {
 
     @Builder(builderMethodName = "createBuilder", builderClassName = "CreateBuilder")
     public ChargePlanMember(
-            final ChargePlan chargePlan,
             final String debtorId,
             final BigDecimal amountOverride,
             final Integer rotationOrder,
@@ -79,7 +74,7 @@ public class ChargePlanMember {
             final BigDecimal creditBalance,
             final Instant joinedAt,
             final Instant leftAt) {
-        this(null, chargePlan, debtorId, amountOverride, rotationOrder, status, creditBalance, joinedAt, leftAt, null);
+        this(null, debtorId, amountOverride, rotationOrder, status, creditBalance, joinedAt, leftAt, null);
     }
 
     public Optional<UUID> getId() {

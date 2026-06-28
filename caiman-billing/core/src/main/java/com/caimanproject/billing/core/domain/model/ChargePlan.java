@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -53,7 +54,7 @@ public class ChargePlan {
 
     private final LocalTime notificationTime;
 
-    private final String notificationTimezone;
+    private final ZoneId notificationTimezone;
 
     private final Instant startsAt;
 
@@ -84,7 +85,7 @@ public class ChargePlan {
             final LocalDate cycleAnchorDate,
             final Boolean notificationsEnabled,
             final LocalTime notificationTime,
-            final String notificationTimezone,
+            final ZoneId notificationTimezone,
             final Instant startsAt,
             final Instant endsAt,
             final BigDecimal endWhenRecovered,
@@ -137,7 +138,7 @@ public class ChargePlan {
             final LocalDate cycleAnchorDate,
             final Boolean notificationsEnabled,
             final LocalTime notificationTime,
-            final String notificationTimezone,
+            final ZoneId notificationTimezone,
             final Instant startsAt,
             final Instant endsAt,
             final BigDecimal endWhenRecovered,

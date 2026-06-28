@@ -1,26 +1,50 @@
 info:
-  name: newDebtor
+  name: newChargePlans
   type: http
-  seq: 1
+  seq: 2
 
 http:
   method: POST
-  url: "{{SERVER_URL}}/api/v1/debtors"
+  url: "{{SERVER_URL}}/api/v1/charge-plans"
   body:
     type: json
     data: |-
       {
-          "name": "mateus",
-          "notes": "eu mesmo",
-          "notificationsEnabled": true,
-          "active": true,
-          "contacts": [
-              {
-                  "contactType": "EMAIL",
-                  "contactValue": "admin@gmail.com",
-                  "priority": 1
-              }
-          ]
+        "name": "YouYube Premium",
+        "description": "Familia YT",
+        "type": "ROTATING",
+        "status": "ACTIVE",
+        "proofValidationMode": "AI_AUTO",
+        "totalAmount": 54,
+        "dueToleranceDays": 2,
+        "cycleUnit": "MONTHLY",
+        "cycleInterval": 2,
+        "cycleAnchorDate": "2026-06-27",
+        "notificationsEnabled": true,
+        "notificationTime": "13:00:00",
+        "notificationTimezone": "America/Sao_Paulo",
+        "startsAt": "2026-06-28T13:18:04.502Z",
+        "endsAt": "2026-10-28T13:18:04.502Z",
+        "endWhenRecovered": 1005,
+        "notificationConfigs": [
+          {
+            "triggerType": "INVOICE_CREATED",
+            "reminderInterval": 2,
+            "reminderUnit": "DAILY",
+            "maxAttempts": 10,
+            "enabled": true
+          }
+        ],
+        "members": [
+          {
+            "debtorId": "ee25b455-9555-4d32-8cf7-6d283872966b",
+            "amountOverride": 0,
+            "rotationOrder": 0,
+            "status": "ACTIVE",
+            "creditBalance": 0,
+            "joinedAt": "2026-06-28T13:18:04.502Z"
+          }
+        ]
       }
   auth: inherit
 

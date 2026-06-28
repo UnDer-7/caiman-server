@@ -10,14 +10,18 @@ import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 
+import java.util.Collection;
+
 @Mapper(
         componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
         injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-        uses = {OptionalMapper.class, AuditWebMapper.class},
+        uses = {OptionalMapper.class, DebtorAuditWebMapper.class},
         unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface DebtorContactWebMapper {
 
     CreateDebtorContactCommand toCommand(CreateDebtorContactRequestDto dto);
+    Collection<CreateDebtorContactCommand> toCommand(Collection<CreateDebtorContactRequestDto> dtos);
 
     DebtorContactResponseDto toDto(final DebtorContact domain);
+    Collection<DebtorContactResponseDto> toDto(final Collection<DebtorContact> domain);
 }

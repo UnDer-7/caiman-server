@@ -19,8 +19,6 @@ public class ChargePlanNotificationConfig {
     @Getter(AccessLevel.NONE)
     private final UUID id;
 
-    private final ChargePlan chargePlan;
-
     private final TriggerType triggerType;
 
     @Getter(AccessLevel.NONE)
@@ -39,7 +37,6 @@ public class ChargePlanNotificationConfig {
     @Builder(builderMethodName = "restoreBuilder", builderClassName = "RestoreBuilder")
     public ChargePlanNotificationConfig(
             final UUID id,
-            final ChargePlan chargePlan,
             final TriggerType triggerType,
             final Integer reminderInterval,
             final CycleUnit reminderUnit,
@@ -54,7 +51,6 @@ public class ChargePlanNotificationConfig {
         this.maxAttempts = maxAttempts;
 
         // Required
-        this.chargePlan = validateOrThrows(chargePlan, "chargePlan");
         this.triggerType = validateOrThrows(triggerType, "triggerType");
         this.enabled = validateOrThrows(enabled, "enabled");
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
@@ -62,13 +58,12 @@ public class ChargePlanNotificationConfig {
 
     @Builder(builderMethodName = "createBuilder", builderClassName = "CreateBuilder")
     public ChargePlanNotificationConfig(
-            final ChargePlan chargePlan,
             final TriggerType triggerType,
             final Integer reminderInterval,
             final CycleUnit reminderUnit,
             final Integer maxAttempts,
             final Boolean enabled) {
-        this(null, chargePlan, triggerType, reminderInterval, reminderUnit, maxAttempts, enabled, null);
+        this(null, triggerType, reminderInterval, reminderUnit, maxAttempts, enabled, null);
     }
 
     public Optional<UUID> getId() {

@@ -13,7 +13,7 @@ import org.mapstruct.ReportingPolicy;
         injectionStrategy = InjectionStrategy.CONSTRUCTOR,
         uses = OptionalMapper.class,
         unmappedTargetPolicy = ReportingPolicy.ERROR)
-public interface AuditWebMapper {
+public interface DebtorAuditWebMapper {
 
     AuditResponseDto toDto(Audit model);
 }

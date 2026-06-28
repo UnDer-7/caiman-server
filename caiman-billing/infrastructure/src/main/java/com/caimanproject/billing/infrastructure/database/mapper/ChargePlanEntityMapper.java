@@ -5,6 +5,7 @@ import com.caimanproject.billing.infrastructure.database.entity.ChargePlanEntity
 import com.caimanproject.contracts.util.Constants;
 import com.caimanproject.mapper.IdMapper;
 import com.caimanproject.mapper.OptionalMapper;
+import com.caimanproject.mapper.ZoneIdMapper;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -16,6 +17,7 @@ import org.mapstruct.ReportingPolicy;
         uses = {
             OptionalMapper.class,
             IdMapper.class,
+            ZoneIdMapper.class,
             BillingAuditEntityMapper.class,
             ChargePlanMemberEntityMapper.class,
             ChargePlanNotificationConfigEntityMapper.class
