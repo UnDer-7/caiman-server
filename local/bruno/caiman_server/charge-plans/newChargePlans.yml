@@ -37,9 +37,8 @@ http:
         ],
         "members": [
           {
-            "debtorId": "ee25b455-9555-4d32-8cf7-6d283872966b",
-            "amountOverride": 0,
-            "rotationOrder": 0,
+            "debtorId": "98ccda44-10f3-4b56-9d72-426c62ed0ded",
+            "amountOverride": 100,
             "status": "ACTIVE",
             "creditBalance": 0,
             "joinedAt": "2026-06-28T13:18:04.502Z"

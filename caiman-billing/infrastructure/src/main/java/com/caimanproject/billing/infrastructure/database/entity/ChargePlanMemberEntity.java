@@ -15,7 +15,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.math.BigDecimal;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
@@ -32,7 +34,15 @@ import lombok.ToString;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "charge_plan_member")
+@Table(
+        name = "charge_plan_member",
+        indexes = {
+            @Index(name = "idx_cpm_charge_plan_status", columnList = "charge_plan_id, status"),
+            @Index(name = "idx_cpm_debtor", columnList = "debtor_id")
+        },
+        uniqueConstraints = {
+            @UniqueConstraint(name = "uk_cpm_debtor_charge_plan", columnNames = {"debtor_id", "charge_plan_id"})
+        })
 public class ChargePlanMemberEntity implements AuditableEntity {
 
     @Id

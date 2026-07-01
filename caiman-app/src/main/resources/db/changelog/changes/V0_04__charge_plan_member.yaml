@@ -101,3 +101,12 @@ databaseChangeLog:
                   remarks: Timestamp of the last update to this record. Always stored in UTC.
                   constraints:
                     nullable: false
+
+  - changeSet:
+      id: 4-unique-charge-plan-member-debtor
+      author: caiman
+      changes:
+        - addUniqueConstraint:
+            tableName: charge_plan_member
+            constraintName: uk_cpm_debtor_charge_plan
+            columnNames: debtor_id, charge_plan_id

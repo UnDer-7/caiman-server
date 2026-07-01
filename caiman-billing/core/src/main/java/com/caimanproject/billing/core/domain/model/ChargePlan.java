@@ -17,6 +17,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -165,6 +167,46 @@ public class ChargePlan {
                 null,
                 notificationConfigs,
                 members);
+    }
+
+    public static List<ChargePlanMember> getDuplicateMembersByDebtorId(final List<ChargePlanMember> members) {
+        return members.stream()
+            .collect(Collectors.groupingBy(ChargePlanMember::getDebtorId))
+            .values()
+            .stream()
+            .filter(group -> group.size() > 1)
+            .map(List::getFirst)
+            .toList();
+    }
+
+    public static List<ChargePlanMember> getMembersWithoutRotationOrder(final List<ChargePlanMember> members) {
+        return members.stream()
+            .filter(member -> member.getRotationOrder().isEmpty())
+            .toList();
+    }
+
+    public static boolean hasRotationOrderGaps(final List<ChargePlanMember> members) {
+        if (members.isEmpty()) {
+            return false;
+        }
+
+        final List<Integer> rotationOrders = members.stream()
+            .map(ChargePlanMember::getRotationOrder)
+            .flatMap(Optional::stream)
+            .sorted()
+            .toList();
+
+        if (rotationOrders.getFirst() != 1) {
+            return true;
+        }
+
+        for (int i = 1; i < rotationOrders.size(); i++) {
+            if (rotationOrders.get(i) - rotationOrders.get(i - 1) != 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public Optional<UUID> getId() {

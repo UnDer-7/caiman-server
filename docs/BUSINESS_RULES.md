@@ -477,12 +477,12 @@ All enum columns use `VARCHAR`. Valid values per column:
 **Rules:**
 
 - `debtor_id` is required.  
-- The same debtor cannot be added to the same plan twice if they already have an `ACTIVE` membership. If the debtor has a `LEFT` membership, a new membership record is created (the old one is preserved for history).  
+- If a `charge_plan_member` record already exists for this `(debtor_id, charge_plan_id)` pair — regardless of status (`ACTIVE` or `LEFT`) — the endpoint returns `409 Conflict`. The database enforces `UNIQUE(debtor_id, charge_plan_id)` on `charge_plan_member`. To reactivate a member who previously left, use `PATCH /charge-plans/{planId}/members/{memberId}` instead.  
 - `amount_override` is optional. If not provided, the plan default is used.  
 - For `ROTATING` plans, `rotation_order` is required. The application validates that the provided value does not duplicate an existing `rotation_order` in the plan among `ACTIVE` members.  
 - For `SPLIT` plans, `rotation_order` is ignored and stored as `null`.  
 - `status` is always `ACTIVE` on creation.  
-- `credit_balance` is always `0.00` on creation.  
+- `credit_balance` defaults to `0.00` if not provided. Admin may supply an initial credit balance at creation time.  
 - `joined_at` is set to the current UTC instant.
 
 ### 4.2 Reorder Members (ROTATING plans only)
@@ -498,9 +498,17 @@ All enum columns use `VARCHAR`. Valid values per column:
 - All updates are applied in a single transaction.  
 - Takes effect on the next invoice generation cycle. Does not affect already-generated invoices.
 
-### 4.3 Remove Member from Plan (Member Leaves)
+### 4.3 Update Member Status (Leave or Reactivate)
 
 **Endpoint:** `PATCH /charge-plans/{planId}/members/{memberId}`
+
+This endpoint handles both directions of the `charge_plan_member` status lifecycle.
+
+---
+
+#### 4.3.1 Member Leaves (`ACTIVE → LEFT`)
+
+**Request:**
 
 {
 
@@ -516,6 +524,7 @@ All enum columns use `VARCHAR`. Valid values per column:
 
 **Rules:**
 
+- Only applicable when current `status = ACTIVE`. Returns `409 Conflict` if already `LEFT`.  
 - Sets `status = LEFT` and `left_at = leftAt` on the membership record.  
 - The member is immediately excluded from future invoice generation and rotation calculation.  
 - `leftAt` defaults to the current UTC instant if not provided.  
@@ -527,6 +536,32 @@ All enum columns use `VARCHAR`. Valid values per column:
 - If `cancelPendingInvoices = false` (default):  
   - Existing invoices are untouched. The member remains billable for open invoices.  
 - After the member is set to `LEFT`, the admin should call the reorder endpoint to update `rotation_order` for remaining members if desired.
+
+---
+
+#### 4.3.2 Member Reactivates (`LEFT → ACTIVE`)
+
+**Request:**
+
+{
+
+  "status": "ACTIVE",
+
+  "rotationOrder": 3,
+
+  "amountOverride": 50.00
+
+}
+
+**Rules:**
+
+- Only applicable when current `status = LEFT`. Returns `409 Conflict` if already `ACTIVE`.  
+- Sets `status = ACTIVE`, resets `joined_at` to the current UTC instant, and clears `left_at` (`null`).  
+- `credit_balance` is **preserved** from the previous membership — not reset to zero.  
+- `amount_override` from the request replaces the previous value. If not provided, it is cleared (`null`) and the plan default applies.  
+- For `ROTATING` plans, `rotation_order` is required. The application validates that the provided value does not duplicate an existing `rotation_order` among `ACTIVE` members.  
+- For `SPLIT` plans, `rotation_order` is ignored and stored as `null`.  
+- All updates happen in a single transaction.
 
 ### 4.4 Credit Balance (Manual Pre-payment)
 
@@ -1315,4 +1350,14 @@ No DDL change needed (stored as `VARCHAR`). Update application-layer enum only.
 
 ### A.8 Default notification config rows on ChargePlan creation
 
-When a new `ChargePlan` is created, the application must automatically insert `charge_plan_notification_config` rows for `PAYMENT_APPROVED` and `PAYMENT_REJECTED` with notifications enabled. This is application logic, not a DDL change.  
+When a new `ChargePlan` is created, the application must automatically insert `charge_plan_notification_config` rows for `PAYMENT_APPROVED` and `PAYMENT_REJECTED` with notifications enabled. This is application logic, not a DDL change.
+
+### A.9 Unique constraint on `charge_plan_member(debtor_id, charge_plan_id)`
+
+Each debtor can have at most one `charge_plan_member` record per plan (regardless of status). `POST /charge-plans/{planId}/members` always inserts; `PATCH` updates the existing record for reactivation. The database enforces this invariant via a simple unique constraint:
+
+```sql
+UNIQUE (debtor_id, charge_plan_id)
+```
+
+Add to the `charge_plan_member` table definition in the existing migration (`V0_04__charge_plan_member.yaml`) or as a separate `addUniqueConstraint` changeset.

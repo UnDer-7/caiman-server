@@ -5,16 +5,15 @@ import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.UUID;
 
 @Builder
 public record CreateChargePlanMemberCommand(
-    String debtorId,
+    UUID debtorId,
 
     BigDecimal amountOverride,
 
     Integer rotationOrder,
-
-    ChargePlanMemberStatus status,
 
     BigDecimal creditBalance,
 
