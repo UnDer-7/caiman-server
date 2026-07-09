@@ -2,12 +2,12 @@ package com.caimanproject.billing.entrypoint.payload.request;
 
 import com.caimanproject.billing.core.domain.types.CycleUnit;
 import com.caimanproject.billing.core.domain.types.TriggerType;
-import jakarta.validation.constraints.NotNull;
+import com.caimanproject.web.annotation.composition.body.NotNullBody;
 import lombok.Builder;
 
 @Builder
 public record CreateChargePlanNotificationConfigRequestDto(
-    @NotNull
+    @NotNullBody
     TriggerType triggerType,
 
     Integer reminderInterval,
@@ -16,7 +16,7 @@ public record CreateChargePlanNotificationConfigRequestDto(
 
     Integer maxAttempts,
 
-    @NotNull
+    @NotNullBody
     Boolean enabled
 ) {
 

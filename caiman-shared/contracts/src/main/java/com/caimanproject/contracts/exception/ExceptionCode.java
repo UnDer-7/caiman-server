@@ -8,14 +8,6 @@ public interface ExceptionCode {
 
     ModulePrefix getModulePrefix();
 
-    CaimanException createException(String detail);
-
-    CaimanException createException(String detail, Throwable originalCause);
-
-    CaimanException createException(Throwable originalCause);
-
-    CaimanException createException();
-
     default String getFullCode() {
         return this.getModulePrefix().toString() + "_" + this.getCode();
     }

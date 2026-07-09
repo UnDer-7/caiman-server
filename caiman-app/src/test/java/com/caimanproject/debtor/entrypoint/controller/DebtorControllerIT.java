@@ -6,7 +6,7 @@ import com.caimanproject.contracts.util.RequestConstants;
 import com.caimanproject.debtor.core.domain.types.ContactType;
 import com.caimanproject.debtor.entrypoint.payload.request.CreateDebtorContactRequestDto;
 import com.caimanproject.debtor.entrypoint.payload.response.DebtorResponseDto;
-import com.caimanproject.web.dto.response.ErrorResponseDto;
+
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

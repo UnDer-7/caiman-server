@@ -1,10 +1,12 @@
 package com.caimanproject.billing.core.domain.model;
 
-import com.caimanproject.billing.core.domain.exception.domain.DomainExceptionCode;
+import com.caimanproject.billing.core.domain.types.DomainExceptionCode;
 import com.caimanproject.billing.core.domain.types.ChargePlanMemberStatus;
+import com.caimanproject.contracts.exception.DomainException;
 import com.caimanproject.contracts.util.DomainValidation;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -58,11 +60,19 @@ public class ChargePlanMember {
         this.leftAt = leftAt;
 
         // Required
-        this.debtorId = validateOrThrows(debtorId, "debtorId");
-        this.status = validateOrThrows(status, "status");
-        this.creditBalance = validateOrThrows(creditBalance, "creditBalance");
-        this.joinedAt = validateOrThrows(joinedAt, "joinedAt");
+        this.debtorId = debtorId;
+        this.status = status;
+        this.creditBalance = creditBalance;
+        this.joinedAt = joinedAt;
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
+
+        final var fieldValidation = DomainValidation.validateAll(List.of(
+            DomainValidation.validate(debtorId, "$.debtorId", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(status, "$.status", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(creditBalance, "$.creditBalance", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(joinedAt, "$.joinedAt", DomainExceptionCode.INVALID_VALUE)));
+
+        fieldValidation.throwIfInvalid(DomainException::new);
     }
 
     @Builder(builderMethodName = "createBuilder", builderClassName = "CreateBuilder")
@@ -92,7 +102,4 @@ public class ChargePlanMember {
         return Optional.ofNullable(leftAt);
     }
 
-    private static <T> T validateOrThrows(final T value, final String valueName) {
-        return DomainValidation.validateOrThrows(value, valueName, DomainExceptionCode.INVALID_VALUE::createException);
-    }
 }

@@ -1,9 +1,8 @@
 package com.caimanproject.billing.entrypoint.payload.request;
 
-import com.caimanproject.billing.core.domain.types.ChargePlanMemberStatus;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
+import com.caimanproject.web.annotation.composition.body.NotNullBody;
+import com.caimanproject.web.annotation.composition.body.PositiveBody;
+import com.caimanproject.web.annotation.composition.body.PositiveOrZeroBody;
 import lombok.Builder;
 
 import java.math.BigDecimal;
@@ -12,20 +11,20 @@ import java.util.UUID;
 
 @Builder
 public record CreateChargePlanMemberRequestDto(
-    @NotNull
+    @NotNullBody
     UUID debtorId,
 
-    @Positive
+    @PositiveBody
     BigDecimal amountOverride,
 
-    @Positive
+    @PositiveBody
     Integer rotationOrder,
 
-    @NotNull
-    @PositiveOrZero
+    @NotNullBody
+    @PositiveOrZeroBody
     BigDecimal creditBalance,
 
-    @NotNull
+    @NotNullBody
     Instant joinedAt
 ) {
 

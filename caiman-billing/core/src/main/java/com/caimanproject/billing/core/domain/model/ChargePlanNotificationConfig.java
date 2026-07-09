@@ -1,9 +1,12 @@
 package com.caimanproject.billing.core.domain.model;
 
-import com.caimanproject.billing.core.domain.exception.domain.DomainExceptionCode;
+import com.caimanproject.billing.core.domain.types.DomainExceptionCode;
 import com.caimanproject.billing.core.domain.types.CycleUnit;
 import com.caimanproject.billing.core.domain.types.TriggerType;
+import com.caimanproject.contracts.exception.DomainException;
 import com.caimanproject.contracts.util.DomainValidation;
+
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -51,9 +54,15 @@ public class ChargePlanNotificationConfig {
         this.maxAttempts = maxAttempts;
 
         // Required
-        this.triggerType = validateOrThrows(triggerType, "triggerType");
-        this.enabled = validateOrThrows(enabled, "enabled");
+        this.triggerType = triggerType;
+        this.enabled = enabled;
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
+
+        final var fieldValidations = DomainValidation.validateAll(List.of(
+            DomainValidation.validate(triggerType, "$.triggerType", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(enabled, "$.enabled", DomainExceptionCode.INVALID_VALUE)));
+
+        fieldValidations.throwIfInvalid(DomainException::new);
     }
 
     @Builder(builderMethodName = "createBuilder", builderClassName = "CreateBuilder")
@@ -82,7 +91,4 @@ public class ChargePlanNotificationConfig {
         return Optional.ofNullable(maxAttempts);
     }
 
-    private static <T> T validateOrThrows(final T value, final String valueName) {
-        return DomainValidation.validateOrThrows(value, valueName, DomainExceptionCode.INVALID_VALUE::createException);
-    }
 }

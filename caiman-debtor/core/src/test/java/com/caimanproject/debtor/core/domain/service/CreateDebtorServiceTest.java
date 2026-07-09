@@ -1,6 +1,6 @@
 package com.caimanproject.debtor.core.domain.service;
 
-import com.caimanproject.debtor.core.domain.exception.business.BusinessExceptionCode;
+import com.caimanproject.debtor.core.domain.types.BusinessExceptionCode;
 import com.caimanproject.debtor.core.domain.model.Debtor;
 import com.caimanproject.debtor.core.domain.types.ContactType;
 import com.caimanproject.debtor.core.port.in.command.CreateDebtorContactCommand;

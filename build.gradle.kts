@@ -5,6 +5,7 @@ import org.sonarqube.gradle.SonarExtension
 plugins {
     java
     jacoco
+    idea
     alias(libs.plugins.spring.boot) apply false
     alias(libs.plugins.spring.dependency.management) apply false
     alias(libs.plugins.graalvm.native) apply false
@@ -30,6 +31,13 @@ repositories {
 
 jacoco {
     toolVersion = jacocoToolVersion
+}
+
+idea {
+    module {
+        isDownloadJavadoc = true
+        isDownloadSources = true
+    }
 }
 
 // Classes with no meaningful coverage value: bootstrap, wiring, exceptions, generated code.

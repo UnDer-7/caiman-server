@@ -1,13 +1,19 @@
 package com.caimanproject.contracts.exception;
 
-import java.time.Instant;
-import java.util.Optional;
-import java.util.function.Predicate;
+import com.caimanproject.contracts.validation.ValidationError;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Getter
@@ -15,111 +21,76 @@ public abstract class CaimanException extends RuntimeException {
 
     private final Instant timestamp;
     private final int httpStatusCode;
-    private final Throwable originalCause;
-    private final ExceptionCode exceptionCode;
-
-    @Getter(AccessLevel.NONE)
+    private final List<ValidationError> errors;
+    private final String title;
     private final String detail;
 
+    @Getter(AccessLevel.NONE)
+    private final Throwable originalCause;
+
     protected CaimanException(
-            final ExceptionCode exceptionCode,
-            final ErrorHttpStatus httpStatusCode,
-            final String detail,
-            final Throwable originalCause) {
+        final ErrorHttpStatus httpStatusCode,
+        final String title,
+        final String detail,
+        final List<ValidationError> errors,
+        final Throwable originalCause) {
 
-        super(getExceptionMessage(exceptionCode, detail, originalCause), originalCause);
+        super(getExceptionMessage(title, detail, errors, originalCause), originalCause);
 
+        this.title = title;
         this.timestamp = Instant.now();
-        this.detail = detail;
         this.httpStatusCode = httpStatusCode.getValue();
         this.originalCause = originalCause;
-        this.exceptionCode = exceptionCode;
-    }
-
-    protected CaimanException(
-            final ExceptionCode exceptionCode, final ErrorHttpStatus httpStatusCode, final Throwable originalCause) {
-
-        super(getExceptionMessage(exceptionCode), originalCause);
-
-        this.timestamp = Instant.now();
-        this.detail = null;
-        this.httpStatusCode = httpStatusCode.getValue();
-        this.originalCause = originalCause;
-        this.exceptionCode = exceptionCode;
-    }
-
-    protected CaimanException(
-            final ExceptionCode exceptionCode, final ErrorHttpStatus httpStatusCode, final String detail) {
-
-        super(getExceptionMessage(exceptionCode, detail));
-
-        this.timestamp = Instant.now();
+        this.errors = Optional.ofNullable(errors).map(List::copyOf).orElseGet(Collections::emptyList);
         this.detail = detail;
-        this.httpStatusCode = httpStatusCode.getValue();
-        this.originalCause = null;
-        this.exceptionCode = exceptionCode;
     }
 
-    protected CaimanException(final ExceptionCode exceptionCode, final ErrorHttpStatus httpStatusCode) {
+    protected CaimanException(
+        final ErrorHttpStatus httpStatusCode,
+        final String title,
+        final String detail,
+        final List<ValidationError> errors) {
 
-        super(getExceptionMessage(exceptionCode));
+        super(getExceptionMessage(title, detail, errors, null));
 
+        this.title = title;
         this.timestamp = Instant.now();
-        this.detail = null;
         this.httpStatusCode = httpStatusCode.getValue();
         this.originalCause = null;
-        this.exceptionCode = exceptionCode;
+        this.errors = Optional.ofNullable(errors).map(List::copyOf).orElseGet(Collections::emptyList);
+        this.detail = detail;
     }
 
     public void executeLogging() {
         final var className = this.getClass().getSimpleName();
-        final var defaultMsg = "An exception has occurred";
+        final var errorCodes = errors.stream().map(e -> e.getCode().getFullCode()).toList();
+        final var logLevel = getLogLevel();
+        final var placeholder = LogField.Placeholders.SIX.getPlaceholder();
 
-        final LogLevel logLevel = getLogLevel();
+        final var args = new ArrayList<Object>(List.of(
+            StructuredArguments.kv(LogField.MSG.label(), "An exception has occurred"),
+            StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
+            StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()),
+            StructuredArguments.kv(LogField.ERROR_CODES.label(), errorCodes),
+            StructuredArguments.kv(LogField.HTTP_STATUS_CODE.label(), httpStatusCode),
+            StructuredArguments.kv(LogField.ERROR_TIMESTAMP.label(), getTimestamp().toString())));
 
+        if (logLevel == LogLevel.ERROR) {
+            args.add(this);
+        }
+
+        final var argsArray = args.toArray();
         switch (logLevel) {
-            case TRACE ->
-                getLogger()
-                        .trace(
-                                LogField.Placeholders.THREE.getPlaceholder(),
-                                StructuredArguments.kv(LogField.MSG.label(), defaultMsg),
-                                StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
-                                StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()));
-            case DEBUG ->
-                getLogger()
-                        .debug(
-                                LogField.Placeholders.THREE.getPlaceholder(),
-                                StructuredArguments.kv(LogField.MSG.label(), defaultMsg),
-                                StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
-                                StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()));
-            case INFO ->
-                getLogger()
-                        .info(
-                                LogField.Placeholders.THREE.getPlaceholder(),
-                                StructuredArguments.kv(LogField.MSG.label(), defaultMsg),
-                                StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
-                                StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()));
-            case WARN ->
-                getLogger()
-                        .warn(
-                                LogField.Placeholders.THREE.getPlaceholder(),
-                                StructuredArguments.kv(LogField.MSG.label(), defaultMsg),
-                                StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
-                                StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()));
-            case ERROR ->
-                getLogger()
-                        .error(
-                                LogField.Placeholders.THREE.getPlaceholder(),
-                                StructuredArguments.kv(LogField.MSG.label(), defaultMsg),
-                                StructuredArguments.kv(LogField.EXCEPTION_CLASS.label(), className),
-                                StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), super.getMessage()));
-
+            case TRACE -> getLogger().trace(placeholder, argsArray);
+            case DEBUG -> getLogger().debug(placeholder, argsArray);
+            case INFO -> getLogger().info(placeholder, argsArray);
+            case WARN -> getLogger().warn(placeholder, argsArray);
+            case ERROR -> getLogger().error(placeholder, argsArray);
             default -> {
                 log.warn(
-                        LogField.Placeholders.TWO.getPlaceholder(),
-                        StructuredArguments.kv(LogField.MSG.label(), "Log Level Unknown"),
-                        StructuredArguments.kv(LogField.LOG_LEVEL.label(), logLevel));
-
+                    LogField.Placeholders.TWO.getPlaceholder(),
+                    StructuredArguments.kv(LogField.MSG.label(), "Log Level Unknown"),
+                    StructuredArguments.kv(LogField.LOG_LEVEL.label(), logLevel));
                 throw new IllegalStateException("Unmapped log level: " + logLevel);
             }
         }
@@ -129,44 +100,35 @@ public abstract class CaimanException extends RuntimeException {
 
     protected abstract Logger getLogger();
 
+    public Optional<Throwable> getOriginalCause() {
+        return Optional.ofNullable(originalCause);
+    }
+
     private static String getExceptionMessage(
-            final ExceptionCode exceptionCode, final String detail, final Throwable originalCause) {
-        return Optional.ofNullable(detail)
-                .filter(Predicate.not(String::isBlank))
-                .map(d ->
-                        "[code: %s] - [message: %s] - [detail: %s] - [originalCauseMessage: %s] [originalCauseClass: %s]"
-                                .formatted(
-                                        exceptionCode.getFullCode(),
-                                        exceptionCode.getMessage(),
-                                        d,
-                                        originalCause.getMessage(),
-                                        originalCause.getClass().getName()))
-                .orElseGet(() -> getExceptionMessage(exceptionCode, originalCause));
+        final String title,
+        final String detail,
+        final List<ValidationError> errors,
+        final Throwable originalCause) {
+
+        final var errorCodes = Objects.requireNonNullElseGet(errors, Collections::<ValidationError>emptyList).stream()
+            .map(CaimanException::formatError)
+            .collect(Collectors.joining(" | "));
+
+        return Optional.ofNullable(originalCause)
+            .map(oc -> "[title: %s] [detail: %s] [errors: %s] [originalCauseMessage: %s] [originalCauseClass: %s]"
+                .formatted(title, detail, errorCodes, oc.getMessage(), oc.getClass().getName()))
+            .orElseGet(() -> "[title: %s] [detail: %s] [errors: %s]".formatted(title, detail, errorCodes));
     }
 
-    private static String getExceptionMessage(final ExceptionCode exceptionCode, final Throwable originalCause) {
-        return "[code: %s] - [message: %s] - [originalCauseMessage: %s] [originalCauseClass: %s]"
-                .formatted(
-                        exceptionCode.getFullCode(),
-                        exceptionCode.getMessage(),
-                        originalCause.getMessage(),
-                        originalCause.getClass().getName());
-    }
 
-    private static String getExceptionMessage(final ExceptionCode exceptionCode) {
-        return "[code: %s] - [message: %s]".formatted(exceptionCode.getFullCode(), exceptionCode.getMessage());
-    }
+    private static String formatError(final ValidationError error) {
+        final var parts = new ArrayList<String>();
 
-    private static String getExceptionMessage(final ExceptionCode exceptionCode, final String customMessage) {
-        return Optional.ofNullable(customMessage)
-                .filter(Predicate.not(String::isBlank))
-                .map(cm -> "[code: %s] - [msg: %s] - [detail: %s]"
-                        .formatted(exceptionCode.getFullCode(), exceptionCode.getMessage(), cm))
-                .orElseGet(() -> getExceptionMessage(exceptionCode));
-    }
+        parts.add("code: " + error.getCode().getFullCode());
+        error.getDetail().ifPresent(d -> parts.add("detail: " + d));
+        error.getSource().ifPresent(s -> parts.add("source: " + s));
 
-    public Optional<String> getDetail() {
-        return Optional.ofNullable(detail);
+        return "{ " + String.join(", ", parts) + " }";
     }
 
     protected enum LogLevel {
@@ -174,6 +136,7 @@ public abstract class CaimanException extends RuntimeException {
         DEBUG,
         INFO,
         WARN,
-        ERROR
+        ERROR;
     }
+
 }

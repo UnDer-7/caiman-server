@@ -2,11 +2,11 @@ package com.caimanproject.debtor.entrypoint.payload.request;
 
 import com.caimanproject.debtor.core.domain.types.ContactType;
 import com.caimanproject.debtor.entrypoint.validation.ValidContactValue;
+import com.caimanproject.web.annotation.composition.body.NotBlankBody;
+import com.caimanproject.web.annotation.composition.body.NotNullBody;
+import com.caimanproject.web.annotation.composition.body.PositiveBody;
+import com.caimanproject.web.annotation.composition.body.SizeBody;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
 @Schema(
@@ -20,7 +20,7 @@ public record CreateDebtorContactRequestDto(
                 example = "EMAIL",
                 nullable = false,
                 requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotNull ContactType contactType,
+        @NotNullBody ContactType contactType,
 
         @Schema(
                 description =
@@ -28,7 +28,7 @@ public record CreateDebtorContactRequestDto(
                 example = "user@example.com",
                 nullable = false,
                 requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlank @Size(max = 500) String contactValue,
+        @NotBlankBody @SizeBody(max = 500) String contactValue,
 
         @Schema(description = """
             Dispatch priority within the same (debtor, contactType) group. \
@@ -36,7 +36,7 @@ public record CreateDebtorContactRequestDto(
             Huginn picks the entry with the lowest priority when routing. \
             Defaults to 1 when not provided.
             """, example = "1", nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-        @Positive Integer priority) {
+        @PositiveBody Integer priority) {
 
     public CreateDebtorContactRequestDto {
         if (priority == null) {

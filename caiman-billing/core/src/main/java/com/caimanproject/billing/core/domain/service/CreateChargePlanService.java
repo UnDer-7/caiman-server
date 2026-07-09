@@ -1,6 +1,6 @@
 package com.caimanproject.billing.core.domain.service;
 
-import com.caimanproject.billing.core.domain.exception.business.BusinessExceptionCode;
+import com.caimanproject.billing.core.domain.types.BusinessExceptionCode;
 import com.caimanproject.billing.core.domain.model.ChargePlan;
 import com.caimanproject.billing.core.domain.model.ChargePlanMember;
 import com.caimanproject.billing.core.domain.model.ChargePlanNotificationConfig;
@@ -9,14 +9,16 @@ import com.caimanproject.billing.core.port.in.CreateChargePlanUseCase;
 import com.caimanproject.billing.core.port.in.command.CreateChargePlanCommand;
 import com.caimanproject.billing.core.port.in.command.CreateChargePlanMemberCommand;
 import com.caimanproject.billing.core.port.out.ChargePlanPersistenceGateway;
+import com.caimanproject.contracts.exception.BusinessException;
 import com.caimanproject.contracts.gateway.DebtorGateway;
+import com.caimanproject.contracts.validation.ValidationError;
+import com.caimanproject.contracts.validation.ValidationErrorSourceBody;
+import com.caimanproject.contracts.validation.ValidationResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -53,13 +55,14 @@ public class CreateChargePlanService implements CreateChargePlanUseCase {
                     .build())
             .toList();
 
-        validateDebtorExistence(command);
-        validateDuplicateMembers(members);
+        final var validationDebtorsExists = validateDebtorExistence(command);
+        final var validationDuplicateMembers = validateDuplicateMembers(members);
 
         if (command.type() == ChargePlanType.SPLIT) {
             validateTypeSplit();
         } else {
-            validateTypeRotating(command, members);
+            final var validationTypeRotation = validateTypeRotating(command, members);
+            validationDebtorsExists.merge(validationDuplicateMembers).merge(validationTypeRotation).throwIfInvalid(BusinessException::new);
         }
 
         return ChargePlan.createBuilder()
@@ -85,51 +88,32 @@ public class CreateChargePlanService implements CreateChargePlanUseCase {
     }
 
     private void validateTypeSplit() {
-
+        // todo: fazer depois
     }
 
-    private void validateTypeRotating(final CreateChargePlanCommand chargePlanCommand, final List<ChargePlanMember> members) {
-        final var membersWithoutRotationOrder = ChargePlan.getMembersWithoutRotationOrder(members);
-        if (!membersWithoutRotationOrder.isEmpty()) {
-            final var errorMsg = membersWithoutRotationOrder.stream()
-                .map(e -> e.getDebtorId().toString())
-                .collect(Collectors.joining(","));
-            throw BusinessExceptionCode.INVALID_ROTATION_ORDER.createException("ROTATING plan requires rotationOrder for all members. Missing (debtorId): [%s]".formatted(errorMsg));
-        }
-        if (ChargePlan.hasRotationOrderGaps(members)) {
-            final var errorMsg = members.stream()
-                .filter(member -> member.getRotationOrder().isPresent())
-                .sorted(Comparator.comparing(member -> member.getRotationOrder().get()))
-                .map(member -> "debtorId: %s - rotationOrder: %s".formatted(member.getDebtorId(), member.getRotationOrder().get()))
-                .collect(Collectors.joining(","));
-
-            throw BusinessExceptionCode.INVALID_ROTATION_ORDER.createException("rotationOrder values must form a sequence starting at 1 with no gaps (order of members does not matter). Members informed: [%s]".formatted(errorMsg));
-        }
+    private static ValidationResult validateTypeRotating(final CreateChargePlanCommand chargePlanCommand, final List<ChargePlanMember> members) {
+        // todo: terminar de validar o rotation
+        final var validationRotationOrder = ChargePlan.validateMembersWithoutRotationOrder(members, BusinessExceptionCode.INVALID_ROTATION_ORDER);
+        final var validationRotationOrderGaps = ChargePlan.validateRotationOrderGaps(members, BusinessExceptionCode.INVALID_ROTATION_ORDER);
+        return validationRotationOrder.merge(validationRotationOrderGaps);
     }
 
-    private void validateDebtorExistence(final CreateChargePlanCommand chargePlanCommand) {
+    private ValidationResult validateDebtorExistence(final CreateChargePlanCommand chargePlanCommand) {
         final var debtorIds = chargePlanCommand.members().stream()
             .map(CreateChargePlanMemberCommand::debtorId)
             .collect(Collectors.toSet());
-        final var notFoundDebtorIds = debtorGateway.findMissingIds(debtorIds);
-        if (!notFoundDebtorIds.isEmpty()) {
-            final var notFoundDebtorIdsMsg = notFoundDebtorIds.stream()
-                .map(UUID::toString)
-                .collect(Collectors.joining(", "));
 
-            throw BusinessExceptionCode.DEBTOR_NOT_FOUND.createException("The given debtor IDs were not found: [%s]".formatted(notFoundDebtorIdsMsg));
-        }
+        final var validations = debtorGateway.findMissingIds(debtorIds).stream()
+            .map(id -> ValidationError.builder()
+                .code(BusinessExceptionCode.DEBTOR_NOT_FOUND)
+                .source(new ValidationErrorSourceBody("$.members[*].debtorId", id.toString()))
+                .build())
+            .toList();
+        return ValidationResult.of(validations);
+
     }
 
-    private void validateDuplicateMembers(final List<ChargePlanMember> members) {
-        final var duplicateMembers = ChargePlan.getDuplicateMembersByDebtorId(members);
-        if (!duplicateMembers.isEmpty()) {
-            final var msg = duplicateMembers.stream()
-                .map(cpm -> "debtorId: %s"
-                    .formatted(cpm.getDebtorId()))
-                .collect(Collectors.joining(", "));
-            throw BusinessExceptionCode.DUPLICATE_CHARGE_PLAN_MEMBER_BY_DEBTOR_ID.createException(msg);
-        }
+    private static ValidationResult validateDuplicateMembers(final List<ChargePlanMember> members) {
+        return ChargePlan.validateDuplicateMembersByDebtorId(members, BusinessExceptionCode.DUPLICATE_CHARGE_PLAN_MEMBER_BY_DEBTOR_ID);
     }
-
 }

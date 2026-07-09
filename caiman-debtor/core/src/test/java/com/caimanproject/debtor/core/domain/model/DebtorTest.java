@@ -1,6 +1,6 @@
 package com.caimanproject.debtor.core.domain.model;
 
-import com.caimanproject.debtor.core.domain.exception.domain.DomainExceptionCode;
+import com.caimanproject.debtor.core.domain.types.DomainExceptionCode;
 import com.caimanproject.debtor.core.domain.types.ContactType;
 import com.caimanproject.debtor.core.test.builder.DebtorDomainBuilder;
 import com.caimanproject.test.annotation.UnitTest;
@@ -30,7 +30,7 @@ class DebtorTest {
         void should_return_duplicate_contacts(
                 final List<DebtorContact> contacts, final List<String> expectedDuplicateValues) {
             // When
-            final var result = Debtor.getDuplicateContactsByValue(contacts);
+            final var result = Debtor.validateDuplicateContactsByValue(contacts);
 
             // Then
             Assertions.assertThat(result)
@@ -42,7 +42,7 @@ class DebtorTest {
         @MethodSource("should_return_empty_when_no_duplicates__cases")
         void should_return_empty_when_no_duplicates(final List<DebtorContact> contacts) {
             // When
-            final var result = Debtor.getDuplicateContactsByValue(contacts);
+            final var result = Debtor.validateDuplicateContactsByValue(contacts);
 
             // Then
             Assertions.assertThat(result).isEmpty();
@@ -95,7 +95,7 @@ class DebtorTest {
         void should_return_duplicate_contacts(
                 final List<DebtorContact> contacts, final List<String> expectedDuplicateValues) {
             // When
-            final var result = Debtor.getDuplicateContactsByPriority(contacts);
+            final var result = Debtor.validateDuplicateContactsByPriority(contacts);
 
             // Then
             Assertions.assertThat(result)
@@ -107,7 +107,7 @@ class DebtorTest {
         @MethodSource("should_return_empty_when_no_duplicates__cases")
         void should_return_empty_when_no_duplicates(final List<DebtorContact> contacts) {
             // When
-            final var result = Debtor.getDuplicateContactsByPriority(contacts);
+            final var result = Debtor.validateDuplicateContactsByPriority(contacts);
 
             // Then
             Assertions.assertThat(result).isEmpty();

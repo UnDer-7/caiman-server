@@ -19,6 +19,8 @@ public class OpenApiConstants {
         public static final String TRUE = "true";
         public static final String ID = "42";
 
+        public static final String UUID = "60d8295d-1b20-4191-b1f5-ee6b3498784f";
+
         private Examples() {
             throw new IllegalStateException("Utility class");
         }

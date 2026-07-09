@@ -1,14 +1,19 @@
 package com.caimanproject.debtor.core.domain.service;
 
+import com.caimanproject.contracts.exception.BusinessException;
 import com.caimanproject.contracts.exception.LogField;
-import com.caimanproject.debtor.core.domain.exception.business.BusinessExceptionCode;
+import com.caimanproject.contracts.validation.ValidationError;
+import com.caimanproject.contracts.validation.ValidationErrorSourceBody;
+import com.caimanproject.contracts.validation.ValidationResult;
+import com.caimanproject.debtor.core.domain.types.BusinessExceptionCode;
 import com.caimanproject.debtor.core.domain.model.Debtor;
 import com.caimanproject.debtor.core.domain.model.DebtorContact;
 import com.caimanproject.debtor.core.port.in.CreateDebtorUseCase;
 import com.caimanproject.debtor.core.port.in.command.CreateDebtorCommand;
 import com.caimanproject.debtor.core.port.out.DebtorPersistenceGateway;
+
 import java.util.List;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.argument.StructuredArguments;
@@ -60,22 +65,9 @@ class CreateDebtorService implements CreateDebtorUseCase {
     }
 
     private static void validateContacts(final List<DebtorContact> contacts) {
-        final List<DebtorContact> duplicateContactsByPriority = Debtor.getDuplicateContactsByPriority(contacts);
-        if (!duplicateContactsByPriority.isEmpty()) {
-            final var msg = duplicateContactsByPriority.stream()
-                    .map(dc -> "contactType: %s - contactValue: %s - priority: %s"
-                            .formatted(dc.getContactType(), dc.getContactValue(), dc.getPriority()))
-                    .collect(Collectors.joining(" | "));
-            throw BusinessExceptionCode.DUPLICATE_CONTACT_BY_PRIORITY.createException("Duplicate Contacts: " + msg);
-        }
+        final var priorityValidation = Debtor.validateDuplicateContactsByPriority(contacts, BusinessExceptionCode.DUPLICATE_CONTACT_BY_PRIORITY);
+        final var valueValidation = Debtor.validateDuplicateContactsByValue(contacts, BusinessExceptionCode.DUPLICATE_CONTACT_BY_VALUE);
 
-        final List<DebtorContact> duplicateContactsByValue = Debtor.getDuplicateContactsByValue(contacts);
-        if (!duplicateContactsByValue.isEmpty()) {
-            final var msg = duplicateContactsByValue.stream()
-                    .map(dc -> "contactType: %s - contactValue: %s - priority: %s"
-                            .formatted(dc.getContactType(), dc.getContactValue(), dc.getPriority()))
-                    .collect(Collectors.joining(" | "));
-            throw BusinessExceptionCode.DUPLICATE_CONTACT_BY_VALUE.createException("Duplicate Contacts: " + msg);
-        }
+        priorityValidation.merge(valueValidation).throwIfInvalid(BusinessException::new);
     }
 }

@@ -1,10 +1,12 @@
 package com.caimanproject.billing.core.domain.model;
 
-import com.caimanproject.billing.core.domain.exception.domain.DomainExceptionCode;
+import com.caimanproject.billing.core.domain.types.DomainExceptionCode;
 import com.caimanproject.billing.core.domain.types.ChargePlanStatus;
 import com.caimanproject.billing.core.domain.types.ChargePlanType;
 import com.caimanproject.billing.core.domain.types.CycleUnit;
 import com.caimanproject.billing.core.domain.types.ProofValidationMode;
+import com.caimanproject.contracts.exception.DomainException;
+import com.caimanproject.contracts.exception.ExceptionCode;
 import com.caimanproject.contracts.util.DomainValidation;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -18,7 +20,11 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import com.caimanproject.contracts.validation.ValidationError;
+import com.caimanproject.contracts.validation.ValidationErrorSourceBody;
+import com.caimanproject.contracts.validation.ValidationResult;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -102,19 +108,19 @@ public class ChargePlan {
         this.endWhenRecovered = endWhenRecovered;
 
         // Required
-        this.name = validateOrThrows(name, "name");
-        this.type = validateOrThrows(type, "type");
-        this.status = validateOrThrows(status, "status");
-        this.proofValidationMode = validateOrThrows(proofValidationMode, "proofValidationMode");
-        this.totalAmount = validateOrThrows(totalAmount, "totalAmount");
-        this.dueToleranceDays = validateOrThrows(dueToleranceDays, "dueToleranceDays");
-        this.cycleUnit = validateOrThrows(cycleUnit, "cycleUnit");
-        this.cycleInterval = validateOrThrows(cycleInterval, "cycleInterval");
-        this.cycleAnchorDate = validateOrThrows(cycleAnchorDate, "cycleAnchorDate");
-        this.notificationsEnabled = validateOrThrows(notificationsEnabled, "notificationsEnabled");
-        this.notificationTime = validateOrThrows(notificationTime, "notificationTime");
-        this.notificationTimezone = validateOrThrows(notificationTimezone, "notificationTimezone");
-        this.startsAt = validateOrThrows(startsAt, "startsAt");
+        this.name = name;
+        this.type = type;
+        this.status = status;
+        this.proofValidationMode = proofValidationMode;
+        this.totalAmount = totalAmount;
+        this.dueToleranceDays = dueToleranceDays;
+        this.cycleUnit = cycleUnit;
+        this.cycleInterval = cycleInterval;
+        this.cycleAnchorDate = cycleAnchorDate;
+        this.notificationsEnabled = notificationsEnabled;
+        this.notificationTime = notificationTime;
+        this.notificationTimezone = notificationTimezone;
+        this.startsAt = startsAt;
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
         this.notificationConfigs = Optional.ofNullable(notificationConfigs)
                 .filter(Predicate.not(List::isEmpty))
@@ -124,6 +130,23 @@ public class ChargePlan {
                 .filter(Predicate.not(List::isEmpty))
                 .map(List::copyOf)
                 .orElseGet(Collections::emptyList);
+
+        final var fieldValidations = DomainValidation.validateAll(List.of(
+            DomainValidation.validate(name, "$.name", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(type, "$.type", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(status, "$.status", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(proofValidationMode, "$.proofValidationMode", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(totalAmount, "$.totalAmount", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(dueToleranceDays, "$.dueToleranceDays", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(cycleUnit, "$.cycleUnit", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(cycleInterval, "$.cycleInterval", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(cycleAnchorDate, "$.cycleAnchorDate", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(notificationsEnabled, "$.notificationsEnabled", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(notificationTime, "$.notificationTime", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(notificationTimezone, "$.notificationTimezone", DomainExceptionCode.INVALID_VALUE),
+            DomainValidation.validate(startsAt, "$.startsAt", DomainExceptionCode.INVALID_VALUE)));
+
+        fieldValidations.throwIfInvalid(DomainException::new);
     }
 
     @Builder(builderMethodName = "createBuilder", builderClassName = "CreateBuilder")
@@ -169,25 +192,36 @@ public class ChargePlan {
                 members);
     }
 
-    public static List<ChargePlanMember> getDuplicateMembersByDebtorId(final List<ChargePlanMember> members) {
-        return members.stream()
+    public static ValidationResult validateDuplicateMembersByDebtorId(final List<ChargePlanMember> members, final ExceptionCode exceptionCode) {
+        final var validations = members.stream()
             .collect(Collectors.groupingBy(ChargePlanMember::getDebtorId))
             .values()
             .stream()
             .filter(group -> group.size() > 1)
             .map(List::getFirst)
+            .map(member -> ValidationError.builder()
+                .code(exceptionCode)
+                .source(new ValidationErrorSourceBody("$.members[*].debtorId", member.getDebtorId().toString()))
+                .build())
             .toList();
+            return ValidationResult.of(validations);
     }
 
-    public static List<ChargePlanMember> getMembersWithoutRotationOrder(final List<ChargePlanMember> members) {
-        return members.stream()
+    public static ValidationResult validateMembersWithoutRotationOrder(final List<ChargePlanMember> members, final ExceptionCode exceptionCode) {
+         final var validations = members.stream()
             .filter(member -> member.getRotationOrder().isEmpty())
-            .toList();
+            .map(member -> ValidationError.builder()
+                .code(exceptionCode)
+                .source(new ValidationErrorSourceBody("$.members[*].rotationOrder", null))
+                .detail("debtorId: " + member.getDebtorId().toString())
+                .build())
+             .toList();
+         return ValidationResult.of(validations);
     }
 
-    public static boolean hasRotationOrderGaps(final List<ChargePlanMember> members) {
+    public static ValidationResult validateRotationOrderGaps(final List<ChargePlanMember> members, final ExceptionCode exceptionCode) {
         if (members.isEmpty()) {
-            return false;
+            return ValidationResult.valid();
         }
 
         final List<Integer> rotationOrders = members.stream()
@@ -195,18 +229,27 @@ public class ChargePlan {
             .flatMap(Optional::stream)
             .sorted()
             .toList();
+        final var hasGap = rotationOrders.getFirst() != 1
+            || IntStream.range(1, rotationOrders.size())
+            .anyMatch(i -> rotationOrders.get(i) - rotationOrders.get(i - 1) != 1);
 
-        if (rotationOrders.getFirst() != 1) {
-            return true;
+        if (!hasGap) {
+            return ValidationResult.valid();
         }
 
-        for (int i = 1; i < rotationOrders.size(); i++) {
-            if (rotationOrders.get(i) - rotationOrders.get(i - 1) != 1) {
-                return true;
-            }
-        }
-
-        return false;
+        final var invalidValues = rotationOrders.stream()
+            .map(String::valueOf)
+            .collect(Collectors.joining(", "));
+        final var detail = members.stream()
+            .filter(member -> member.getRotationOrder().isPresent())
+            .map(m -> "debtorId: %s - rotationOrder: %s".formatted(m.getDebtorId(), m.getRotationOrder().get()))
+            .collect(Collectors.joining(" | "));
+        final var validationError = ValidationError.builder()
+            .code(exceptionCode)
+            .detail(detail)
+            .source(new ValidationErrorSourceBody("$.members[*].rotationOrder", invalidValues))
+            .build();
+        return ValidationResult.of(validationError);
     }
 
     public Optional<UUID> getId() {
@@ -225,7 +268,4 @@ public class ChargePlan {
         return Optional.ofNullable(endWhenRecovered);
     }
 
-    private static <T> T validateOrThrows(final T value, final String valueName) {
-        return DomainValidation.validateOrThrows(value, valueName, DomainExceptionCode.INVALID_VALUE::createException);
-    }
 }

@@ -3,11 +3,15 @@ package com.caimanproject.app.config;
 import com.caimanproject.app.exception.AppExceptionCode;
 import com.caimanproject.app.property.CaimanServerPropsConfig;
 import com.caimanproject.contracts.exception.LogField;
+import com.caimanproject.contracts.exception.TechnicalException;
+import com.caimanproject.contracts.validation.ValidationError;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.argument.StructuredArguments;
@@ -98,8 +102,13 @@ public class DataSourceConfig {
                 Files.createFile(path);
             }
         } catch (IOException e) {
-            throw AppExceptionCode.SQLITE_FILE_INITIALIZATION_FAILED.createException(
-                    "path=" + path.toAbsolutePath(), e);
+            log.error(
+                LogField.Placeholders.THREE.getPlaceholder(),
+                StructuredArguments.kv(LogField.MSG.label(), "Failed to initialize SQLite database file"),
+                StructuredArguments.kv(LogField.ERROR_CODES.label(), AppExceptionCode.SQLITE_FILE_INITIALIZATION_FAILED.getFullCode()),
+                StructuredArguments.kv(LogField.SQLITE_PATH.label(), path.toAbsolutePath()),
+                e);
+            throw new UncheckedIOException("Failed to initialize SQLite database file: " + path.toAbsolutePath(), e);
         }
         log.info(
                 LogField.Placeholders.TWO.getPlaceholder(),

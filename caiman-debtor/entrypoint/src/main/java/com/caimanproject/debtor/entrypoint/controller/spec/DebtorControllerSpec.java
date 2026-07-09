@@ -2,8 +2,9 @@ package com.caimanproject.debtor.entrypoint.controller.spec;
 
 import com.caimanproject.debtor.entrypoint.payload.request.CreateDebtorRequestDto;
 import com.caimanproject.debtor.entrypoint.payload.response.DebtorResponseDto;
+import com.caimanproject.web.annotation.composition.body.NotNullBody;
 import com.caimanproject.web.constant.OpenApiConstants;
-import com.caimanproject.web.dto.response.ErrorResponseDto;
+import com.caimanproject.web.dto.response.ProblemDetailResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -11,7 +12,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 
 @Tag(name = "Debtors", description = "Operations for managing debtor records and their notification contacts.")
 public interface DebtorControllerSpec {
@@ -38,7 +38,7 @@ public interface DebtorControllerSpec {
                     "Business rule violation. The request was well-formed but violated a business constraint. All possible business error scenarios are documented below.",
             content =
                     @Content(
-                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            schema = @Schema(implementation = ProblemDetailResponseDto.class),
                             examples = {
                                 @ExampleObject(
                                         name = "Two or more contacts share the same contactType and contactValue",
@@ -65,5 +65,5 @@ public interface DebtorControllerSpec {
                         }
                         """),
                             }))
-    DebtorResponseDto createDebtor(@Valid @NotNull CreateDebtorRequestDto payload);
+    DebtorResponseDto createDebtor(@Valid @NotNullBody CreateDebtorRequestDto payload);
 }

@@ -4,12 +4,13 @@ import com.caimanproject.billing.core.domain.types.ChargePlanStatus;
 import com.caimanproject.billing.core.domain.types.ChargePlanType;
 import com.caimanproject.billing.core.domain.types.CycleUnit;
 import com.caimanproject.billing.core.domain.types.ProofValidationMode;
+import com.caimanproject.web.annotation.composition.body.MinBody;
+import com.caimanproject.web.annotation.composition.body.NotBlankBody;
+import com.caimanproject.web.annotation.composition.body.NotNullBody;
+import com.caimanproject.web.annotation.composition.body.PositiveBody;
+import com.caimanproject.web.annotation.composition.body.PositiveOrZeroBody;
+import com.caimanproject.web.annotation.composition.body.SizeBody;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
 
 import java.math.BigDecimal;
@@ -21,53 +22,54 @@ import java.util.List;
 
 @Builder
 public record CreateChargePlanRequestDto(
-    @NotBlank
+    @NotBlankBody
+    @SizeBody(max = 255)
     String name,
 
     String description,
 
-    @NotNull
+    @NotNullBody
     ChargePlanType type,
 
-    @NotNull
+    @NotNullBody
     ChargePlanStatus status,
 
-    @NotNull
+    @NotNullBody
     ProofValidationMode proofValidationMode,
 
-    @NotNull
-    @Positive
+    @NotNullBody
+    @PositiveBody
     BigDecimal totalAmount,
 
-    @NotNull
-    @PositiveOrZero
+    @NotNullBody
+    @PositiveOrZeroBody
     Integer dueToleranceDays,
 
-    @NotNull
+    @NotNullBody
     CycleUnit cycleUnit,
 
-    @NotNull
-    @Min(1)
+    @NotNullBody
+    @MinBody(1)
     Integer cycleInterval,
 
-    @NotNull
+    @NotNullBody
     LocalDate cycleAnchorDate,
 
-    @NotNull
+    @NotNullBody
     Boolean notificationsEnabled,
 
-    @NotNull
+    @NotNullBody
     LocalTime notificationTime,
 
-    @NotNull
+    @NotNullBody
     ZoneId notificationTimezone,
 
-    @NotNull
+    @NotNullBody
     Instant startsAt,
 
     Instant endsAt,
 
-    @Positive
+    @PositiveBody
     BigDecimal endWhenRecovered,
 
     @Valid
