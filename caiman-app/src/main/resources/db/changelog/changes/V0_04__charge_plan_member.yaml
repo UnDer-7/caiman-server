@@ -105,6 +105,7 @@ databaseChangeLog:
   - changeSet:
       id: 4-unique-charge-plan-member-debtor
       author: caiman
+      dbms: "!sqlite"
       changes:
         - addUniqueConstraint:
             tableName: charge_plan_member

@@ -96,19 +96,18 @@ class DebtorControllerIT extends IntegrationTestController {
                     .exchange()
                     .expectStatus()
                     .isBadRequest()
-                    .expectBody(ErrorResponseDto.class)
-                    .value(response -> {
-                        assertThat(response.code()).isEqualTo("WEB_SUPPORT_002");
-                        assertThat(response.timestamp()).isNotNull();
-                        assertThat(response.message()).isEqualTo("Some invalid values were sent");
-                        assertThat(response.detail())
-                                .contains("propertyPath: name")
-                                .contains("errorMotive: must not be blank");
-                        assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-                        assertThat(response.requestId()).isNotNull();
-                        assertThat(response.correlationId()).isEqualTo(correlationId);
-                        assertThat(response.channel()).isEqualTo(channel);
-                    });
+                    .expectBody()
+                    .jsonPath("$.status").isEqualTo(HttpStatus.BAD_REQUEST.value())
+                    .jsonPath("$.title").isEqualTo("Field validation failed")
+                    .jsonPath("$.detail").isEqualTo("One or more request fields are invalid. See errors for details.")
+                    .jsonPath("$.instance").exists()
+                    .jsonPath("$.correlationId").isEqualTo(correlationId)
+                    .jsonPath("$.channel").isEqualTo(channel)
+                    .jsonPath("$.errors.length()").isEqualTo(1)
+                    .jsonPath("$.errors[0].code").isEqualTo("WEB_SUPPORT_002")
+                    .jsonPath("$.errors[0].message").isEqualTo("Some invalid values were sent")
+                    .jsonPath("$.errors[0].detail").isEqualTo("must not be blank")
+                    .jsonPath("$.errors[0].source.body").isEqualTo("$.name");
         }
 
         @Test
@@ -141,16 +140,19 @@ class DebtorControllerIT extends IntegrationTestController {
                     .exchange()
                     .expectStatus()
                     .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value())
-                    .expectBody(ErrorResponseDto.class)
-                    .value(response -> {
-                        assertThat(response.code()).isEqualTo("DEBTOR_BUSINESS_001");
-                        assertThat(response.timestamp()).isNotNull();
-                        assertThat(response.message()).isEqualTo("Informed contact list has duplicate contact value");
-                        assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value());
-                        assertThat(response.requestId()).isNotNull();
-                        assertThat(response.correlationId()).isEqualTo(correlationId);
-                        assertThat(response.channel()).isEqualTo(channel);
-                    });
+                    .expectBody()
+                    .jsonPath("$.status").isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value())
+                    .jsonPath("$.title").isEqualTo("Business rule violation")
+                    .jsonPath("$.detail").isEqualTo("One or more business rules were violated. See errors for details.")
+                    .jsonPath("$.instance").exists()
+                    .jsonPath("$.correlationId").isEqualTo(correlationId)
+                    .jsonPath("$.channel").isEqualTo(channel)
+                    .jsonPath("$.errors.length()").isEqualTo(1)
+                    .jsonPath("$.errors[0].code").isEqualTo("DEBTOR_BUSINESS_001")
+                    .jsonPath("$.errors[0].message").isEqualTo("Informed contact list has duplicate contact value")
+                    .jsonPath("$.errors[0].detail").isEqualTo("contactType: EMAIL - priority: 1")
+                    .jsonPath("$.errors[0].source.body").isEqualTo("$.contacts[*].contactValue")
+                    .jsonPath("$.errors[0].source.invalidValue").isEqualTo(duplicateContactValue);
         }
 
         @Test
@@ -183,17 +185,19 @@ class DebtorControllerIT extends IntegrationTestController {
                     .exchange()
                     .expectStatus()
                     .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value())
-                    .expectBody(ErrorResponseDto.class)
-                    .value(response -> {
-                        assertThat(response.code()).isEqualTo("DEBTOR_BUSINESS_002");
-                        assertThat(response.timestamp()).isNotNull();
-                        assertThat(response.message())
-                                .isEqualTo("Informed contact list has duplicate contact priority");
-                        assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value());
-                        assertThat(response.requestId()).isNotNull();
-                        assertThat(response.correlationId()).isEqualTo(correlationId);
-                        assertThat(response.channel()).isEqualTo(channel);
-                    });
+                    .expectBody()
+                    .jsonPath("$.status").isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value())
+                    .jsonPath("$.title").isEqualTo("Business rule violation")
+                    .jsonPath("$.detail").isEqualTo("One or more business rules were violated. See errors for details.")
+                    .jsonPath("$.instance").exists()
+                    .jsonPath("$.correlationId").isEqualTo(correlationId)
+                    .jsonPath("$.channel").isEqualTo(channel)
+                    .jsonPath("$.errors.length()").isEqualTo(1)
+                    .jsonPath("$.errors[0].code").isEqualTo("DEBTOR_BUSINESS_002")
+                    .jsonPath("$.errors[0].message").isEqualTo("Informed contact list has duplicate contact priority")
+                    .jsonPath("$.errors[0].detail").isEqualTo("contactType: EMAIL - contactValue: johndoe@example.com")
+                    .jsonPath("$.errors[0].source.body").isEqualTo("$.contacts[*].priority")
+                    .jsonPath("$.errors[0].source.invalidValue").isEqualTo(String.valueOf(duplicatePriority));
         }
 
         @ParameterizedTest
@@ -220,19 +224,18 @@ class DebtorControllerIT extends IntegrationTestController {
                     .exchange()
                     .expectStatus()
                     .isBadRequest()
-                    .expectBody(ErrorResponseDto.class)
-                    .value(response -> {
-                        assertThat(response.code()).isEqualTo("WEB_SUPPORT_002");
-                        assertThat(response.timestamp()).isNotNull();
-                        assertThat(response.message()).isEqualTo("Some invalid values were sent");
-                        assertThat(response.detail())
-                                .contains("propertyPath: contacts[0].contactValue")
-                                .contains("errorMotive: must be a valid EMAIL address");
-                        assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-                        assertThat(response.requestId()).isNotNull();
-                        assertThat(response.correlationId()).isEqualTo(correlationId);
-                        assertThat(response.channel()).isEqualTo(channel);
-                    });
+                    .expectBody()
+                    .jsonPath("$.status").isEqualTo(HttpStatus.BAD_REQUEST.value())
+                    .jsonPath("$.title").isEqualTo("Field validation failed")
+                    .jsonPath("$.detail").isEqualTo("One or more request fields are invalid. See errors for details.")
+                    .jsonPath("$.instance").exists()
+                    .jsonPath("$.correlationId").isEqualTo(correlationId)
+                    .jsonPath("$.channel").isEqualTo(channel)
+                    .jsonPath("$.errors.length()").isEqualTo(1)
+                    .jsonPath("$.errors[0].code").isEqualTo("WEB_SUPPORT_002")
+                    .jsonPath("$.errors[0].message").isEqualTo("Some invalid values were sent")
+                    .jsonPath("$.errors[0].detail").isEqualTo("must be a valid EMAIL address")
+                    .jsonPath("$.errors[0].source.body").isEqualTo("$.contacts[0].contactValue");
         }
 
         @Test
@@ -248,20 +251,24 @@ class DebtorControllerIT extends IntegrationTestController {
                     .exchange()
                     .expectStatus()
                     .isBadRequest()
-                    .expectBody(ErrorResponseDto.class)
-                    .value(response -> {
-                        assertThat(response.code()).isEqualTo("WEB_SUPPORT_002");
-                        assertThat(response.timestamp()).isNotNull();
-                        assertThat(response.message()).isEqualTo("Some invalid values were sent");
-                        assertThat(response.detail())
-                                .contains("Missing headers")
-                                .contains(RequestConstants.Headers.X_CORRELATION_ID)
-                                .contains(RequestConstants.Headers.X_CHANNEL);
-                        assertThat(response.httpStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-                        assertThat(response.requestId()).isNotNull();
-                        assertThat(response.correlationId()).isNull();
-                        assertThat(response.channel()).isNull();
-                    });
+                    .expectBody()
+                    .jsonPath("$.status").isEqualTo(HttpStatus.BAD_REQUEST.value())
+                    .jsonPath("$.title").isEqualTo("Field validation failed")
+                    .jsonPath("$.detail").isEqualTo("One or more request fields are invalid. See errors for details.")
+                    .jsonPath("$.instance").exists()
+                    .jsonPath("$.correlationId").doesNotExist()
+                    .jsonPath("$.channel").doesNotExist()
+                    .jsonPath("$.errors.length()").isEqualTo(2)
+                    .jsonPath("$.errors[0].code").isEqualTo("WEB_SUPPORT_002")
+                    .jsonPath("$.errors[0].message").isEqualTo("Some invalid values were sent")
+                    .jsonPath("$.errors[0].detail").isEqualTo("Required field is null/blank")
+                    .jsonPath("$.errors[1].code").isEqualTo("WEB_SUPPORT_002")
+                    .jsonPath("$.errors[1].message").isEqualTo("Some invalid values were sent")
+                    .jsonPath("$.errors[1].detail").isEqualTo("Required field is null/blank")
+                    .jsonPath("$.errors[*].source.header")
+                    .value(List.class, headers -> assertThat(headers)
+                            .containsExactlyInAnyOrder(
+                                    RequestConstants.Headers.X_CORRELATION_ID, RequestConstants.Headers.X_CHANNEL));
         }
     }
 }
