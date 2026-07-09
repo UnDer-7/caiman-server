@@ -85,8 +85,9 @@ class CreateDebtorServiceTest {
             // Then
             abstractThrowableAssert.isInstanceOfSatisfying(BusinessException.class, exception -> {
                 Assertions.assertThat(exception.getErrors())
-                        .allSatisfy(error -> Assertions.assertThat(error.getCode().getFullCode())
-                                .isEqualTo(BusinessExceptionCode.DUPLICATE_CONTACT_BY_VALUE.getFullCode()))
+                        .allSatisfy(
+                                error -> Assertions.assertThat(error.getCode().getFullCode())
+                                        .isEqualTo(BusinessExceptionCode.DUPLICATE_CONTACT_BY_VALUE.getFullCode()))
                         .extracting(error -> error.getSource().orElseThrow().invalidValue())
                         .containsExactlyInAnyOrderElementsOf(expectedInMessage);
             });

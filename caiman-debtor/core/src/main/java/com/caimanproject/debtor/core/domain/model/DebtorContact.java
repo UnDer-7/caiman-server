@@ -2,9 +2,8 @@ package com.caimanproject.debtor.core.domain.model;
 
 import com.caimanproject.contracts.exception.DomainException;
 import com.caimanproject.contracts.util.DomainValidation;
-import com.caimanproject.debtor.core.domain.types.DomainExceptionCode;
 import com.caimanproject.debtor.core.domain.types.ContactType;
-
+import com.caimanproject.debtor.core.domain.types.DomainExceptionCode;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -47,9 +46,9 @@ public class DebtorContact {
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
 
         final var fieldValidations = DomainValidation.validateAll(List.of(
-            DomainValidation.validate(contactType, "$.contactType", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(contactValue, "$.contactValue", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(priority, "$.priority", DomainExceptionCode.INVALID_VALUE)));
+                DomainValidation.validate(contactType, "$.contactType", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(contactValue, "$.contactValue", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(priority, "$.priority", DomainExceptionCode.INVALID_VALUE)));
 
         fieldValidations.throwIfInvalid(DomainException::new);
     }
@@ -62,5 +61,4 @@ public class DebtorContact {
     public Optional<UUID> getId() {
         return Optional.ofNullable(id);
     }
-
 }

@@ -11,72 +11,48 @@ import com.caimanproject.web.annotation.composition.body.PositiveBody;
 import com.caimanproject.web.annotation.composition.body.PositiveOrZeroBody;
 import com.caimanproject.web.annotation.composition.body.SizeBody;
 import jakarta.validation.Valid;
-import lombok.Builder;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
+import lombok.Builder;
 
 @Builder
 public record CreateChargePlanRequestDto(
-    @NotBlankBody
-    @SizeBody(max = 255)
-    String name,
+        @NotBlankBody @SizeBody(max = 255) String name,
 
-    String description,
+        String description,
 
-    @NotNullBody
-    ChargePlanType type,
+        @NotNullBody ChargePlanType type,
 
-    @NotNullBody
-    ChargePlanStatus status,
+        @NotNullBody ChargePlanStatus status,
 
-    @NotNullBody
-    ProofValidationMode proofValidationMode,
+        @NotNullBody ProofValidationMode proofValidationMode,
 
-    @NotNullBody
-    @PositiveBody
-    BigDecimal totalAmount,
+        @NotNullBody @PositiveBody BigDecimal totalAmount,
 
-    @NotNullBody
-    @PositiveOrZeroBody
-    Integer dueToleranceDays,
+        @NotNullBody @PositiveOrZeroBody Integer dueToleranceDays,
 
-    @NotNullBody
-    CycleUnit cycleUnit,
+        @NotNullBody CycleUnit cycleUnit,
 
-    @NotNullBody
-    @MinBody(1)
-    Integer cycleInterval,
+        @NotNullBody @MinBody(1) Integer cycleInterval,
 
-    @NotNullBody
-    LocalDate cycleAnchorDate,
+        @NotNullBody LocalDate cycleAnchorDate,
 
-    @NotNullBody
-    Boolean notificationsEnabled,
+        @NotNullBody Boolean notificationsEnabled,
 
-    @NotNullBody
-    LocalTime notificationTime,
+        @NotNullBody LocalTime notificationTime,
 
-    @NotNullBody
-    ZoneId notificationTimezone,
+        @NotNullBody ZoneId notificationTimezone,
 
-    @NotNullBody
-    Instant startsAt,
+        @NotNullBody Instant startsAt,
 
-    Instant endsAt,
+        Instant endsAt,
 
-    @PositiveBody
-    BigDecimal endWhenRecovered,
+        @PositiveBody BigDecimal endWhenRecovered,
 
-    @Valid
-    List<CreateChargePlanNotificationConfigRequestDto> notificationConfigs,
+        @Valid List<CreateChargePlanNotificationConfigRequestDto> notificationConfigs,
 
-    @Valid
-    List<CreateChargePlanMemberRequestDto> members
-) {
-
-}
+        @Valid List<CreateChargePlanMemberRequestDto> members) {}

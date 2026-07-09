@@ -7,17 +7,12 @@ import lombok.Builder;
 
 @Builder
 public record CreateChargePlanNotificationConfigRequestDto(
-    @NotNullBody
-    TriggerType triggerType,
+        @NotNullBody TriggerType triggerType,
 
-    Integer reminderInterval,
+        Integer reminderInterval,
 
-    CycleUnit reminderUnit,
+        CycleUnit reminderUnit,
 
-    Integer maxAttempts,
+        Integer maxAttempts,
 
-    @NotNullBody
-    Boolean enabled
-) {
-
-}
+        @NotNullBody Boolean enabled) {}

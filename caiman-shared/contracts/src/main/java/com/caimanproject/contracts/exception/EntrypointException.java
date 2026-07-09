@@ -1,13 +1,12 @@
 package com.caimanproject.contracts.exception;
 
 import com.caimanproject.contracts.validation.ValidationError;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
-import java.util.List;
-
 @Slf4j
-public class EntrypointException extends CaimanException{
+public class EntrypointException extends CaimanException {
 
     private static final ErrorHttpStatus HTTP_STATUS = ErrorHttpStatus.BAD_REQUEST;
     private static final String TITLE = "Field validation failed";
@@ -30,5 +29,4 @@ public class EntrypointException extends CaimanException{
     protected Logger getLogger() {
         return log;
     }
-
 }

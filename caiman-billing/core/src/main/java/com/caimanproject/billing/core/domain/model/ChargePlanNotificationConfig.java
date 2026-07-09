@@ -1,11 +1,10 @@
 package com.caimanproject.billing.core.domain.model;
 
-import com.caimanproject.billing.core.domain.types.DomainExceptionCode;
 import com.caimanproject.billing.core.domain.types.CycleUnit;
+import com.caimanproject.billing.core.domain.types.DomainExceptionCode;
 import com.caimanproject.billing.core.domain.types.TriggerType;
 import com.caimanproject.contracts.exception.DomainException;
 import com.caimanproject.contracts.util.DomainValidation;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -59,8 +58,8 @@ public class ChargePlanNotificationConfig {
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
 
         final var fieldValidations = DomainValidation.validateAll(List.of(
-            DomainValidation.validate(triggerType, "$.triggerType", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(enabled, "$.enabled", DomainExceptionCode.INVALID_VALUE)));
+                DomainValidation.validate(triggerType, "$.triggerType", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(enabled, "$.enabled", DomainExceptionCode.INVALID_VALUE)));
 
         fieldValidations.throwIfInvalid(DomainException::new);
     }
@@ -90,5 +89,4 @@ public class ChargePlanNotificationConfig {
     public Optional<Integer> getMaxAttempts() {
         return Optional.ofNullable(maxAttempts);
     }
-
 }

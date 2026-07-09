@@ -1,10 +1,9 @@
 package com.caimanproject.contracts.exception;
 
 import com.caimanproject.contracts.validation.ValidationError;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
-
-import java.util.List;
 
 @Slf4j
 public class BusinessException extends CaimanException {
@@ -30,5 +29,4 @@ public class BusinessException extends CaimanException {
     protected Logger getLogger() {
         return log;
     }
-
 }

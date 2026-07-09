@@ -6,22 +6,24 @@ import com.caimanproject.billing.entrypoint.payload.request.CreateChargePlanNoti
 import com.caimanproject.billing.entrypoint.payload.response.ChargePlanNotificationConfigResponseDto;
 import com.caimanproject.contracts.util.Constants;
 import com.caimanproject.mapper.OptionalMapper;
+import java.util.Collection;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 
-import java.util.Collection;
-
 @Mapper(
-    componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
-    injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-    uses = {OptionalMapper.class, BillingAuditWebMapper.class},
-    unmappedTargetPolicy = ReportingPolicy.ERROR)
+        componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
+        injectionStrategy = InjectionStrategy.CONSTRUCTOR,
+        uses = {OptionalMapper.class, BillingAuditWebMapper.class},
+        unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface CreateChargePlanNotificationConfigWebMapper {
 
     CreateChargePlanNotificationConfigCommand toCommand(CreateChargePlanNotificationConfigRequestDto dto);
-    Collection<CreateChargePlanNotificationConfigCommand> toCommand(Collection<CreateChargePlanNotificationConfigRequestDto> dtos);
+
+    Collection<CreateChargePlanNotificationConfigCommand> toCommand(
+            Collection<CreateChargePlanNotificationConfigRequestDto> dtos);
 
     ChargePlanNotificationConfigResponseDto toDto(final ChargePlanNotificationConfig domain);
+
     Collection<ChargePlanNotificationConfigResponseDto> toDto(final Collection<ChargePlanNotificationConfig> domains);
 }

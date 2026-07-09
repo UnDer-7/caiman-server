@@ -6,15 +6,12 @@ import lombok.Builder;
 
 @Builder
 public record CreateChargePlanNotificationConfigCommand(
-    TriggerType triggerType,
+        TriggerType triggerType,
 
-    Integer reminderInterval,
+        Integer reminderInterval,
 
-    CycleUnit reminderUnit,
+        CycleUnit reminderUnit,
 
-    Integer maxAttempts,
+        Integer maxAttempts,
 
-    Boolean enabled
-) {
-
-}
+        Boolean enabled) {}

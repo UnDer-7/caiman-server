@@ -14,5 +14,4 @@ public class ProblemDetailPropertySourceParameterResponseDto extends ProblemDeta
         super(invalidValue);
         this.queryParameter = queryParameter;
     }
-
 }

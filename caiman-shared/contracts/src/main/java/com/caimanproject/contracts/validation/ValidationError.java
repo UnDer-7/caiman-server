@@ -1,13 +1,12 @@
 package com.caimanproject.contracts.validation;
 
 import com.caimanproject.contracts.exception.ExceptionCode;
+import java.util.Optional;
+import java.util.function.Predicate;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
-
-import java.util.Optional;
-import java.util.function.Predicate;
 
 @Getter
 @Builder
@@ -35,5 +34,4 @@ public class ValidationError {
     public Optional<ValidationErrorSource> getSource() {
         return Optional.ofNullable(source);
     }
-
 }

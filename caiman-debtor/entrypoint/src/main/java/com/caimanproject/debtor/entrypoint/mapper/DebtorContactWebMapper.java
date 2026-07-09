@@ -6,11 +6,10 @@ import com.caimanproject.debtor.core.port.in.command.CreateDebtorContactCommand;
 import com.caimanproject.debtor.entrypoint.payload.request.CreateDebtorContactRequestDto;
 import com.caimanproject.debtor.entrypoint.payload.response.DebtorContactResponseDto;
 import com.caimanproject.mapper.OptionalMapper;
+import java.util.Collection;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
-
-import java.util.Collection;
 
 @Mapper(
         componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
@@ -20,8 +19,10 @@ import java.util.Collection;
 public interface DebtorContactWebMapper {
 
     CreateDebtorContactCommand toCommand(CreateDebtorContactRequestDto dto);
+
     Collection<CreateDebtorContactCommand> toCommand(Collection<CreateDebtorContactRequestDto> dtos);
 
     DebtorContactResponseDto toDto(final DebtorContact domain);
+
     Collection<DebtorContactResponseDto> toDto(final Collection<DebtorContact> domain);
 }

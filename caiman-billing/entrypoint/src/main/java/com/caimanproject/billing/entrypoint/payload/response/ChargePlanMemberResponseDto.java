@@ -1,31 +1,27 @@
 package com.caimanproject.billing.entrypoint.payload.response;
 
 import com.caimanproject.billing.core.domain.types.ChargePlanMemberStatus;
-import lombok.Builder;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.Builder;
 
 @Builder
 public record ChargePlanMemberResponseDto(
-    UUID id,
+        UUID id,
 
-    String debtorId,
+        String debtorId,
 
-    BigDecimal amountOverride,
+        BigDecimal amountOverride,
 
-    Integer rotationOrder,
+        Integer rotationOrder,
 
-    ChargePlanMemberStatus status,
+        ChargePlanMemberStatus status,
 
-    BigDecimal creditBalance,
+        BigDecimal creditBalance,
 
-    Instant joinedAt,
+        Instant joinedAt,
 
-    Instant leftAt,
+        Instant leftAt,
 
-    AuditResponseDto audit
-) {
-
-}
+        AuditResponseDto audit) {}

@@ -10,7 +10,7 @@ public class ProblemDetailPropertySourceGenericResponseDto extends ProblemDetail
     String field;
 
     @Builder
-    public ProblemDetailPropertySourceGenericResponseDto(final String invalidValue,  final String field) {
+    public ProblemDetailPropertySourceGenericResponseDto(final String invalidValue, final String field) {
         super(invalidValue);
         this.field = field;
     }

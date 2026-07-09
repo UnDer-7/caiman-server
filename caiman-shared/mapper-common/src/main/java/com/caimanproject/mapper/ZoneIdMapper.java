@@ -1,10 +1,9 @@
 package com.caimanproject.mapper;
 
 import com.caimanproject.contracts.util.Constants;
+import java.time.ZoneId;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
-
-import java.time.ZoneId;
 
 @Mapper(componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL, unmappedTargetPolicy = ReportingPolicy.ERROR)
 public class ZoneIdMapper {

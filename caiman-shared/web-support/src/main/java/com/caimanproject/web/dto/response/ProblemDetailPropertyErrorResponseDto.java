@@ -4,10 +4,4 @@ import lombok.Builder;
 
 @Builder
 public record ProblemDetailPropertyErrorResponseDto(
-    String code,
-    String message,
-    String detail,
-    ProblemDetailPropertySourceResponseDto source
-) {
-
-}
+        String code, String message, String detail, ProblemDetailPropertySourceResponseDto source) {}

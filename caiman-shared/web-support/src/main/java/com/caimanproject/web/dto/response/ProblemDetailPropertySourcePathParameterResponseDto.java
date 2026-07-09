@@ -14,5 +14,4 @@ public class ProblemDetailPropertySourcePathParameterResponseDto extends Problem
         super(invalidValue);
         this.pathParameter = pathParameter;
     }
-
 }

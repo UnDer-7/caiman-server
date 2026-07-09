@@ -1,7 +1,7 @@
 package com.caimanproject.billing.core.domain.model;
 
-import com.caimanproject.billing.core.domain.types.DomainExceptionCode;
 import com.caimanproject.billing.core.domain.types.ChargePlanMemberStatus;
+import com.caimanproject.billing.core.domain.types.DomainExceptionCode;
 import com.caimanproject.contracts.exception.DomainException;
 import com.caimanproject.contracts.util.DomainValidation;
 import java.math.BigDecimal;
@@ -67,10 +67,10 @@ public class ChargePlanMember {
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
 
         final var fieldValidation = DomainValidation.validateAll(List.of(
-            DomainValidation.validate(debtorId, "$.debtorId", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(status, "$.status", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(creditBalance, "$.creditBalance", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(joinedAt, "$.joinedAt", DomainExceptionCode.INVALID_VALUE)));
+                DomainValidation.validate(debtorId, "$.debtorId", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(status, "$.status", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(creditBalance, "$.creditBalance", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(joinedAt, "$.joinedAt", DomainExceptionCode.INVALID_VALUE)));
 
         fieldValidation.throwIfInvalid(DomainException::new);
     }
@@ -83,7 +83,16 @@ public class ChargePlanMember {
             final BigDecimal creditBalance,
             final Instant joinedAt,
             final Instant leftAt) {
-        this(null, debtorId, amountOverride, rotationOrder, ChargePlanMemberStatus.ACTIVE, creditBalance, joinedAt, leftAt, null);
+        this(
+                null,
+                debtorId,
+                amountOverride,
+                rotationOrder,
+                ChargePlanMemberStatus.ACTIVE,
+                creditBalance,
+                joinedAt,
+                leftAt,
+                null);
     }
 
     public Optional<UUID> getId() {
@@ -101,5 +110,4 @@ public class ChargePlanMember {
     public Optional<Instant> getLeftAt() {
         return Optional.ofNullable(leftAt);
     }
-
 }

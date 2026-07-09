@@ -1,13 +1,16 @@
 package com.caimanproject.billing.core.domain.model;
 
-import com.caimanproject.billing.core.domain.types.DomainExceptionCode;
 import com.caimanproject.billing.core.domain.types.ChargePlanStatus;
 import com.caimanproject.billing.core.domain.types.ChargePlanType;
 import com.caimanproject.billing.core.domain.types.CycleUnit;
+import com.caimanproject.billing.core.domain.types.DomainExceptionCode;
 import com.caimanproject.billing.core.domain.types.ProofValidationMode;
 import com.caimanproject.contracts.exception.DomainException;
 import com.caimanproject.contracts.exception.ExceptionCode;
 import com.caimanproject.contracts.util.DomainValidation;
+import com.caimanproject.contracts.validation.ValidationError;
+import com.caimanproject.contracts.validation.ValidationErrorSourceBody;
+import com.caimanproject.contracts.validation.ValidationResult;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -21,10 +24,6 @@ import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import com.caimanproject.contracts.validation.ValidationError;
-import com.caimanproject.contracts.validation.ValidationErrorSourceBody;
-import com.caimanproject.contracts.validation.ValidationResult;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -132,19 +131,22 @@ public class ChargePlan {
                 .orElseGet(Collections::emptyList);
 
         final var fieldValidations = DomainValidation.validateAll(List.of(
-            DomainValidation.validate(name, "$.name", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(type, "$.type", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(status, "$.status", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(proofValidationMode, "$.proofValidationMode", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(totalAmount, "$.totalAmount", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(dueToleranceDays, "$.dueToleranceDays", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(cycleUnit, "$.cycleUnit", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(cycleInterval, "$.cycleInterval", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(cycleAnchorDate, "$.cycleAnchorDate", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(notificationsEnabled, "$.notificationsEnabled", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(notificationTime, "$.notificationTime", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(notificationTimezone, "$.notificationTimezone", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(startsAt, "$.startsAt", DomainExceptionCode.INVALID_VALUE)));
+                DomainValidation.validate(name, "$.name", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(type, "$.type", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(status, "$.status", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(
+                        proofValidationMode, "$.proofValidationMode", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(totalAmount, "$.totalAmount", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(dueToleranceDays, "$.dueToleranceDays", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(cycleUnit, "$.cycleUnit", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(cycleInterval, "$.cycleInterval", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(cycleAnchorDate, "$.cycleAnchorDate", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(
+                        notificationsEnabled, "$.notificationsEnabled", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(notificationTime, "$.notificationTime", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(
+                        notificationTimezone, "$.notificationTimezone", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(startsAt, "$.startsAt", DomainExceptionCode.INVALID_VALUE)));
 
         fieldValidations.throwIfInvalid(DomainException::new);
     }
@@ -192,63 +194,65 @@ public class ChargePlan {
                 members);
     }
 
-    public static ValidationResult validateDuplicateMembersByDebtorId(final List<ChargePlanMember> members, final ExceptionCode exceptionCode) {
+    public static ValidationResult validateDuplicateMembersByDebtorId(
+            final List<ChargePlanMember> members, final ExceptionCode exceptionCode) {
+        final var validations =
+                members.stream().collect(Collectors.groupingBy(ChargePlanMember::getDebtorId)).values().stream()
+                        .filter(group -> group.size() > 1)
+                        .map(List::getFirst)
+                        .map(member -> ValidationError.builder()
+                                .code(exceptionCode)
+                                .source(new ValidationErrorSourceBody(
+                                        "$.members[*].debtorId",
+                                        member.getDebtorId().toString()))
+                                .build())
+                        .toList();
+        return ValidationResult.of(validations);
+    }
+
+    public static ValidationResult validateMembersWithoutRotationOrder(
+            final List<ChargePlanMember> members, final ExceptionCode exceptionCode) {
         final var validations = members.stream()
-            .collect(Collectors.groupingBy(ChargePlanMember::getDebtorId))
-            .values()
-            .stream()
-            .filter(group -> group.size() > 1)
-            .map(List::getFirst)
-            .map(member -> ValidationError.builder()
-                .code(exceptionCode)
-                .source(new ValidationErrorSourceBody("$.members[*].debtorId", member.getDebtorId().toString()))
-                .build())
-            .toList();
-            return ValidationResult.of(validations);
+                .filter(member -> member.getRotationOrder().isEmpty())
+                .map(member -> ValidationError.builder()
+                        .code(exceptionCode)
+                        .source(new ValidationErrorSourceBody("$.members[*].rotationOrder", null))
+                        .detail("debtorId: " + member.getDebtorId().toString())
+                        .build())
+                .toList();
+        return ValidationResult.of(validations);
     }
 
-    public static ValidationResult validateMembersWithoutRotationOrder(final List<ChargePlanMember> members, final ExceptionCode exceptionCode) {
-         final var validations = members.stream()
-            .filter(member -> member.getRotationOrder().isEmpty())
-            .map(member -> ValidationError.builder()
-                .code(exceptionCode)
-                .source(new ValidationErrorSourceBody("$.members[*].rotationOrder", null))
-                .detail("debtorId: " + member.getDebtorId().toString())
-                .build())
-             .toList();
-         return ValidationResult.of(validations);
-    }
-
-    public static ValidationResult validateRotationOrderGaps(final List<ChargePlanMember> members, final ExceptionCode exceptionCode) {
+    public static ValidationResult validateRotationOrderGaps(
+            final List<ChargePlanMember> members, final ExceptionCode exceptionCode) {
         if (members.isEmpty()) {
             return ValidationResult.valid();
         }
 
         final List<Integer> rotationOrders = members.stream()
-            .map(ChargePlanMember::getRotationOrder)
-            .flatMap(Optional::stream)
-            .sorted()
-            .toList();
+                .map(ChargePlanMember::getRotationOrder)
+                .flatMap(Optional::stream)
+                .sorted()
+                .toList();
         final var hasGap = rotationOrders.getFirst() != 1
-            || IntStream.range(1, rotationOrders.size())
-            .anyMatch(i -> rotationOrders.get(i) - rotationOrders.get(i - 1) != 1);
+                || IntStream.range(1, rotationOrders.size())
+                        .anyMatch(i -> rotationOrders.get(i) - rotationOrders.get(i - 1) != 1);
 
         if (!hasGap) {
             return ValidationResult.valid();
         }
 
-        final var invalidValues = rotationOrders.stream()
-            .map(String::valueOf)
-            .collect(Collectors.joining(", "));
+        final var invalidValues = rotationOrders.stream().map(String::valueOf).collect(Collectors.joining(", "));
         final var detail = members.stream()
-            .filter(member -> member.getRotationOrder().isPresent())
-            .map(m -> "debtorId: %s - rotationOrder: %s".formatted(m.getDebtorId(), m.getRotationOrder().get()))
-            .collect(Collectors.joining(" | "));
+                .filter(member -> member.getRotationOrder().isPresent())
+                .map(m -> "debtorId: %s - rotationOrder: %s"
+                        .formatted(m.getDebtorId(), m.getRotationOrder().get()))
+                .collect(Collectors.joining(" | "));
         final var validationError = ValidationError.builder()
-            .code(exceptionCode)
-            .detail(detail)
-            .source(new ValidationErrorSourceBody("$.members[*].rotationOrder", invalidValues))
-            .build();
+                .code(exceptionCode)
+                .detail(detail)
+                .source(new ValidationErrorSourceBody("$.members[*].rotationOrder", invalidValues))
+                .build();
         return ValidationResult.of(validationError);
     }
 
@@ -267,5 +271,4 @@ public class ChargePlan {
     public Optional<BigDecimal> getEndWhenRecovered() {
         return Optional.ofNullable(endWhenRecovered);
     }
-
 }

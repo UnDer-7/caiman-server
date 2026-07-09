@@ -17,7 +17,9 @@ public record CreateDebtorRequestDto(
                 example = "John Doe",
                 nullable = false,
                 requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlankBody @SizeBody(max = 255) String name,
+        @NotBlankBody
+        @SizeBody(max = 255)
+        String name,
 
         @Schema(
                 description = "Free-text notes about this debtor. Internal use only. Not sent in notifications.",

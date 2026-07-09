@@ -17,35 +17,22 @@ import com.caimanproject.web.annotation.composition.header.HeaderParam;
 import com.caimanproject.web.annotation.composition.path.PathParam;
 import com.caimanproject.web.annotation.composition.query.QueryParam;
 import com.caimanproject.web.constant.OpenApiConstants;
-import com.caimanproject.web.dto.response.ProblemDetailPropertyErrorResponseDto;
-import com.caimanproject.web.dto.response.ProblemDetailPropertySourceBodyResponseDto;
-import com.caimanproject.web.dto.response.ProblemDetailPropertySourceGenericResponseDto;
-import com.caimanproject.web.dto.response.ProblemDetailPropertySourceHeaderResponseDto;
-import com.caimanproject.web.dto.response.ProblemDetailPropertySourceParameterResponseDto;
-import com.caimanproject.web.dto.response.ProblemDetailPropertySourcePathParameterResponseDto;
-import com.caimanproject.web.dto.response.ProblemDetailPropertySourceResponseDto;
 import com.caimanproject.web.dto.response.ProblemDetailResponseDto;
 import com.caimanproject.web.exception.WebSupportExceptionCode;
 import com.caimanproject.web.mapper.CaimanExceptionMapper;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-
-import java.net.URI;
+import jakarta.validation.Payload;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import jakarta.validation.Payload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.argument.StructuredArguments;
@@ -108,8 +95,8 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
                 exception);
 
         final var validation = ValidationError.builder()
-            .code(WebSupportExceptionCode.UNEXPECTED_ERROR)
-            .build();
+                .code(WebSupportExceptionCode.UNEXPECTED_ERROR)
+                .build();
         final var unexpectedException = new TechnicalException(Collections.singletonList(validation));
         return logExceptionAndBuild(unexpectedException);
     }
@@ -130,14 +117,15 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
     public ResponseEntity<Object> handleConstraintViolation(final ConstraintViolationException exception) {
         final var validations = exception.getConstraintViolations().stream()
                 .map(violation -> {
-                    final var pathSegments = violation.getPropertyPath().toString().split("\\.");
+                    final var pathSegments =
+                            violation.getPropertyPath().toString().split("\\.");
                     final var paramName = pathSegments[pathSegments.length - 1];
 
                     return ValidationError.builder()
-                        .code(WebSupportExceptionCode.INVALID_VALUES)
-                        .detail(violation.getMessage())
-                        .source(resolveSource(violation, paramName))
-                        .build();
+                            .code(WebSupportExceptionCode.INVALID_VALUES)
+                            .detail(violation.getMessage())
+                            .source(resolveSource(violation, paramName))
+                            .build();
                 })
                 .toList();
 
@@ -159,7 +147,7 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
                         fieldError.getField(),
                         Objects.requireNonNullElse(fieldError.getDefaultMessage(), "validation failed"),
                         fieldError.getRejectedValue()))
-            .toList();
+                .toList();
         final var exception = new EntrypointException(validationErrors);
 
         return logExceptionAndBuild(exception);
@@ -171,15 +159,15 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
     // the parameter's own Spring annotation via exception.getParameter() instead.
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Object> handleInvalidRequestParameters(final MethodArgumentTypeMismatchException exception) {
-        final var invalidValue = Optional.ofNullable(exception.getValue())
-            .map(Object::toString)
-            .orElse(null);
-        final var detail = resolveFormatHint(exception.getRequiredType(), "invalid value for parameter: " + exception.getName());
+        final var invalidValue =
+                Optional.ofNullable(exception.getValue()).map(Object::toString).orElse(null);
+        final var detail =
+                resolveFormatHint(exception.getRequiredType(), "invalid value for parameter: " + exception.getName());
         final var validationError = ValidationError.builder()
-            .code(WebSupportExceptionCode.INVALID_VALUES)
-            .detail(detail)
-            .source(resolveSource(exception, invalidValue))
-            .build();
+                .code(WebSupportExceptionCode.INVALID_VALUES)
+                .detail(detail)
+                .source(resolveSource(exception, invalidValue))
+                .build();
         return logExceptionAndBuild(new EntrypointException(Collections.singletonList(validationError)));
     }
 
@@ -202,22 +190,22 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
                     .collect(Collectors.joining("."));
 
             final var invalidValue = Optional.ofNullable(invalidFormatException.getValue())
-                .map(Object::toString)
-                .orElse(null);
+                    .map(Object::toString)
+                    .orElse(null);
             final var detail = resolveFormatHint(targetType, "invalid value for type: " + targetType.getSimpleName());
             final var validationError = ValidationError.builder()
-                .code(WebSupportExceptionCode.INVALID_VALUES)
-                .detail(detail)
-                .source(new ValidationErrorSourceBody("$." + fieldName, invalidValue))
-                .build();
+                    .code(WebSupportExceptionCode.INVALID_VALUES)
+                    .detail(detail)
+                    .source(new ValidationErrorSourceBody("$." + fieldName, invalidValue))
+                    .build();
             return logExceptionAndBuild(new EntrypointException(Collections.singletonList(validationError), ex));
         }
 
         // For other HttpMessageNotReadableException cases, use default handling
         final var validationError = ValidationError.builder()
-            .code(WebSupportExceptionCode.INVALID_VALUES)
-            .detail("Failed to read request: " + ex.getMessage())
-            .build();
+                .code(WebSupportExceptionCode.INVALID_VALUES)
+                .detail("Failed to read request: " + ex.getMessage())
+                .build();
 
         return logExceptionAndBuild(new EntrypointException(Collections.singletonList(validationError), ex));
     }
@@ -233,26 +221,27 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
         }
     }
 
-    private static ValidationError buildInvalidAttributeMessageBody(final String attributeName, final String errMotive, final Object attributeValue) {
-        final var invalidValue = Optional.ofNullable(attributeValue)
-            .map(Object::toString)
-            .orElse(null);
+    private static ValidationError buildInvalidAttributeMessageBody(
+            final String attributeName, final String errMotive, final Object attributeValue) {
+        final var invalidValue =
+                Optional.ofNullable(attributeValue).map(Object::toString).orElse(null);
         final var body = "$." + attributeName;
         final var source = new ValidationErrorSourceBody(body, invalidValue);
 
         if (errMotive.contains(Instant.class.getName())) {
             return ValidationError.builder()
-                .code(WebSupportExceptionCode.INVALID_VALUES)
-                .detail("date-time must be in the following format: %s (example: %s)".formatted(Constants.DATE_TIME_FORMAT, OpenApiConstants.Examples.DATE_TIME))
-                .source(source)
-                .build();
+                    .code(WebSupportExceptionCode.INVALID_VALUES)
+                    .detail("date-time must be in the following format: %s (example: %s)"
+                            .formatted(Constants.DATE_TIME_FORMAT, OpenApiConstants.Examples.DATE_TIME))
+                    .source(source)
+                    .build();
         }
 
         return ValidationError.builder()
-            .code(WebSupportExceptionCode.INVALID_VALUES)
-            .detail(errMotive)
-            .source(source)
-            .build();
+                .code(WebSupportExceptionCode.INVALID_VALUES)
+                .detail(errMotive)
+                .source(source)
+                .build();
     }
 
     private static String resolveFormatHint(final Class<?> clazz, final String fallback) {
@@ -261,20 +250,21 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
         }
         if (Objects.equals(clazz, Instant.class)) {
             return "date-time must be in the following format: %s (example: %s)"
-                .formatted(Constants.DATE_TIME_FORMAT, OpenApiConstants.Examples.DATE_TIME);
+                    .formatted(Constants.DATE_TIME_FORMAT, OpenApiConstants.Examples.DATE_TIME);
         }
         if (Objects.equals(clazz, LocalDate.class)) {
             return "date must be in the following format: %s (example: %s)"
-                .formatted(Constants.DATE_FORMAT, OpenApiConstants.Examples.DATE);
+                    .formatted(Constants.DATE_FORMAT, OpenApiConstants.Examples.DATE);
         }
         if (Objects.equals(clazz, LocalTime.class)) {
             return "time must be in the following format: %s (example: %s)"
-                .formatted(Constants.TIME_FORMAT, OpenApiConstants.Examples.TIME);
+                    .formatted(Constants.TIME_FORMAT, OpenApiConstants.Examples.TIME);
         }
         return fallback;
     }
 
-    private static ValidationErrorSource resolveSource(final MethodArgumentTypeMismatchException exception, final String invalidValue) {
+    private static ValidationErrorSource resolveSource(
+            final MethodArgumentTypeMismatchException exception, final String invalidValue) {
         final var parameter = exception.getParameter();
 
         if (parameter.hasParameterAnnotation(PathVariable.class)) {
@@ -290,24 +280,27 @@ public class GlobalRestExceptionHandlerConfig extends ResponseEntityExceptionHan
         }
 
         final var presentAnnotations = Arrays.stream(parameter.getParameterAnnotations())
-            .map(annotation -> annotation.annotationType().getSimpleName())
-            .collect(Collectors.joining(", "));
+                .map(annotation -> annotation.annotationType().getSimpleName())
+                .collect(Collectors.joining(", "));
 
         log.error(
                 LogField.Placeholders.TWO.getPlaceholder(),
                 StructuredArguments.kv(
                         LogField.MSG.label(),
                         "Method parameter without a recognized origin annotation (@PathVariable/@RequestHeader/@RequestParam) — check that the parameter is properly annotated"),
-                StructuredArguments.kv(LogField.EXCEPTION_MESSAGE.label(), "Annotations present: [%s]. Exception: %s".formatted(presentAnnotations, exception)));
+                StructuredArguments.kv(
+                        LogField.EXCEPTION_MESSAGE.label(),
+                        "Annotations present: [%s]. Exception: %s".formatted(presentAnnotations, exception)));
 
         return new ValidationErrorSourceGeneric(exception.getName(), invalidValue);
     }
 
     private static ValidationErrorSource resolveSource(final ConstraintViolation<?> violation, final String paramName) {
-        final Set<Class<? extends Payload>> payloads = violation.getConstraintDescriptor().getPayload();
+        final Set<Class<? extends Payload>> payloads =
+                violation.getConstraintDescriptor().getPayload();
         final var invalidValue = Optional.ofNullable(violation.getInvalidValue())
-            .map(Object::toString)
-            .orElse(null);
+                .map(Object::toString)
+                .orElse(null);
 
         if (payloads.contains(BodyParam.class)) {
             return new ValidationErrorSourceBody(paramName, invalidValue);

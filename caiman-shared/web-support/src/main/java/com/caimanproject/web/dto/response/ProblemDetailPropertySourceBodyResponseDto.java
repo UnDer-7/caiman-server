@@ -10,9 +10,8 @@ public class ProblemDetailPropertySourceBodyResponseDto extends ProblemDetailPro
     String body;
 
     @Builder
-    public ProblemDetailPropertySourceBodyResponseDto(final String invalidValue,  final String body) {
+    public ProblemDetailPropertySourceBodyResponseDto(final String invalidValue, final String body) {
         super(invalidValue);
         this.body = body;
     }
-
 }

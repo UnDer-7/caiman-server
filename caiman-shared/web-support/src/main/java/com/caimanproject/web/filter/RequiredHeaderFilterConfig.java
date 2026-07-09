@@ -54,7 +54,7 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
             final Optional<SpringDocConfigProperties> springDocConfigProperties,
             final ObjectMapper objectMapper,
             @Value("${management.endpoints.web.base-path:/manage}") final String managementBasePath,
-        final CaimanExceptionMapper caimanExceptionMapper) {
+            final CaimanExceptionMapper caimanExceptionMapper) {
 
         this.pathMatcher = pathMatcher;
 
@@ -112,26 +112,27 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
 
         if (correlationId == null || correlationId.isBlank()) {
             validations.add(ValidationError.builder()
-                .code(WebSupportExceptionCode.INVALID_VALUES)
-                .detail("Required field is null/blank")
-                .source(new ValidationErrorSourceHeader(RequestConstants.Headers.X_CORRELATION_ID, correlationId))
-                .build());
+                    .code(WebSupportExceptionCode.INVALID_VALUES)
+                    .detail("Required field is null/blank")
+                    .source(new ValidationErrorSourceHeader(RequestConstants.Headers.X_CORRELATION_ID, correlationId))
+                    .build());
         }
 
         if (channel == null || channel.isBlank()) {
             validations.add(ValidationError.builder()
-                .code(WebSupportExceptionCode.INVALID_VALUES)
-                .detail("Required field is null/blank")
-                .source(new ValidationErrorSourceHeader(RequestConstants.Headers.X_CHANNEL, channel))
-                .build());
+                    .code(WebSupportExceptionCode.INVALID_VALUES)
+                    .detail("Required field is null/blank")
+                    .source(new ValidationErrorSourceHeader(RequestConstants.Headers.X_CHANNEL, channel))
+                    .build());
         }
 
         if (!isValidUuid(correlationId)) {
             validations.add(ValidationError.builder()
-                .code(WebSupportExceptionCode.INVALID_VALUES)
-                .detail("Required uuid must be a valid format: %s (example: %s)".formatted(Constants.UUID_FORMAT, OpenApiConstants.Examples.UUID))
-                .source(new ValidationErrorSourceHeader(RequestConstants.Headers.X_CORRELATION_ID, correlationId))
-                .build());
+                    .code(WebSupportExceptionCode.INVALID_VALUES)
+                    .detail("Required uuid must be a valid format: %s (example: %s)"
+                            .formatted(Constants.UUID_FORMAT, OpenApiConstants.Examples.UUID))
+                    .source(new ValidationErrorSourceHeader(RequestConstants.Headers.X_CORRELATION_ID, correlationId))
+                    .build());
         }
 
         return ValidationResult.of(validations);
@@ -166,5 +167,4 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
                 })
                 .orElse(List.of());
     }
-
 }

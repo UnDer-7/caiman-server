@@ -4,52 +4,48 @@ import com.caimanproject.billing.core.domain.types.ChargePlanStatus;
 import com.caimanproject.billing.core.domain.types.ChargePlanType;
 import com.caimanproject.billing.core.domain.types.CycleUnit;
 import com.caimanproject.billing.core.domain.types.ProofValidationMode;
-import lombok.Builder;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
+import lombok.Builder;
 
 @Builder
 public record CreateChargePlanCommand(
-    String name,
+        String name,
 
-    String description,
+        String description,
 
-    ChargePlanType type,
+        ChargePlanType type,
 
-    ChargePlanStatus status,
+        ChargePlanStatus status,
 
-    ProofValidationMode proofValidationMode,
+        ProofValidationMode proofValidationMode,
 
-    BigDecimal totalAmount,
+        BigDecimal totalAmount,
 
-    Integer dueToleranceDays,
+        Integer dueToleranceDays,
 
-    CycleUnit cycleUnit,
+        CycleUnit cycleUnit,
 
-    Integer cycleInterval,
+        Integer cycleInterval,
 
-    LocalDate cycleAnchorDate,
+        LocalDate cycleAnchorDate,
 
-    Boolean notificationsEnabled,
+        Boolean notificationsEnabled,
 
-    LocalTime notificationTime,
+        LocalTime notificationTime,
 
-    ZoneId notificationTimezone,
+        ZoneId notificationTimezone,
 
-    Instant startsAt,
+        Instant startsAt,
 
-    Instant endsAt,
+        Instant endsAt,
 
-    BigDecimal endWhenRecovered,
+        BigDecimal endWhenRecovered,
 
-    List<CreateChargePlanNotificationConfigCommand> notificationConfigs,
+        List<CreateChargePlanNotificationConfigCommand> notificationConfigs,
 
-    List<CreateChargePlanMemberCommand> members
-) {
-
-}
+        List<CreateChargePlanMemberCommand> members) {}

@@ -15,7 +15,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -66,14 +65,20 @@ public class Debtor {
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
 
         final var fieldsValidation = DomainValidation.validateAll(List.of(
-            DomainValidation.validate(name, "$.name", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(notificationsEnabled, "$.notificationsEnabled", DomainExceptionCode.INVALID_VALUE),
-            DomainValidation.validate(active, "$.active", DomainExceptionCode.INVALID_VALUE)));
+                DomainValidation.validate(name, "$.name", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(
+                        notificationsEnabled, "$.notificationsEnabled", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(active, "$.active", DomainExceptionCode.INVALID_VALUE)));
 
-        final var contactPriorityValidation = validateDuplicateContactsByPriority(this.contacts, DomainExceptionCode.DUPLICATE_CONTACT_PRIORITY);
-        final var contactValueValidation = validateDuplicateContactsByValue(this.contacts, DomainExceptionCode.DUPLICATED_CONTACT_VALUE);
+        final var contactPriorityValidation =
+                validateDuplicateContactsByPriority(this.contacts, DomainExceptionCode.DUPLICATE_CONTACT_PRIORITY);
+        final var contactValueValidation =
+                validateDuplicateContactsByValue(this.contacts, DomainExceptionCode.DUPLICATED_CONTACT_VALUE);
 
-        fieldsValidation.merge(contactPriorityValidation).merge(contactValueValidation).throwIfInvalid(DomainException::new);
+        fieldsValidation
+                .merge(contactPriorityValidation)
+                .merge(contactValueValidation)
+                .throwIfInvalid(DomainException::new);
     }
 
     @Builder(builderMethodName = "createBuilder", builderClassName = "CreateBuilder")
@@ -85,36 +90,39 @@ public class Debtor {
         this(null, name, notes, notificationsEnabled, true, contacts, null);
     }
 
-    public static ValidationResult validateDuplicateContactsByValue(final List<DebtorContact> contacts, final ExceptionCode exceptionCode) {
+    public static ValidationResult validateDuplicateContactsByValue(
+            final List<DebtorContact> contacts, final ExceptionCode exceptionCode) {
         final var validations = contacts.stream()
-            .collect(
-                Collectors.groupingBy(c -> Map.entry(c.getContactValue().toLowerCase(), c.getContactType())))
-            .values()
-            .stream()
-            .filter(group -> group.size() > 1)
-            .map(List::getFirst)
-            .map(c -> ValidationError.builder()
-                .code(exceptionCode)
-                .source(new ValidationErrorSourceBody("$.contacts[*].contactValue", c.getContactValue()))
-                .detail("contactType: %s - priority: %s".formatted(c.getContactType(), c.getPriority()))
-                .build())
-            .toList();
+                .collect(
+                        Collectors.groupingBy(c -> Map.entry(c.getContactValue().toLowerCase(), c.getContactType())))
+                .values()
+                .stream()
+                .filter(group -> group.size() > 1)
+                .map(List::getFirst)
+                .map(c -> ValidationError.builder()
+                        .code(exceptionCode)
+                        .source(new ValidationErrorSourceBody("$.contacts[*].contactValue", c.getContactValue()))
+                        .detail("contactType: %s - priority: %s".formatted(c.getContactType(), c.getPriority()))
+                        .build())
+                .toList();
         return ValidationResult.of(validations);
     }
 
-    public static ValidationResult validateDuplicateContactsByPriority(final List<DebtorContact> contacts, final ExceptionCode exceptionCode) {
+    public static ValidationResult validateDuplicateContactsByPriority(
+            final List<DebtorContact> contacts, final ExceptionCode exceptionCode) {
         final var validations = contacts.stream()
-            .collect(Collectors.groupingBy(c -> Map.entry(c.getContactType(), c.getPriority())))
-            .values()
-            .stream()
-            .filter(group -> group.size() > 1)
-            .map(List::getFirst)
-            .map(c -> ValidationError.builder()
-                .code(exceptionCode)
-                .source(new ValidationErrorSourceBody("$.contacts[*].priority", c.getPriority().toString()))
-                .detail("contactType: %s - contactValue: %s".formatted(c.getContactType(), c.getContactValue()))
-                .build())
-            .toList();
+                .collect(Collectors.groupingBy(c -> Map.entry(c.getContactType(), c.getPriority())))
+                .values()
+                .stream()
+                .filter(group -> group.size() > 1)
+                .map(List::getFirst)
+                .map(c -> ValidationError.builder()
+                        .code(exceptionCode)
+                        .source(new ValidationErrorSourceBody(
+                                "$.contacts[*].priority", c.getPriority().toString()))
+                        .detail("contactType: %s - contactValue: %s".formatted(c.getContactType(), c.getContactValue()))
+                        .build())
+                .toList();
         return ValidationResult.of(validations);
     }
 
@@ -125,5 +133,4 @@ public class Debtor {
     public Optional<String> getNotes() {
         return Optional.ofNullable(notes);
     }
-
 }

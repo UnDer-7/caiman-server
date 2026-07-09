@@ -1,15 +1,13 @@
 package com.caimanproject.web.dto.response;
 
+import java.net.URI;
+import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
-
-import java.net.URI;
-import java.util.List;
 
 @Getter
 @Setter
@@ -22,13 +20,13 @@ public class ProblemDetailResponseDto extends ProblemDetail {
 
     @Builder
     public ProblemDetailResponseDto(
-        final int status,
-        final String title,
-        final String detail,
-        final URI instance,
-        final String correlationId,
-        final String channel,
-        final List<ProblemDetailPropertyErrorResponseDto> errors) {
+            final int status,
+            final String title,
+            final String detail,
+            final URI instance,
+            final String correlationId,
+            final String channel,
+            final List<ProblemDetailPropertyErrorResponseDto> errors) {
 
         this.correlationId = correlationId;
         this.channel = channel;
@@ -40,5 +38,4 @@ public class ProblemDetailResponseDto extends ProblemDetail {
         problemDetail.setInstance(instance);
         super(problemDetail);
     }
-
 }

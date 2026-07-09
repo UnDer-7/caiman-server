@@ -14,5 +14,4 @@ public class ProblemDetailPropertySourceHeaderResponseDto extends ProblemDetailP
         super(invalidValue);
         this.header = header;
     }
-
 }

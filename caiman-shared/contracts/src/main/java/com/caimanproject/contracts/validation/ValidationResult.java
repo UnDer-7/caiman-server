@@ -1,7 +1,6 @@
 package com.caimanproject.contracts.validation;
 
 import com.caimanproject.contracts.exception.CaimanException;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -26,7 +25,8 @@ public record ValidationResult(List<ValidationError> errors) {
     }
 
     public ValidationResult merge(final ValidationResult other) {
-        return new ValidationResult(Stream.concat(errors.stream(), other.errors().stream()).toList());
+        return new ValidationResult(
+                Stream.concat(errors.stream(), other.errors().stream()).toList());
     }
 
     public boolean isValid() {
@@ -42,5 +42,4 @@ public record ValidationResult(List<ValidationError> errors) {
             throw exceptionSupplier.apply(errors);
         }
     }
-
 }

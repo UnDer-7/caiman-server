@@ -1,6 +1,5 @@
 package com.caimanproject.web.exception;
 
-import com.caimanproject.contracts.exception.CaimanException;
 import com.caimanproject.contracts.exception.ExceptionCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

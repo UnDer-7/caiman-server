@@ -30,5 +30,4 @@ public class ChargePlanController implements ChargePlanControllerSpec {
         final var chargePlan = createChargePlanUseCase.execute(createCommand);
         return chargePlanWebMapper.toDto(chargePlan);
     }
-
 }

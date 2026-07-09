@@ -2,25 +2,21 @@ package com.caimanproject.billing.entrypoint.payload.response;
 
 import com.caimanproject.billing.core.domain.types.CycleUnit;
 import com.caimanproject.billing.core.domain.types.TriggerType;
-import lombok.Builder;
-
 import java.util.UUID;
+import lombok.Builder;
 
 @Builder
 public record ChargePlanNotificationConfigResponseDto(
-    UUID id,
+        UUID id,
 
-    TriggerType triggerType,
+        TriggerType triggerType,
 
-    Integer reminderInterval,
+        Integer reminderInterval,
 
-    CycleUnit reminderUnit,
+        CycleUnit reminderUnit,
 
-    Integer maxAttempts,
+        Integer maxAttempts,
 
-    Boolean enabled,
+        Boolean enabled,
 
-    AuditResponseDto audit
-) {
-
-}
+        AuditResponseDto audit) {}

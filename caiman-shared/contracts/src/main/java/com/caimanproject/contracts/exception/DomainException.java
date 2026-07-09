@@ -1,17 +1,17 @@
 package com.caimanproject.contracts.exception;
 
 import com.caimanproject.contracts.validation.ValidationError;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
-
-import java.util.List;
 
 @Slf4j
 public class DomainException extends CaimanException {
 
     private static final ErrorHttpStatus HTTP_STATUS = ErrorHttpStatus.INTERNAL_SERVER_ERROR;
     private static final String TITLE = "Internal Server Error";
-    private static final String DETAIL = "An unexpected internal error occurred. Please contact support if the problem persists.";
+    private static final String DETAIL =
+            "An unexpected internal error occurred. Please contact support if the problem persists.";
 
     public DomainException(final List<ValidationError> errors, final Throwable originalCause) {
         super(HTTP_STATUS, TITLE, DETAIL, errors, originalCause);
@@ -30,5 +30,4 @@ public class DomainException extends CaimanException {
     protected Logger getLogger() {
         return log;
     }
-
 }
