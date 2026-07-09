@@ -86,6 +86,10 @@ subprojects {
         }
     }
 
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.add("-parameters")
+    }
+
     tasks.withType<Test> {
         useJUnitPlatform()
         testLogging {
