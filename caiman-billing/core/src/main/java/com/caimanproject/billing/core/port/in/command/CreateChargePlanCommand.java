@@ -1,6 +1,5 @@
 package com.caimanproject.billing.core.port.in.command;
 
-import com.caimanproject.billing.core.domain.types.ChargePlanStatus;
 import com.caimanproject.billing.core.domain.types.ChargePlanType;
 import com.caimanproject.billing.core.domain.types.CycleUnit;
 import com.caimanproject.billing.core.domain.types.ProofValidationMode;

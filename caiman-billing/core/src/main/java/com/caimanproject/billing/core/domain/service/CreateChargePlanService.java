@@ -4,7 +4,6 @@ import com.caimanproject.billing.core.domain.model.ChargePlan;
 import com.caimanproject.billing.core.domain.model.ChargePlanMember;
 import com.caimanproject.billing.core.domain.model.ChargePlanNotificationConfig;
 import com.caimanproject.billing.core.domain.types.BusinessExceptionCode;
-import com.caimanproject.billing.core.domain.types.ChargePlanType;
 import com.caimanproject.billing.core.port.in.CreateChargePlanUseCase;
 import com.caimanproject.billing.core.port.in.command.CreateChargePlanCommand;
 import com.caimanproject.billing.core.port.in.command.CreateChargePlanMemberCommand;
@@ -54,19 +53,22 @@ public class CreateChargePlanService implements CreateChargePlanUseCase {
                 .toList();
 
         final var validationDebtorsExists = validateDebtorExistence(command);
-        final var validationDuplicateMembers = ChargePlan.validateDuplicateMembersByDebtorId(members, BusinessExceptionCode.DUPLICATE_CHARGE_PLAN_MEMBER_BY_DEBTOR_ID);
-        final var validationEndsAt = ChargePlan.validateEndsAt(command.endsAt(), command.startsAt(), BusinessExceptionCode.INVALID_ENDS_AT);
+        final var validationDuplicateMembers = ChargePlan.validateDuplicateMembersByDebtorId(
+                members, BusinessExceptionCode.DUPLICATE_CHARGE_PLAN_MEMBER_BY_DEBTOR_ID);
+        final var validationEndsAt =
+                ChargePlan.validateEndsAt(command.endsAt(), command.startsAt(), BusinessExceptionCode.INVALID_ENDS_AT);
 
-        final ValidationResult validationType = switch (command.type()) {
-            case ROTATING -> validateTypeRotating(members);
-            case SPLIT -> validateTypeSplit(members);
-        };
+        final ValidationResult validationType =
+                switch (command.type()) {
+                    case ROTATING -> validateTypeRotating(members);
+                    case SPLIT -> validateTypeSplit(members);
+                };
 
         validationDebtorsExists
-            .merge(validationDuplicateMembers)
-            .merge(validationEndsAt)
-            .merge(validationType)
-            .throwIfInvalid(BusinessException::new);
+                .merge(validationDuplicateMembers)
+                .merge(validationEndsAt)
+                .merge(validationType)
+                .throwIfInvalid(BusinessException::new);
 
         return ChargePlan.createBuilder()
                 .name(command.name())
@@ -115,5 +117,4 @@ public class CreateChargePlanService implements CreateChargePlanUseCase {
                 .toList();
         return ValidationResult.of(validations);
     }
-
 }

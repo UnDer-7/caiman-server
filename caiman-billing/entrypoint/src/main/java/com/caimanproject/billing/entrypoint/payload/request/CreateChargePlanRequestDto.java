@@ -1,6 +1,5 @@
 package com.caimanproject.billing.entrypoint.payload.request;
 
-import com.caimanproject.billing.core.domain.types.ChargePlanStatus;
 import com.caimanproject.billing.core.domain.types.ChargePlanType;
 import com.caimanproject.billing.core.domain.types.CycleUnit;
 import com.caimanproject.billing.core.domain.types.ProofValidationMode;
@@ -17,8 +16,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
-
-import jakarta.validation.constraints.AssertTrue;
 import lombok.Builder;
 
 @Builder

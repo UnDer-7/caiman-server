@@ -1,7 +1,6 @@
 package com.caimanproject.billing.core.port.in.command;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.UUID;
 import lombok.Builder;
 

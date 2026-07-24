@@ -14,5 +14,4 @@ public record CreateChargePlanNotificationConfigRequestDto(
 
         CycleUnit reminderUnit,
 
-        @PositiveBody
-        Integer maxAttempts) {}
+        @PositiveBody Integer maxAttempts) {}
