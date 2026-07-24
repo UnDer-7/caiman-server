@@ -418,7 +418,10 @@ All enum columns use `VARCHAR`. Valid values per column:
 - `ends_at` and `end_when_recovered` are both optional and independent. Both can be set simultaneously — the plan finishes when whichever condition is met first.  
 - `end_when_recovered` must be greater than zero if provided.  
 - `ends_at` must be in the future relative to `starts_at`.  
-- A newly created plan has no members. Members must be added via `POST /charge-plans/{planId}/members`.  
+- The request body may optionally include a `members` list, following the same rules as `POST /charge-plans/{planId}/members` (see [4.1](#41-add-member-to-plan)). An empty or omitted list is valid — a plan can be created with no members and they can be added later via the dedicated endpoint.  
+- The request body may optionally include a `notificationConfigs` list, following the same rules as `PUT /charge-plans/{planId}/notification-config` (see [3.5](#35-notification-config)). An empty or omitted list is valid.  
+- `joined_at` for any member included in the creation request is still set by the application to the current UTC instant — never accepted from the request.  
+- For `SPLIT` plans, `rotation_order` must not be present on any member in the `members` list — the request is rejected with `422` if it is. This is stricter than the dedicated `POST /charge-plans/{planId}/members` endpoint (see [4.1](#41-add-member-to-plan)), which silently ignores and nulls the field instead of rejecting.  
 - The plan is not processed by the scheduler until it has at least one `ACTIVE` member.
 
 ### 3.2 Update Charge Plan
@@ -479,7 +482,7 @@ All enum columns use `VARCHAR`. Valid values per column:
 - `debtor_id` is required.  
 - If a `charge_plan_member` record already exists for this `(debtor_id, charge_plan_id)` pair — regardless of status (`ACTIVE` or `LEFT`) — the endpoint returns `409 Conflict`. The database enforces `UNIQUE(debtor_id, charge_plan_id)` on `charge_plan_member`. To reactivate a member who previously left, use `PATCH /charge-plans/{planId}/members/{memberId}` instead.  
 - `amount_override` is optional. If not provided, the plan default is used.  
-- For `ROTATING` plans, `rotation_order` is required. The application validates that the provided value does not duplicate an existing `rotation_order` in the plan among `ACTIVE` members.  
+- For `ROTATING` plans, `rotation_order` is required. Together with the `rotation_order` of every existing `ACTIVE` member, the resulting set must be sequential integers starting at 1 with no gaps and no duplicates (e.g. 1,2,3 — not 1,3, and not two members sharing the same value). This is the same shape enforced by `PUT /charge-plans/{planId}/members/reorder` (see [4.2](#42-reorder-members-rotating-plans-only)) — it holds continuously, not just when explicitly reordering.  
 - For `SPLIT` plans, `rotation_order` is ignored and stored as `null`.  
 - `status` is always `ACTIVE` on creation.  
 - `credit_balance` defaults to `0.00` if not provided. Admin may supply an initial credit balance at creation time.  

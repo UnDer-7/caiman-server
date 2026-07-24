@@ -4,11 +4,16 @@ import com.caimanproject.billing.core.domain.types.CycleUnit;
 import com.caimanproject.billing.core.domain.types.DomainExceptionCode;
 import com.caimanproject.billing.core.domain.types.TriggerType;
 import com.caimanproject.contracts.exception.DomainException;
+import com.caimanproject.contracts.exception.ExceptionCode;
 import com.caimanproject.contracts.util.DomainValidation;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+
+import com.caimanproject.contracts.validation.ValidationError;
+import com.caimanproject.contracts.validation.ValidationErrorSourceBody;
+import com.caimanproject.contracts.validation.ValidationResult;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -69,9 +74,16 @@ public class ChargePlanNotificationConfig {
             final TriggerType triggerType,
             final Integer reminderInterval,
             final CycleUnit reminderUnit,
-            final Integer maxAttempts,
-            final Boolean enabled) {
-        this(null, triggerType, reminderInterval, reminderUnit, maxAttempts, enabled, null);
+            final Integer maxAttempts) {
+        this(null, triggerType, reminderInterval, reminderUnit, maxAttempts, true, null);
+    }
+
+    public boolean isPendingReminder() {
+        return getTriggerType() == TriggerType.PENDING_REMINDER;
+    }
+
+    public boolean isOverdueReminder() {
+        return getTriggerType() == TriggerType.OVERDUE_REMINDER;
     }
 
     public Optional<UUID> getId() {

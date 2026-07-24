@@ -81,7 +81,6 @@ public class ChargePlanMember {
             final BigDecimal amountOverride,
             final Integer rotationOrder,
             final BigDecimal creditBalance,
-            final Instant joinedAt,
             final Instant leftAt) {
         this(
                 null,
@@ -90,7 +89,7 @@ public class ChargePlanMember {
                 rotationOrder,
                 ChargePlanMemberStatus.ACTIVE,
                 creditBalance,
-                joinedAt,
+                Instant.now(),
                 leftAt,
                 null);
     }

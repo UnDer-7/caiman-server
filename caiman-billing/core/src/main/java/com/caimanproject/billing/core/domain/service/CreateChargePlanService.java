@@ -41,7 +41,6 @@ public class CreateChargePlanService implements CreateChargePlanUseCase {
                         .amountOverride(member.amountOverride())
                         .rotationOrder(member.rotationOrder())
                         .creditBalance(member.creditBalance())
-                        .joinedAt(member.joinedAt())
                         .build())
                 .toList();
 
@@ -51,28 +50,28 @@ public class CreateChargePlanService implements CreateChargePlanUseCase {
                         .reminderInterval(notificationConfig.reminderInterval())
                         .reminderUnit(notificationConfig.reminderUnit())
                         .maxAttempts(notificationConfig.maxAttempts())
-                        .enabled(notificationConfig.enabled())
                         .build())
                 .toList();
 
         final var validationDebtorsExists = validateDebtorExistence(command);
-        final var validationDuplicateMembers = validateDuplicateMembers(members);
+        final var validationDuplicateMembers = ChargePlan.validateDuplicateMembersByDebtorId(members, BusinessExceptionCode.DUPLICATE_CHARGE_PLAN_MEMBER_BY_DEBTOR_ID);
+        final var validationEndsAt = ChargePlan.validateEndsAt(command.endsAt(), command.startsAt(), BusinessExceptionCode.INVALID_ENDS_AT);
 
-        if (command.type() == ChargePlanType.SPLIT) {
-            validateTypeSplit();
-        } else {
-            final var validationTypeRotation = validateTypeRotating(command, members);
-            validationDebtorsExists
-                    .merge(validationDuplicateMembers)
-                    .merge(validationTypeRotation)
-                    .throwIfInvalid(BusinessException::new);
-        }
+        final ValidationResult validationType = switch (command.type()) {
+            case ROTATING -> validateTypeRotating(members);
+            case SPLIT -> validateTypeSplit(members);
+        };
+
+        validationDebtorsExists
+            .merge(validationDuplicateMembers)
+            .merge(validationEndsAt)
+            .merge(validationType)
+            .throwIfInvalid(BusinessException::new);
 
         return ChargePlan.createBuilder()
                 .name(command.name())
                 .description(command.description())
                 .type(command.type())
-                .status(command.status())
                 .proofValidationMode(command.proofValidationMode())
                 .totalAmount(command.totalAmount())
                 .dueToleranceDays(command.dueToleranceDays())
@@ -90,17 +89,16 @@ public class CreateChargePlanService implements CreateChargePlanUseCase {
                 .build();
     }
 
-    private void validateTypeSplit() {
-        // todo: fazer depois
+    private static ValidationResult validateTypeSplit(final List<ChargePlanMember> members) {
+        return ChargePlan.validateRotationOrderPresence(members, BusinessExceptionCode.ROTATION_ORDER_NOT_ALLOWED);
     }
 
-    private static ValidationResult validateTypeRotating(
-            final CreateChargePlanCommand chargePlanCommand, final List<ChargePlanMember> members) {
-        // todo: terminar de validar o rotation
+    private static ValidationResult validateTypeRotating(final List<ChargePlanMember> members) {
         final var validationRotationOrder =
                 ChargePlan.validateMembersWithoutRotationOrder(members, BusinessExceptionCode.INVALID_ROTATION_ORDER);
         final var validationRotationOrderGaps =
-                ChargePlan.validateRotationOrderGaps(members, BusinessExceptionCode.INVALID_ROTATION_ORDER);
+                ChargePlan.validateRotationOrderGaps(members, BusinessExceptionCode.ROTATION_ORDER_GAP);
+
         return validationRotationOrder.merge(validationRotationOrderGaps);
     }
 
@@ -118,8 +116,4 @@ public class CreateChargePlanService implements CreateChargePlanUseCase {
         return ValidationResult.of(validations);
     }
 
-    private static ValidationResult validateDuplicateMembers(final List<ChargePlanMember> members) {
-        return ChargePlan.validateDuplicateMembersByDebtorId(
-                members, BusinessExceptionCode.DUPLICATE_CHARGE_PLAN_MEMBER_BY_DEBTOR_ID);
-    }
 }

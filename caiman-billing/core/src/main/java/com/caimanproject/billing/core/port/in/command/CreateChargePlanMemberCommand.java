@@ -7,4 +7,4 @@ import lombok.Builder;
 
 @Builder
 public record CreateChargePlanMemberCommand(
-        UUID debtorId, BigDecimal amountOverride, Integer rotationOrder, BigDecimal creditBalance, Instant joinedAt) {}
+        UUID debtorId, BigDecimal amountOverride, Integer rotationOrder, BigDecimal creditBalance) {}

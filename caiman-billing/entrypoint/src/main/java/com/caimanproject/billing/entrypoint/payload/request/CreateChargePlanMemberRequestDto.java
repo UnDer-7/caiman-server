@@ -16,6 +16,4 @@ public record CreateChargePlanMemberRequestDto(
 
         @PositiveBody Integer rotationOrder,
 
-        @NotNullBody @PositiveOrZeroBody BigDecimal creditBalance,
-
-        @NotNullBody Instant joinedAt) {}
+        @NotNullBody @PositiveOrZeroBody BigDecimal creditBalance) {}

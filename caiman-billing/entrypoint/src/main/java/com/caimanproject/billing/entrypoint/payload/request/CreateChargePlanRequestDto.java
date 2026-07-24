@@ -17,6 +17,8 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
+
+import jakarta.validation.constraints.AssertTrue;
 import lombok.Builder;
 
 @Builder
@@ -26,8 +28,6 @@ public record CreateChargePlanRequestDto(
         String description,
 
         @NotNullBody ChargePlanType type,
-
-        @NotNullBody ChargePlanStatus status,
 
         @NotNullBody ProofValidationMode proofValidationMode,
 

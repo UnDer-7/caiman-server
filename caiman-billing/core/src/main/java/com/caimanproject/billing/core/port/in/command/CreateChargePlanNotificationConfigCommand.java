@@ -12,6 +12,4 @@ public record CreateChargePlanNotificationConfigCommand(
 
         CycleUnit reminderUnit,
 
-        Integer maxAttempts,
-
-        Boolean enabled) {}
+        Integer maxAttempts) {}

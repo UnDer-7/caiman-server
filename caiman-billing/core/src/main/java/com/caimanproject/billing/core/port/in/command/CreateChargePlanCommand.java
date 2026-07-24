@@ -20,8 +20,6 @@ public record CreateChargePlanCommand(
 
         ChargePlanType type,
 
-        ChargePlanStatus status,
-
         ProofValidationMode proofValidationMode,
 
         BigDecimal totalAmount,

@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -156,7 +157,6 @@ public class ChargePlan {
             final String name,
             final String description,
             final ChargePlanType type,
-            final ChargePlanStatus status,
             final ProofValidationMode proofValidationMode,
             final BigDecimal totalAmount,
             final Integer dueToleranceDays,
@@ -176,7 +176,7 @@ public class ChargePlan {
                 name,
                 description,
                 type,
-                status,
+                ChargePlanStatus.ACTIVE,
                 proofValidationMode,
                 totalAmount,
                 dueToleranceDays,
@@ -210,6 +210,18 @@ public class ChargePlan {
         return ValidationResult.of(validations);
     }
 
+    public static ValidationResult validateRotationOrderPresence(final List<ChargePlanMember> members, final ExceptionCode exceptionCode) {
+        final var validations = members.stream()
+            .filter(cp -> cp.getRotationOrder().isPresent())
+            .map(member -> ValidationError.builder()
+                .code(exceptionCode)
+                .source(new ValidationErrorSourceBody("$.members[*].rotationOrder", member.getRotationOrder().get().toString()))
+                .detail("debtorId: " + member.getDebtorId().toString())
+                .build())
+            .toList();
+        return ValidationResult.of(validations);
+    }
+
     public static ValidationResult validateMembersWithoutRotationOrder(
             final List<ChargePlanMember> members, final ExceptionCode exceptionCode) {
         final var validations = members.stream()
@@ -221,6 +233,21 @@ public class ChargePlan {
                         .build())
                 .toList();
         return ValidationResult.of(validations);
+    }
+
+    public static ValidationResult validateEndsAt(final Instant endsAt, final Instant startsAt, final ExceptionCode exceptionCode) {
+        if (endsAt == null) {
+            return ValidationResult.valid();
+        }
+
+        if (!endsAt.isAfter(startsAt)) {
+            return ValidationResult.of(ValidationError.builder()
+                .code(exceptionCode)
+                .source(new ValidationErrorSourceBody("$.endsAt", endsAt.toString()))
+                .build());
+        }
+
+        return ValidationResult.valid();
     }
 
     public static ValidationResult validateRotationOrderGaps(
