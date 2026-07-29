@@ -99,3 +99,9 @@ management:
       enabled: true
     readinessstate:
       enabled: true
+
+jobrunr:
+  background-job-server:
+    enabled: true
+  dashboard:
+    enabled: true

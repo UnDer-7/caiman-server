@@ -52,6 +52,10 @@ spring:
     virtual:
       enabled: true
 
+jobrunr:
+  dashboard:
+    enabled: false
+
 springdoc:
   api-docs:
     path: /v3/api-docs

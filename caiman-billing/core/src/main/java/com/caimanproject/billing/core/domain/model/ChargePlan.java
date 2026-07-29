@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -193,6 +194,18 @@ public class ChargePlan {
                 members);
     }
 
+    public boolean isGenerationDueOn(final LocalDate currentDate) {
+        if (currentDate.isBefore(cycleAnchorDate)) {
+            return false;
+        }
+        
+        return switch (cycleUnit) {
+            case DAILY -> ChronoUnit.DAYS.between(cycleAnchorDate, currentDate) % cycleInterval == 0;
+            case WEEKLY -> ChronoUnit.DAYS.between(cycleAnchorDate, currentDate) % (cycleInterval * 7L) == 0;
+            case MONTHLY -> isMonthlyDue(currentDate);
+        };
+    }
+
     public static ValidationResult validateDuplicateMembersByDebtorId(
             final List<ChargePlanMember> members, final ExceptionCode exceptionCode) {
         final var validations =
@@ -284,6 +297,17 @@ public class ChargePlan {
                 .source(new ValidationErrorSourceBody("$.members[*].rotationOrder", invalidValues))
                 .build();
         return ValidationResult.of(validationError);
+    }
+
+    private boolean isMonthlyDue(final LocalDate currentDate) {
+        final long monthsBetween = ChronoUnit.MONTHS.between(cycleAnchorDate.withDayOfMonth(1), currentDate.withDayOfMonth(1));
+
+        if (monthsBetween % cycleInterval != 0) {
+            return false;
+        }
+
+        final int targetDay = Math.min(cycleAnchorDate.getDayOfMonth(), currentDate.lengthOfMonth());
+        return currentDate.getDayOfMonth() == targetDay;
     }
 
     public Optional<UUID> getId() {

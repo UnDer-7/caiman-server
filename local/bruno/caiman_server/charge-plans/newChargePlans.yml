@@ -18,8 +18,8 @@ http:
         "totalAmount": 54,
         "dueToleranceDays": 2,
         "cycleUnit": "MONTHLY",
-        "cycleInterval": 2,
-        "cycleAnchorDate": "2026-06-27",
+        "cycleInterval": 1,
+        "cycleAnchorDate": "2026-07-29",
         "notificationsEnabled": true,
         "notificationTime": "13:00:00",
         "notificationTimezone": "America/Sao_Paulo",
@@ -37,11 +37,10 @@ http:
         ],
         "members": [
           {
-            "debtorId": "98ccda44-10f3-4b56-9d72-426c62ed0ded",
-            "amountOverride": 100,
+            "debtorId": "be40907b-a19d-42d0-8340-ae501d6d9ae8",
+      //       "amountOverride": 100,
             "status": "ACTIVE",
-            "creditBalance": 0,
-            "joinedAt": "2026-06-28T13:18:04.502Z"
+            "creditBalance": 0
           }
         ]
       }

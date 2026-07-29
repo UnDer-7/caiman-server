@@ -9,6 +9,7 @@ import com.caimanproject.billing.infrastructure.database.repository.ChargePlanRe
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
@@ -21,6 +22,7 @@ public class ChargePlanPersistenceAdapter implements ChargePlanPersistenceGatewa
     private final ChargePlanNotificationConfigEntityMapper chargePlanNotificationConfigEntityMapper;
 
     @Override
+    @Transactional
     public ChargePlan save(final ChargePlan chargePlan) {
         final var chargePlanEntity = chargePlanEntityMapper.toEntity(chargePlan);
         final var chargePlanMembersEntity = chargePlanMemberEntityMapper.toEntity(chargePlan.getMembers());

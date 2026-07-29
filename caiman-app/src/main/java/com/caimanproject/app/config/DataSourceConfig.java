@@ -83,6 +83,10 @@ public class DataSourceConfig {
         config.setTransactionMode(SQLiteConfig.TransactionMode.IMMEDIATE);
         // SQLite does not enforce FK constraints by default; enable explicitly
         config.enforceForeignKeys(true);
+        // Force TEXT storage for date/time binds; default is INTEGER (epoch ms), which
+        // gets coerced to unparseable raw-digit TEXT on TEXT-affinity columns (datetime cols)
+        config.setDateClass("TEXT");
+        config.setDateStringFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
         var ds = new SQLiteDataSource(config);
         ds.setUrl("jdbc:sqlite:" + sqliteFile);

@@ -96,12 +96,17 @@ public class CreateChargePlanService implements CreateChargePlanUseCase {
     }
 
     private static ValidationResult validateTypeRotating(final List<ChargePlanMember> members) {
-        final var validationRotationOrder =
+        final var validationRotationOrderPresent =
                 ChargePlan.validateMembersWithoutRotationOrder(members, BusinessExceptionCode.INVALID_ROTATION_ORDER);
-        final var validationRotationOrderGaps =
-                ChargePlan.validateRotationOrderGaps(members, BusinessExceptionCode.ROTATION_ORDER_GAP);
 
-        return validationRotationOrder.merge(validationRotationOrderGaps);
+        final ValidationResult validationRotationOrderGaps;
+        if (validationRotationOrderPresent.isValid()) {
+                validationRotationOrderGaps = ChargePlan.validateRotationOrderGaps(members, BusinessExceptionCode.ROTATION_ORDER_GAP);
+        } else {
+            validationRotationOrderGaps = ValidationResult.valid();
+        }
+
+        return validationRotationOrderPresent.merge(validationRotationOrderGaps);
     }
 
     private ValidationResult validateDebtorExistence(final CreateChargePlanCommand chargePlanCommand) {

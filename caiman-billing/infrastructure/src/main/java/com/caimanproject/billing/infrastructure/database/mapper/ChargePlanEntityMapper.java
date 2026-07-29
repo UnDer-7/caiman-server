@@ -11,6 +11,9 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
+import java.util.Collection;
+import java.util.List;
+
 @Mapper(
         componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
         injectionStrategy = InjectionStrategy.CONSTRUCTOR,
@@ -26,6 +29,7 @@ import org.mapstruct.ReportingPolicy;
 public interface ChargePlanEntityMapper {
 
     ChargePlan toModel(ChargePlanEntity entity);
+    List<ChargePlan> toModel(List<ChargePlanEntity> entity);
 
     @Mapping(target = "members", ignore = true)
     @Mapping(target = "notificationConfigs", ignore = true)
