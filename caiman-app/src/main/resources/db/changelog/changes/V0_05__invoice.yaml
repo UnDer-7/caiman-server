@@ -38,7 +38,7 @@ databaseChangeLog:
                     references: charge_plan_member(id)
               - column:
                   name: cycle_index
-                  type: integer
+                  type: bigint
                   remarks: >
                     Zero-based index of the billing cycle that generated this invoice.
                     Used to reconstruct rotation history: responsible member =

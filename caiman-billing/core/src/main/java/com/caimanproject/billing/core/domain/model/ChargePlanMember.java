@@ -94,6 +94,18 @@ public class ChargePlanMember {
                 null);
     }
 
+    public boolean isActive() {
+        return getStatus() == ChargePlanMemberStatus.ACTIVE;
+    }
+
+    public BigDecimal getDueAmount(final BigDecimal defaultAmount) {
+        if (getAmountOverride().isPresent() && getAmountOverride().get().compareTo(BigDecimal.ZERO) > 0) {
+            return getAmountOverride().get().subtract(getCreditBalance());
+        }
+
+        return defaultAmount.subtract(getCreditBalance());
+    }
+
     public Optional<UUID> getId() {
         return Optional.ofNullable(id);
     }

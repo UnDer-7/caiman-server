@@ -61,7 +61,7 @@ public class InvoiceEntity implements AuditableEntity {
     private ChargePlanMemberEntity chargePlanMember;
 
     @Column(name = "cycle_index", nullable = false)
-    private Integer cycleIndex;
+    private Long cycleIndex;
 
     @Column(name = "amount_due", nullable = false, precision = 15, scale = 2)
     private BigDecimal amountDue;

@@ -26,7 +26,7 @@ public class Invoice {
 
     private final UUID chargePlanMemberId;
 
-    private final Integer cycleIndex;
+    private final Long cycleIndex;
 
     private final BigDecimal amountDue;
 
@@ -52,7 +52,7 @@ public class Invoice {
             final UUID id,
             final UUID chargePlanId,
             final UUID chargePlanMemberId,
-            final Integer cycleIndex,
+            final Long cycleIndex,
             final BigDecimal amountDue,
             final BigDecimal amountPaid,
             final InvoiceStatus status,
@@ -95,7 +95,7 @@ public class Invoice {
     public Invoice(
             final UUID chargePlanId,
             final UUID chargePlanMemberId,
-            final Integer cycleIndex,
+            final Long cycleIndex,
             final BigDecimal amountDue,
             final Instant dueDate) {
         this(

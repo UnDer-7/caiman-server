@@ -194,6 +194,12 @@ public class ChargePlan {
                 members);
     }
 
+    public List<ChargePlanMember> getActiveMembers() {
+        return getMembers().stream()
+            .filter(ChargePlanMember::isActive)
+            .toList();
+    }
+
     public boolean isGenerationDueOn(final LocalDate currentDate) {
         if (currentDate.isBefore(cycleAnchorDate)) {
             return false;

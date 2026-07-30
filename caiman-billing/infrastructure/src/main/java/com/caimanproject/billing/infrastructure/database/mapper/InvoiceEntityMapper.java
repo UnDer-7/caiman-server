@@ -21,7 +21,7 @@ public interface InvoiceEntityMapper {
     @Mapping(target = "chargePlanMemberId", source = "chargePlanMember.id")
     Invoice toModel(InvoiceEntity entity);
 
-    @Mapping(target = "chargePlan", ignore = true)
-    @Mapping(target = "chargePlanMember", ignore = true)
+    @Mapping(target = "chargePlan.id", source = "chargePlanId")
+    @Mapping(target = "chargePlanMember.id", source = "chargePlanMemberId")
     InvoiceEntity toEntity(Invoice model);
 }
