@@ -6,6 +6,7 @@ import com.caimanproject.contracts.exception.DomainException;
 import com.caimanproject.contracts.util.DomainValidation;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -27,6 +28,8 @@ public class Invoice {
     private final UUID chargePlanMemberId;
 
     private final Long cycleIndex;
+
+    private final LocalDate generationDate;
 
     private final BigDecimal amountDue;
 
@@ -53,6 +56,7 @@ public class Invoice {
             final UUID chargePlanId,
             final UUID chargePlanMemberId,
             final Long cycleIndex,
+            final LocalDate generationDate,
             final BigDecimal amountDue,
             final BigDecimal amountPaid,
             final InvoiceStatus status,
@@ -72,6 +76,7 @@ public class Invoice {
         this.chargePlanId = chargePlanId;
         this.chargePlanMemberId = chargePlanMemberId;
         this.cycleIndex = cycleIndex;
+        this.generationDate = generationDate;
         this.amountDue = amountDue;
         this.amountPaid = amountPaid;
         this.status = status;
@@ -83,6 +88,7 @@ public class Invoice {
                 DomainValidation.validate(
                         chargePlanMemberId, "$.chargePlanMemberId", DomainExceptionCode.INVALID_VALUE),
                 DomainValidation.validate(cycleIndex, "$.cycleIndex", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(generationDate, "$.generationDate", DomainExceptionCode.INVALID_VALUE),
                 DomainValidation.validate(amountDue, "$.amountDue", DomainExceptionCode.INVALID_VALUE),
                 DomainValidation.validate(amountPaid, "$.amountPaid", DomainExceptionCode.INVALID_VALUE),
                 DomainValidation.validate(status, "$.status", DomainExceptionCode.INVALID_VALUE),
@@ -96,6 +102,7 @@ public class Invoice {
             final UUID chargePlanId,
             final UUID chargePlanMemberId,
             final Long cycleIndex,
+            final LocalDate generationDate,
             final BigDecimal amountDue,
             final Instant dueDate) {
         this(
@@ -103,14 +110,19 @@ public class Invoice {
                 chargePlanId,
                 chargePlanMemberId,
                 cycleIndex,
+                generationDate,
                 amountDue,
                 BigDecimal.ZERO,
-                InvoiceStatus.PENDING,
+                isFullyCoveredByCredit(amountDue) ? InvoiceStatus.PAID : InvoiceStatus.PENDING,
                 dueDate,
                 null,
                 null,
-                null,
+                isFullyCoveredByCredit(amountDue) ? Instant.now() : null,
                 null);
+    }
+
+    private static boolean isFullyCoveredByCredit(final BigDecimal amountDue) {
+        return amountDue != null && amountDue.compareTo(BigDecimal.ZERO) == 0;
     }
 
     public Optional<UUID> getId() {

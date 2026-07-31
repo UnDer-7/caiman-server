@@ -6,13 +6,22 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Repository
 public interface InvoiceRepository extends CrudRepository<InvoiceEntity, String> {
 
     @Query("""
-        SELECT cycleIndex FROM InvoiceEntity WHERE chargePlan.id = :chargePlanId
+        SELECT MAX(i.cycleIndex) FROM InvoiceEntity i WHERE i.chargePlan.id = :chargePlanId
         """)
     Optional<Long> findMaxCycleIndex(@Param("chargePlanId") String chargePlanId);
+
+    @Query("""
+        SELECT COUNT(i) > 0 FROM InvoiceEntity i
+        WHERE i.chargePlan.id = :chargePlanId
+          AND i.generationDate = :generationDate
+        """)
+    boolean existsByChargePlanIdAndGenerationDate(
+            @Param("chargePlanId") String chargePlanId, @Param("generationDate") LocalDate generationDate);
 }

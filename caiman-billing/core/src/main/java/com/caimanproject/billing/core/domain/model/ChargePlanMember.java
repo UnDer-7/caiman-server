@@ -98,13 +98,32 @@ public class ChargePlanMember {
         return getStatus() == ChargePlanMemberStatus.ACTIVE;
     }
 
-    public BigDecimal getDueAmount(final BigDecimal defaultAmount) {
-        if (getAmountOverride().isPresent() && getAmountOverride().get().compareTo(BigDecimal.ZERO) > 0) {
-            return getAmountOverride().get().subtract(getCreditBalance());
-        }
+    public Charge chargeForCycle(final BigDecimal chargePlanTotalAmount) {
+        final var baseAmount = getAmountOverride()
+                .filter(override -> override.compareTo(BigDecimal.ZERO) > 0)
+                .orElse(chargePlanTotalAmount);
 
-        return defaultAmount.subtract(getCreditBalance());
+        final var amountDue = baseAmount.subtract(creditBalance).max(BigDecimal.ZERO);
+        final var remainingCreditBalance = creditBalance.subtract(baseAmount).max(BigDecimal.ZERO);
+
+        return new Charge(amountDue, withCreditBalance(remainingCreditBalance));
     }
+
+    private ChargePlanMember withCreditBalance(final BigDecimal newCreditBalance) {
+        return ChargePlanMember.restoreBuilder()
+                .id(id)
+                .debtorId(debtorId)
+                .amountOverride(amountOverride)
+                .rotationOrder(rotationOrder)
+                .status(status)
+                .creditBalance(newCreditBalance)
+                .joinedAt(joinedAt)
+                .leftAt(leftAt)
+                .audit(audit)
+                .build();
+    }
+
+    public record Charge(BigDecimal amountDue, ChargePlanMember updatedMember) {}
 
     public Optional<UUID> getId() {
         return Optional.ofNullable(id);

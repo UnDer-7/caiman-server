@@ -46,6 +46,17 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: generation_date
+                  type: date
+                  remarks: >
+                    UTC date this invoice's generation cycle ran on. Set by the application
+                    (Odin) at creation time — decoupled from created_at, which is technical
+                    audit metadata, not the business generation cycle date.
+                    Combined with charge_plan_id and charge_plan_member_id, guards against
+                    duplicate invoice generation for the same member on the same cycle.
+                  constraints:
+                    nullable: false
+              - column:
                   name: amount_due
                   type: decimal(15, 2)
                   remarks: >
@@ -124,3 +135,25 @@ databaseChangeLog:
                   remarks: Timestamp of the last update to this record. Always stored in UTC.
                   constraints:
                     nullable: false
+
+  - changeSet:
+      id: 5-invoice-unique-plan-member-generation-date
+      author: caiman
+      changes:
+        - createIndex:
+            indexName: uq_invoice_plan_member_generation_date
+            tableName: invoice
+            unique: true
+            remarks: >
+              Odin idempotency guard: prevents generating more than one invoice for the
+              same member of the same charge plan on the same generation date. Uses a
+              unique index (not addUniqueConstraint) so it applies identically on
+              PostgreSQL and SQLite — SQLite has no ALTER TABLE ADD CONSTRAINT support,
+              but CREATE UNIQUE INDEX works natively on both.
+            columns:
+              - column:
+                  name: charge_plan_id
+              - column:
+                  name: charge_plan_member_id
+              - column:
+                  name: generation_date

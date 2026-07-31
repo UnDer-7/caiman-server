@@ -15,11 +15,11 @@ http:
         "type": "ROTATING",
         "status": "ACTIVE",
         "proofValidationMode": "AI_AUTO",
-        "totalAmount": 54,
+        "totalAmount": 55,
         "dueToleranceDays": 2,
         "cycleUnit": "MONTHLY",
         "cycleInterval": 1,
-        "cycleAnchorDate": "2026-07-29",
+        "cycleAnchorDate": "2026-07-31",
         "notificationsEnabled": true,
         "notificationTime": "13:00:00",
         "notificationTimezone": "America/Sao_Paulo",
@@ -37,7 +37,8 @@ http:
         ],
         "members": [
           {
-            "debtorId": "be40907b-a19d-42d0-8340-ae501d6d9ae8",
+            "debtorId": "327be961-b3f5-44ae-b79d-51bc415d140d",
+            "rotationOrder": 1,
       //       "amountOverride": 100,
             "status": "ACTIVE",
             "creditBalance": 0

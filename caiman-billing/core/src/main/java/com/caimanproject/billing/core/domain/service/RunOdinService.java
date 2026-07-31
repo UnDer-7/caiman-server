@@ -1,21 +1,25 @@
 package com.caimanproject.billing.core.domain.service;
 
 import com.caimanproject.billing.core.domain.model.ChargePlan;
-import com.caimanproject.billing.core.domain.model.ChargePlanMember;
 import com.caimanproject.billing.core.domain.model.Invoice;
+import com.caimanproject.billing.core.domain.types.DomainExceptionCode;
 import com.caimanproject.billing.core.port.in.RunOdinUseCase;
+import com.caimanproject.billing.core.port.out.ChargePlanPersistenceGateway;
 import com.caimanproject.billing.core.port.out.ChargePlanSearchGateway;
 import com.caimanproject.billing.core.port.out.InvoicePersistenceGateway;
 import com.caimanproject.billing.core.port.out.InvoiceSearchGateway;
+import com.caimanproject.contracts.exception.DomainException;
+import com.caimanproject.contracts.exception.LogField;
+import com.caimanproject.contracts.validation.ValidationError;
+import com.caimanproject.contracts.validation.ValidationErrorSourceBody;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.logstash.logback.argument.StructuredArguments;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,52 +29,81 @@ import java.util.UUID;
 public class RunOdinService implements RunOdinUseCase {
 
     private final ChargePlanSearchGateway chargePlanSearchGateway;
+    private final ChargePlanPersistenceGateway chargePlanPersistenceGateway;
     private final InvoiceSearchGateway invoiceSearchGateway;
     private final InvoicePersistenceGateway invoicePersistenceGateway;
 
     @Override
     public void execute() {
-        // todo: ver se ja gerou um invoice para o dia (ou semana ou mes) vigente, para nao gerar dois invoices
-        final var today = LocalDate.now();
+        final var today = LocalDate.now(ZoneOffset.UTC);
         chargePlanSearchGateway.getAllActives()
             .stream()
             .filter(cp -> cp.isGenerationDueOn(today))
             .forEach(cp -> {
                 switch (cp.getType()) {
-                    case ROTATING -> processRotating(cp);
-                    case SPLIT -> processSplit(cp);
+                    case ROTATING -> processRotating(cp, today);
+                    case SPLIT -> processSplit(cp, today);
                 };
             });
     }
 
-    private void processRotating(final ChargePlan chargePlan) {
-        final List<ChargePlanMember> activeMembers = chargePlan.getActiveMembers()
-            .stream()
-            .sorted(Comparator.comparingInt(m -> m.getRotationOrder().orElseThrow())) // todo: jogar exception
-            .toList();
+    private void processRotating(final ChargePlan chargePlan, final LocalDate today) {
+        final UUID chargePlanId = requireChargePlanId(chargePlan);
 
-        if (activeMembers.isEmpty()) {
-            // todo: colocar log
+        if (invoiceSearchGateway.existsGeneratedOn(chargePlanId, today)) {
+            log.warn(
+                    LogField.Placeholders.TWO.getPlaceholder(),
+                    StructuredArguments.kv(LogField.MSG.label(), "invoice already generated today, skipping"),
+                    StructuredArguments.kv(LogField.CHARGE_PLAN_ID.label(), chargePlanId));
             return;
         }
 
-        final UUID chargePlanId = chargePlan.getId().orElseThrow();
-        final Long currentCycleIndex = invoiceSearchGateway.findMaxCycleIndex(chargePlanId)
-            .map(ci -> ci + 1)
-            .orElse(0L);
-        final int currentRotationOrder = currentCycleIndex.intValue() % activeMembers.size();
-        final ChargePlanMember currentMember = activeMembers.get(currentRotationOrder); // todo validar se nao encontrar jogar exception
-        final BigDecimal dueAmount = currentMember.getDueAmount(chargePlan.getTotalAmount()); // todo: debitar o credito usado, talvez deixar na mesma funcao q retonar o valor ja debita
+        final var activeMembers = chargePlan.getActiveMembersOrderedByRotation();
+
+        if (activeMembers.isEmpty()) {
+            log.warn(
+                    LogField.Placeholders.TWO.getPlaceholder(),
+                    StructuredArguments.kv(
+                            LogField.MSG.label(), "no active members, skipping ROTATING invoice generation"),
+                    StructuredArguments.kv(LogField.CHARGE_PLAN_ID.label(), chargePlanId));
+            return;
+        }
+
+        final Long currentCycleIndex =
+                invoiceSearchGateway.findMaxCycleIndex(chargePlanId).map(ci -> ci + 1).orElse(0L);
+        final var currentMember = activeMembers.get(currentCycleIndex.intValue() % activeMembers.size());
+        final var charge = currentMember.chargeForCycle(chargePlan.getTotalAmount());
+
         final Invoice invoice = Invoice.createBuilder()
-            .chargePlanId(chargePlanId)
-            .chargePlanMemberId(currentMember.getId().orElseThrow())
-            .cycleIndex(currentCycleIndex)
-            .amountDue(dueAmount)
-            .dueDate(Instant.now().plus(chargePlan.getDueToleranceDays(), ChronoUnit.DAYS))
-            .build();
+                .chargePlanId(chargePlanId)
+                .chargePlanMemberId(currentMember.getId().orElseThrow())
+                .cycleIndex(currentCycleIndex)
+                .generationDate(today)
+                .amountDue(charge.amountDue())
+                .dueDate(dueDateFor(chargePlan, today))
+                .build();
+
         invoicePersistenceGateway.save(invoice);
+
+        if (currentMember.getCreditBalance().compareTo(charge.updatedMember().getCreditBalance()) != 0) {
+            chargePlanPersistenceGateway.save(chargePlan.withUpdatedMember(charge.updatedMember()));
+        }
+
+        // todo: send notifications
     }
 
-    private void processSplit(final ChargePlan chargePlan) {
+    private void processSplit(final ChargePlan chargePlan, final LocalDate today) {
+    }
+
+    private static Instant dueDateFor(final ChargePlan chargePlan, final LocalDate today) {
+        return today.plusDays(chargePlan.getDueToleranceDays()).atStartOfDay(ZoneOffset.UTC).toInstant();
+    }
+
+    private static UUID requireChargePlanId(final ChargePlan chargePlan) {
+        return chargePlan.getId().orElseThrow(() -> new DomainException(List.of(ValidationError.builder()
+                .code(DomainExceptionCode.INVALID_VALUE)
+                .source(new ValidationErrorSourceBody("$.chargePlan.id", null))
+                .detail("ChargePlan returned by search gateway without a persisted id")
+                .build())));
     }
 }

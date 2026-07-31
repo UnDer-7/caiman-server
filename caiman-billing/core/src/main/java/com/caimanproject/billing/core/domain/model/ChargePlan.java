@@ -18,6 +18,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -198,6 +199,53 @@ public class ChargePlan {
         return getMembers().stream()
             .filter(ChargePlanMember::isActive)
             .toList();
+    }
+
+    public List<ChargePlanMember> getActiveMembersOrderedByRotation() {
+        final var activeMembers = getActiveMembers();
+
+        final var missingRotationOrder = activeMembers.stream()
+                .filter(member -> member.getRotationOrder().isEmpty())
+                .map(member -> ValidationError.builder()
+                        .code(DomainExceptionCode.INVALID_VALUE)
+                        .source(new ValidationErrorSourceBody("$.members[*].rotationOrder", null))
+                        .detail("debtorId: " + member.getDebtorId())
+                        .build())
+                .toList();
+        ValidationResult.of(missingRotationOrder).throwIfInvalid(DomainException::new);
+
+        return activeMembers.stream()
+                .sorted(Comparator.comparingInt(member -> member.getRotationOrder().orElseThrow()))
+                .toList();
+    }
+
+    public ChargePlan withUpdatedMember(final ChargePlanMember updatedMember) {
+        final var updatedMembers = members.stream()
+                .map(member -> member.getId().equals(updatedMember.getId()) ? updatedMember : member)
+                .toList();
+
+        return ChargePlan.restoreBuilder()
+                .id(id)
+                .name(name)
+                .description(description)
+                .type(type)
+                .status(status)
+                .proofValidationMode(proofValidationMode)
+                .totalAmount(totalAmount)
+                .dueToleranceDays(dueToleranceDays)
+                .cycleUnit(cycleUnit)
+                .cycleInterval(cycleInterval)
+                .cycleAnchorDate(cycleAnchorDate)
+                .notificationsEnabled(notificationsEnabled)
+                .notificationTime(notificationTime)
+                .notificationTimezone(notificationTimezone)
+                .startsAt(startsAt)
+                .endsAt(endsAt)
+                .endWhenRecovered(endWhenRecovered)
+                .audit(audit)
+                .notificationConfigs(notificationConfigs)
+                .members(updatedMembers)
+                .build();
     }
 
     public boolean isGenerationDueOn(final LocalDate currentDate) {

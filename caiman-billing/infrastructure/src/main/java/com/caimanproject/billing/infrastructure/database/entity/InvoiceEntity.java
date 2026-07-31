@@ -19,6 +19,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -62,6 +63,9 @@ public class InvoiceEntity implements AuditableEntity {
 
     @Column(name = "cycle_index", nullable = false)
     private Long cycleIndex;
+
+    @Column(name = "generation_date", nullable = false)
+    private LocalDate generationDate;
 
     @Column(name = "amount_due", nullable = false, precision = 15, scale = 2)
     private BigDecimal amountDue;
