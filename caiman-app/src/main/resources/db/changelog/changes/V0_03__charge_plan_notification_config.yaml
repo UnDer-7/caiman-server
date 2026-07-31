@@ -94,9 +94,13 @@ databaseChangeLog:
   - changeSet:
       id: 3-cpnc-unique-plan-trigger
       author: caiman
-      dbms: "!sqlite"
       changes:
-        - addUniqueConstraint:
+        - createIndex:
+            indexName: uq_cpnc_plan_trigger
             tableName: charge_plan_notification_config
-            columnNames: charge_plan_id, trigger_type
-            constraintName: uq_cpnc_plan_trigger
+            unique: true
+            columns:
+              - column:
+                  name: charge_plan_id
+              - column:
+                  name: trigger_type

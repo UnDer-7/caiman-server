@@ -105,9 +105,13 @@ databaseChangeLog:
   - changeSet:
       id: 4-unique-charge-plan-member-debtor
       author: caiman
-      dbms: "!sqlite"
       changes:
-        - addUniqueConstraint:
+        - createIndex:
+            indexName: uk_cpm_debtor_charge_plan
             tableName: charge_plan_member
-            constraintName: uk_cpm_debtor_charge_plan
-            columnNames: debtor_id, charge_plan_id
+            unique: true
+            columns:
+              - column:
+                  name: debtor_id
+              - column:
+                  name: charge_plan_id
