@@ -6,6 +6,8 @@ import com.caimanproject.contracts.exception.DomainException;
 import com.caimanproject.contracts.validation.ValidationErrorSourceBody;
 import com.caimanproject.test.annotation.UnitTest;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -81,6 +83,41 @@ class ChargePlanTest {
                                     ValidationErrorSourceBody.class,
                                     source -> Assertions.assertThat(source.body())
                                             .isEqualTo("$.members[*].rotationOrder"))));
+        }
+    }
+
+    @Nested
+    @DisplayName("Tests for isGenerationDueOn")
+    class IsGenerationDueOnTestSuit {
+
+        @Test
+        void should_not_be_due_when_current_date_is_before_starts_at_even_if_cycle_tick_matches() {
+            // Given: anchor tick matches today exactly, but starts_at is 30 days in the future
+            final var today = LocalDate.of(2026, 6, 27);
+            final var futureStartsAt =
+                    today.plusDays(30).atStartOfDay(ZoneOffset.UTC).toInstant();
+            final var chargePlan = ChargePlanDomainBuilder.buildRotatingChargePlanDueTodayFull()
+                    .cycleAnchorDate(today)
+                    .startsAt(futureStartsAt)
+                    .build();
+
+            // When / Then
+            Assertions.assertThat(chargePlan.isGenerationDueOn(today)).isFalse();
+        }
+
+        @Test
+        void should_be_due_when_current_date_is_on_or_after_starts_at_and_matches_cycle_tick() {
+            // Given: anchor tick matches today, starts_at is 30 days in the past
+            final var today = LocalDate.of(2026, 6, 27);
+            final var pastStartsAt =
+                    today.minusDays(30).atStartOfDay(ZoneOffset.UTC).toInstant();
+            final var chargePlan = ChargePlanDomainBuilder.buildRotatingChargePlanDueTodayFull()
+                    .cycleAnchorDate(today)
+                    .startsAt(pastStartsAt)
+                    .build();
+
+            // When / Then
+            Assertions.assertThat(chargePlan.isGenerationDueOn(today)).isTrue();
         }
     }
 

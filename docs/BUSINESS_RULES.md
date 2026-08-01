@@ -418,6 +418,7 @@ All enum columns use `VARCHAR`. Valid values per column:
 - `ends_at` and `end_when_recovered` are both optional and independent. Both can be set simultaneously — the plan finishes when whichever condition is met first.  
 - `end_when_recovered` must be greater than zero if provided.  
 - `ends_at` must be in the future relative to `starts_at`.  
+- `starts_at` marks the official start date of the billing relationship (e.g. "this plan is active as of this date"). It is independent from `cycle_anchor_date`, which only defines the billing rhythm reference point and may be set in the past to model a pre-existing cadence without back-filling (see [Invoice Generation Cycle](INVOICE_GENERATION_CYCLE.md#past-anchor-date)). Odin will not generate invoices before `starts_at`, even if `cycle_anchor_date` computes a tick date earlier than it — see [5.1](#51-determining-whether-to-generate-invoices).  
 - The request body may optionally include a `members` list, following the same rules as `POST /charge-plans/{planId}/members` (see [4.1](#41-add-member-to-plan)). An empty or omitted list is valid — a plan can be created with no members and they can be added later via the dedicated endpoint.  
 - The request body may optionally include a `notificationConfigs` list, following the same rules as `PUT /charge-plans/{planId}/notification-config` (see [3.5](#35-notification-config)). An empty or omitted list is valid.  
 - `joined_at` for any member included in the creation request is still set by the application to the current UTC instant — never accepted from the request.  
@@ -595,6 +596,7 @@ Executed by **Odin**, which runs daily at `00:00 UTC`.
 
 For each `charge_plan` with `status = ACTIVE`:
 
+0. If `today (UTC date) < starts_at (UTC date)` → skip this plan. `starts_at` is a floor on generation, independent of the cycle rhythm — even if `cycle_anchor_date` computes a tick that falls before `starts_at` (e.g. an anchor set in the past to define the cadence), no invoice is generated until `starts_at` is reached.  
 1. Calculate the **next generation date** using:  
      
    next\_date \= cycle\_anchor\_date \+ (N \* cycle\_interval \* cycle\_unit)  

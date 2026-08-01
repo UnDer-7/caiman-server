@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Comparator;
@@ -249,6 +250,10 @@ public class ChargePlan {
     }
 
     public boolean isGenerationDueOn(final LocalDate currentDate) {
+        if (currentDate.isBefore(startsAt.atZone(ZoneOffset.UTC).toLocalDate())) {
+            return false;
+        }
+
         if (currentDate.isBefore(cycleAnchorDate)) {
             return false;
         }

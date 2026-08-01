@@ -147,6 +147,12 @@ This is intentional: past anchor lets you model a pre-existing billing rhythm wi
 
 ---
 
+## `starts_at` — the Generation Floor
+
+`starts_at` is a separate, independent gate from `cycle_anchor_date`. Before computing the ruler at all, Odin checks: is `today >= starts_at`? If not, the plan is skipped, no matter what the ruler says.
+
+This matters because `cycle_anchor_date` can be set in the past (see [Past Anchor Date](#past-anchor-date) below) purely to define the billing rhythm — it does not imply the plan is allowed to charge yet. `starts_at` is what marks the plan's actual start of the billing relationship. A plan can have a rhythm anchored to a date long past while still not being allowed to generate anything until `starts_at` arrives.
+
 ## Key Rules
 
 - `cycle_anchor_date` **never changes automatically**. The value set at plan creation is the permanent reference point for the entire plan lifetime. Odin never touches it.

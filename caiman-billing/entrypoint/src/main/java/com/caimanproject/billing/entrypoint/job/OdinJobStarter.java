@@ -20,6 +20,9 @@ public class OdinJobStarter {
         log.info(
                 LogField.Placeholders.ONE.getPlaceholder(),
                 StructuredArguments.kv(LogField.MSG.label(), "Odin job started"));
+
+        // todo: ver como lidar com erros e o retry do job
+
         runOdinUseCase.execute();
     }
 }
