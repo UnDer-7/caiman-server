@@ -93,6 +93,7 @@ public class RunOdinService implements RunOdinUseCase {
     }
 
     private void processSplit(final ChargePlan chargePlan, final LocalDate today) {
+
     }
 
     private static Instant dueDateFor(final ChargePlan chargePlan, final LocalDate today) {

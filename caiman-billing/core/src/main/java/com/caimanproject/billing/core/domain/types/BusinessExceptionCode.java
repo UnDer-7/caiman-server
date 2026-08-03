@@ -13,7 +13,9 @@ public enum BusinessExceptionCode implements ExceptionCode {
     INVALID_ROTATION_ORDER("003", "Invalid rotation order found"),
     INVALID_ENDS_AT("005", "endsAt must be after startsAt"),
     ROTATION_ORDER_NOT_ALLOWED("006", "rotationOrder is not allowed for SPLIT charge plans"),
-    ROTATION_ORDER_GAP("007", "rotationOrder values must be sequential starting at 1, with no gaps");
+    ROTATION_ORDER_GAP("007", "rotationOrder values must be sequential starting at 1, with no gaps"),
+    SPLIT_OVERRIDE_SUM_EXCEEDS_TOTAL_AMOUNT(
+            "008", "Sum of member amountOverride values exceeds the charge plan totalAmount");
 
     private final String code;
     private final String message;

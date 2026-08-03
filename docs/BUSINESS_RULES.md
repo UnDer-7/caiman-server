@@ -423,6 +423,7 @@ All enum columns use `VARCHAR`. Valid values per column:
 - The request body may optionally include a `notificationConfigs` list, following the same rules as `PUT /charge-plans/{planId}/notification-config` (see [3.5](#35-notification-config)). An empty or omitted list is valid.  
 - `joined_at` for any member included in the creation request is still set by the application to the current UTC instant — never accepted from the request.  
 - For `SPLIT` plans, `rotation_order` must not be present on any member in the `members` list — the request is rejected with `422` if it is. This is stricter than the dedicated `POST /charge-plans/{planId}/members` endpoint (see [4.1](#41-add-member-to-plan)), which silently ignores and nulls the field instead of rejecting.  
+- For `SPLIT` plans, the sum of `amount_override` across all members in the `members` list must not exceed `total_amount` — the request is rejected with `422` if it does. A sum equal to `total_amount` is allowed (non-override members simply receive a `0.00` share, immediately `PAID`). This check only runs at creation time, against the members included in the same request — it is not (yet) re-validated when members are added or updated afterward via the dedicated member endpoints.  
 - The plan is not processed by the scheduler until it has at least one `ACTIVE` member.
 
 ### 3.2 Update Charge Plan

@@ -13,7 +13,9 @@ import com.caimanproject.contracts.gateway.DebtorGateway;
 import com.caimanproject.contracts.validation.ValidationError;
 import com.caimanproject.contracts.validation.ValidationErrorSourceBody;
 import com.caimanproject.contracts.validation.ValidationResult;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +63,7 @@ public class CreateChargePlanService implements CreateChargePlanUseCase {
         final ValidationResult validationType =
                 switch (command.type()) {
                     case ROTATING -> validateTypeRotating(members);
-                    case SPLIT -> validateTypeSplit(members);
+                    case SPLIT -> validateTypeSplit(members, command.totalAmount());
                 };
 
         validationDebtorsExists
@@ -91,8 +93,28 @@ public class CreateChargePlanService implements CreateChargePlanUseCase {
                 .build();
     }
 
-    private static ValidationResult validateTypeSplit(final List<ChargePlanMember> members) {
-        return ChargePlan.validateRotationOrderPresence(members, BusinessExceptionCode.ROTATION_ORDER_NOT_ALLOWED);
+    private static ValidationResult validateTypeSplit(
+            final List<ChargePlanMember> members, final BigDecimal totalAmount) {
+        return ChargePlan.validateRotationOrderPresence(members, BusinessExceptionCode.ROTATION_ORDER_NOT_ALLOWED)
+                .merge(validateSplitOverrideSum(members, totalAmount));
+    }
+
+    private static ValidationResult validateSplitOverrideSum(
+            final List<ChargePlanMember> members, final BigDecimal totalAmount) {
+        final var overrideSum = members.stream()
+                .map(ChargePlanMember::getAmountOverride)
+                .flatMap(Optional::stream)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (overrideSum.compareTo(totalAmount) > 0) {
+            return ValidationResult.of(ValidationError.builder()
+                    .code(BusinessExceptionCode.SPLIT_OVERRIDE_SUM_EXCEEDS_TOTAL_AMOUNT)
+                    .source(new ValidationErrorSourceBody("$.members[*].amountOverride", overrideSum.toString()))
+                    .detail("sum of amountOverride (" + overrideSum + ") exceeds totalAmount (" + totalAmount + ")")
+                    .build());
+        }
+
+        return ValidationResult.valid();
     }
 
     private static ValidationResult validateTypeRotating(final List<ChargePlanMember> members) {
