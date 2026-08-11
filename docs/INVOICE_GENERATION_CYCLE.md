@@ -153,9 +153,18 @@ This is intentional: past anchor lets you model a pre-existing billing rhythm wi
 
 This matters because `cycle_anchor_date` can be set in the past (see [Past Anchor Date](#past-anchor-date) below) purely to define the billing rhythm — it does not imply the plan is allowed to charge yet. `starts_at` is what marks the plan's actual start of the billing relationship. A plan can have a rhythm anchored to a date long past while still not being allowed to generate anything until `starts_at` arrives.
 
+## `SPLIT` Plans — One Tick, Ever
+
+Everything above describes the ruler generically, and it's how `ROTATING` actually behaves: forever, tick after tick. `SPLIT` uses the exact same ruler math to find its **first** tick (`N=0` reaching `starts_at`), but stops there — once a `SPLIT` plan has generated its one batch of invoices (one per active member), it never generates again, no matter how many future ticks the ruler would otherwise produce. This is checked independently of the ruler math: Odin looks at whether *any* invoice already exists for that plan, not at `next_date`.
+
+The plan itself stays `ACTIVE` after that single generation — it isn't auto-`FINISHED` just because invoices went out. It resolves later through the normal termination mechanisms (`ends_at`, `end_when_recovered`, or a manual finish — see `BUSINESS_RULES.md` §13), typically once all invoices are paid.
+
+A recurring variant of `SPLIT` (all members charged on every tick, not just the first) is not supported yet — see `BUSINESS_RULES.md` P-002.
+
 ## Key Rules
 
 - `cycle_anchor_date` **never changes automatically**. The value set at plan creation is the permanent reference point for the entire plan lifetime. Odin never touches it.
 - The only way `cycle_anchor_date` changes is if the **admin explicitly updates it** via `PATCH /charge-plans/{id}`. That is a deliberate manual action — not a side effect of invoice generation or any scheduler run.
 - No back-fill: paused plans or past-anchor plans do not catch up on missed cycles.
 - `N` is a runtime variable, never persisted.
+- `SPLIT` plans only ever act on `N=0` — see [SPLIT Plans — One Tick, Ever](#split-plans--one-tick-ever) above.

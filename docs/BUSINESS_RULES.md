@@ -69,6 +69,15 @@ Devedor envia comprovante pelo link normal cobrindo apenas sua invoice. Admin vi
 
 ---
 
+### P-002 — SPLIT recorrente (todos os membros cobrados a cada ciclo)
+
+**Contexto:**  
+O tipo `SPLIT` hoje (v0) é definido como **evento único**: gera um invoice por membro ativo uma única vez na vida do plano (ex: rateio de uma viagem AirBnB) — ver [5.3](#53-generation-for-split-plans). Existe um caso de uso distinto e ainda não suportado: rateio **recorrente**, onde todos os membros pagam sua parte a cada ciclo (ex: aluguel dividido entre roommates, todo mês). Isso não é `ROTATING` (que cobra só um membro por vez, revezando) nem o `SPLIT` atual (evento único) — é um terceiro comportamento.
+
+**Decisão:** ❌ Não implementado em v0. Candidato a v1, possivelmente como um terceiro `charge_plan.type` (ou uma flag de recorrência em `SPLIT`) — a definir quando o caso de uso surgir. `charge_plan.cycle_interval`/`cycle_unit` já existem no schema e seriam reaproveitados sem mudança de DDL.
+
+---
+
 ## Table of Contents
 
 - [Project Overview](#project-overview)  
@@ -137,7 +146,7 @@ Caiman fills the gap: **recurring and one-time informal billing between a single
 | **Debtor** | A person who owes money in one or more charge plans. Does not have a system login. Interacts only via tokenized email links. |
 | **ChargePlan** | The core entity. Defines a billing arrangement: who owes, how much, how often, and when it ends. Two subtypes: `ROTATING` and `SPLIT`. |
 | **ROTATING plan** | A charge plan where only one member pays per cycle, rotating in a defined order. Example: shared YouTube Premium where each person pays one month per cycle. |
-| **SPLIT plan** | A charge plan where all members are charged each cycle, splitting the total amount. Example: AirBnB trip split among 5 people. |
+| **SPLIT plan** | A charge plan where all active members are charged once, splitting the total amount between them. Example: AirBnB trip split among 5 people. Unlike `ROTATING`, it does **not** repeat on the plan's cycle rhythm — invoices are generated exactly once, on the first tick reached, and never again for that plan (see [5.3](#53-generation-for-split-plans)). A recurring variant (all members charged every cycle) is not yet supported — see [P-002](#p-002--split-recorrente-todos-os-membros-cobrados-a-cada-ciclo). |
 | **ChargePlanMember** | The association between a `Debtor` and a `ChargePlan`. Holds per-member config (amount override, rotation order, credit balance). |
 | **Invoice** | A single billing record issued to one member for one billing cycle. Generated automatically by the scheduler. |
 | **Payment** | A confirmed payment event linked to an invoice. An invoice can have multiple payments (partial payment support). |
@@ -642,9 +651,12 @@ For each `charge_plan` with `status = ACTIVE`:
 
 ### 5.3 Generation for SPLIT Plans
 
+`SPLIT` is a **one-time** billing event (e.g. splitting an AirBnB trip cost). Unlike `ROTATING`, it does not keep generating on every future cycle tick — it generates its single batch of invoices (one per active member) exactly once in the plan's lifetime, then never again, regardless of payment status or how many future ticks `cycle_anchor_date`/`cycle_interval`/`cycle_unit` would otherwise produce.
+
+0. **One-time guard:** before anything else, check whether **any** `invoice` already exists for this `charge_plan_id` (regardless of date or `cycle_index`). If one does, skip this plan permanently — do not generate again. This check is independent of `charge_plan.status`: the plan remains `ACTIVE` (and subject to overdue detection / reminders on its existing invoices) after its one-time batch is generated; it does not transition to `FINISHED` just because invoices were generated. `FINISHED` still only happens via the existing mechanisms in [§13](#13-charge-plan-termination) (`ends_at`, `end_when_recovered`, or manual finish) — typically `end_when_recovered = total_amount` once fully paid.  
 1. Fetch all `charge_plan_member` records with `status = ACTIVE` for this plan.  
 2. If no active members → skip, log a warning.  
-3. Determine the current `cycle_index` (same logic as ROTATING).  
+3. `cycle_index = 0` (always — since this only ever runs once, there is no `max_cycle_index + 1` to compute; kept as a field on `invoice` for schema uniformity with `ROTATING`, not for member selection).  
 4. For each active member:  
    - Calculate `amount_due`:  
      - If `member.amount_override` is not null: `amount_due = amount_override`  
@@ -653,6 +665,8 @@ For each `charge_plan` with `status = ACTIVE`:
    - Create one `invoice` record per member.  
    - If `amount_due = 0`: mark as `PAID` immediately, skip notification.  
 5. **Rounding correction:** the sum of all member `amount_due` values may differ from `total_amount` by at most `0.01` due to rounding. Apply the rounding correction to the first member in the list (lowest `rotation_order` or insertion order).
+
+> **Not yet handled:** if some members have `amount_override` set, step 4's "otherwise" branch still divides by `total_active_members` (not by the count of non-overridden members), which can make the sum diverge from `total_amount` by more than the `0.01` rounding case covers. See open discussion — needs a decision before this diverges further from §3.1's override-sum validation.
 
 ### 5.4 Post-Generation: Enqueue INVOICE\_CREATED Notification
 

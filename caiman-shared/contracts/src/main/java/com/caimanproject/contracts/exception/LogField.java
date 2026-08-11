@@ -30,7 +30,8 @@ public enum LogField {
     DEBTOR_NOTIFICATIONS_ENABLED,
     SQLITE_PATH,
     ERROR_CODES,
-    CHARGE_PLAN_ID;
+    CHARGE_PLAN_ID,
+    CHARGE_PLAN_NAME;
 
     public String label() {
         return this.name().toLowerCase();

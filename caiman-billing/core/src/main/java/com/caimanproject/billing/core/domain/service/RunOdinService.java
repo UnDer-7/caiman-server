@@ -52,19 +52,20 @@ public class RunOdinService implements RunOdinUseCase {
 
         if (invoiceSearchGateway.existsGeneratedOn(chargePlanId, today)) {
             log.warn(
-                    LogField.Placeholders.TWO.getPlaceholder(),
+                    LogField.Placeholders.THREE.getPlaceholder(),
                     StructuredArguments.kv(LogField.MSG.label(), "invoice already generated today, skipping"),
-                    StructuredArguments.kv(LogField.CHARGE_PLAN_ID.label(), chargePlanId));
+                    StructuredArguments.kv(LogField.CHARGE_PLAN_NAME.label(), chargePlan.getName()),
+                    StructuredArguments.kv(LogField.CHARGE_PLAN_ID.label(), chargePlanId)
+                    );
             return;
         }
 
         final var activeMembers = chargePlan.getActiveMembersOrderedByRotation();
-
         if (activeMembers.isEmpty()) {
             log.warn(
-                    LogField.Placeholders.TWO.getPlaceholder(),
-                    StructuredArguments.kv(
-                            LogField.MSG.label(), "no active members, skipping ROTATING invoice generation"),
+                    LogField.Placeholders.THREE.getPlaceholder(),
+                    StructuredArguments.kv(LogField.MSG.label(), "no active members, skipping ROTATING invoice generation"),
+                    StructuredArguments.kv(LogField.CHARGE_PLAN_NAME.label(), chargePlan.getName()),
                     StructuredArguments.kv(LogField.CHARGE_PLAN_ID.label(), chargePlanId));
             return;
         }
@@ -93,7 +94,26 @@ public class RunOdinService implements RunOdinUseCase {
     }
 
     private void processSplit(final ChargePlan chargePlan, final LocalDate today) {
+        final UUID chargePlanId = requireChargePlanId(chargePlan);
+        if (invoiceSearchGateway.existsGeneratedOn(chargePlanId, today)) {
+            log.warn(
+                LogField.Placeholders.THREE.getPlaceholder(),
+                StructuredArguments.kv(LogField.MSG.label(), "invoice already generated today, skipping"),
+                StructuredArguments.kv(LogField.CHARGE_PLAN_NAME.label(), chargePlan.getName()),
+                StructuredArguments.kv(LogField.CHARGE_PLAN_ID.label(), chargePlanId)
+                    );
+            return;
+        }
 
+        final var activeMembers = chargePlan.getActiveMembers();
+        if (activeMembers.isEmpty()) {
+            log.warn(
+                LogField.Placeholders.THREE.getPlaceholder(),
+                StructuredArguments.kv(LogField.MSG.label(), "no active members, skipping SPLIT invoice generation"),
+                StructuredArguments.kv(LogField.CHARGE_PLAN_NAME.label(), chargePlan.getName()),
+                StructuredArguments.kv(LogField.CHARGE_PLAN_ID.label(), chargePlanId));
+            return;
+        }
     }
 
     private static Instant dueDateFor(final ChargePlan chargePlan, final LocalDate today) {
