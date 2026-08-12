@@ -24,4 +24,9 @@ public interface InvoiceRepository extends CrudRepository<InvoiceEntity, String>
         """)
     boolean existsByChargePlanIdAndGenerationDate(
             @Param("chargePlanId") String chargePlanId, @Param("generationDate") LocalDate generationDate);
+
+    @Query("""
+        SELECT COUNT(i) > 0 FROM InvoiceEntity i WHERE i.chargePlan.id = :chargePlanId
+        """)
+    boolean existsByChargePlanId(@Param("chargePlanId") String chargePlanId);
 }

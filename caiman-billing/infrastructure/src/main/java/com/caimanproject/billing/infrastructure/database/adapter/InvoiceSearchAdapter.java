@@ -29,4 +29,10 @@ public class InvoiceSearchAdapter implements InvoiceSearchGateway {
     public boolean existsGeneratedOn(final UUID chargePlanId, final LocalDate generationDate) {
         return invoiceRepository.existsByChargePlanIdAndGenerationDate(chargePlanId.toString(), generationDate);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsAny(final UUID chargePlanId) {
+        return invoiceRepository.existsByChargePlanId(chargePlanId.toString());
+    }
 }

@@ -12,20 +12,20 @@ http:
       {
         "name": "YouYube Premium",
         "description": "Familia YT",
-        "type": "ROTATING",
+        "type": "SPLIT", // ROTATING || SPLIT
         "status": "ACTIVE",
         "proofValidationMode": "AI_AUTO",
-        "totalAmount": 55,
+        "totalAmount": 100,
         "dueToleranceDays": 2,
         "cycleUnit": "MONTHLY",
         "cycleInterval": 1,
-        "cycleAnchorDate": "2026-07-31",
+        "cycleAnchorDate": "2026-08-12",
         "notificationsEnabled": true,
         "notificationTime": "13:00:00",
         "notificationTimezone": "America/Sao_Paulo",
         "startsAt": "2026-06-28T13:18:04.502Z",
         "endsAt": "2026-10-28T13:18:04.502Z",
-        "endWhenRecovered": 1005,
+        "endWhenRecovered": 100, // todo: tavelz remover?
         "notificationConfigs": [
           {
             "triggerType": "INVOICE_CREATED",
@@ -37,9 +37,30 @@ http:
         ],
         "members": [
           {
-            "debtorId": "acef792f-768a-41a2-ae8f-47cea2a6b344",
-            "rotationOrder": 1,
-      //       "amountOverride": 100,
+            "debtorId": "34267137-0198-49c6-bcd1-8bbbeb682d77",
+            //       "rotationOrder": 1,
+            "amountOverride": 30,
+            "status": "ACTIVE",
+            "creditBalance": 0
+          },
+          {
+            "debtorId": "7700a518-6df6-4885-9e34-7b00d20ef3f8",
+            //       "rotationOrder": 1,
+            "amountOverride": 50,
+            "status": "ACTIVE",
+            "creditBalance": 0
+          },
+          {
+            "debtorId": "7cd7d176-f9ad-4102-9a95-bb1f5fd1ea7b",
+            //       "rotationOrder": 1,
+            // "amountOverride": 50,
+            "status": "ACTIVE",
+            "creditBalance": 0
+          },
+          {
+            "debtorId": "02b11ccd-b3c0-4cb9-abf5-ae9d54c4e048",
+            //       "rotationOrder": 1,
+            // "amountOverride": 50,
             "status": "ACTIVE",
             "creditBalance": 0
           }
@@ -162,4 +183,180 @@ examples:
             "message": "Informed contact list has duplicate contact value",
             "detail": "Duplicate Contacts: contactType: EMAIL - contactValue: mateus7532@gmail.com - priority: 1",
             "httpStatusCode": 422
+          }
+  - name: Request | SPLIT
+    request:
+      url: "{{SERVER_URL}}/api/v1/charge-plans"
+      method: POST
+      body:
+        type: json
+        data: |-
+          {
+            "name": "YouYube Premium",
+            "description": "Familia YT",
+            "type": "SPLIT", // ROTATING || SPLIT
+            "status": "ACTIVE",
+            "proofValidationMode": "AI_AUTO",
+            "totalAmount": 100,
+            "dueToleranceDays": 2,
+            "cycleUnit": "MONTHLY",
+            "cycleInterval": 1,
+            "cycleAnchorDate": "2026-08-12",
+            "notificationsEnabled": true,
+            "notificationTime": "13:00:00",
+            "notificationTimezone": "America/Sao_Paulo",
+            "startsAt": "2026-06-28T13:18:04.502Z",
+            "endsAt": "2026-10-28T13:18:04.502Z",
+            "endWhenRecovered": 100, // todo: tavelz remover?
+            "notificationConfigs": [
+              {
+                "triggerType": "INVOICE_CREATED",
+                "reminderInterval": 2,
+                "reminderUnit": "DAILY",
+                "maxAttempts": 10,
+                "enabled": true
+              }
+            ],
+            "members": [
+              {
+                "debtorId": "34267137-0198-49c6-bcd1-8bbbeb682d77",
+                //       "rotationOrder": 1,
+                "amountOverride": 30,
+                "status": "ACTIVE",
+                "creditBalance": 0
+              },
+              {
+                "debtorId": "7700a518-6df6-4885-9e34-7b00d20ef3f8",
+                //       "rotationOrder": 1,
+                "amountOverride": 50,
+                "status": "ACTIVE",
+                "creditBalance": 0
+              },
+              {
+                "debtorId": "7cd7d176-f9ad-4102-9a95-bb1f5fd1ea7b",
+                //       "rotationOrder": 1,
+                // "amountOverride": 50,
+                "status": "ACTIVE",
+                "creditBalance": 0
+              },
+              {
+                "debtorId": "02b11ccd-b3c0-4cb9-abf5-ae9d54c4e048",
+                //       "rotationOrder": 1,
+                // "amountOverride": 50,
+                "status": "ACTIVE",
+                "creditBalance": 0
+              }
+            ]
+          }
+    response:
+      status: 201
+      statusText: Created
+      headers:
+        - name: content-type
+          value: application/json
+        - name: content-length
+          value: "1852"
+        - name: date
+          value: Wed, 12 Aug 2026 01:02:09 GMT
+        - name: keep-alive
+          value: timeout=60
+        - name: connection
+          value: keep-alive
+      body:
+        type: json
+        data: |-
+          {
+            "id": "aa66acea-bc60-419d-9dd0-2d76b3a107a9",
+            "name": "YouYube Premium",
+            "description": "Familia YT",
+            "type": "SPLIT",
+            "status": "ACTIVE",
+            "proofValidationMode": "AI_AUTO",
+            "totalAmount": 100,
+            "dueToleranceDays": 2,
+            "cycleUnit": "MONTHLY",
+            "cycleInterval": 1,
+            "cycleAnchorDate": "2026-08-12",
+            "notificationsEnabled": true,
+            "notificationTime": "13:00:00",
+            "notificationTimezone": "America/Sao_Paulo",
+            "startsAt": "2026-06-28T13:18:04.502Z",
+            "endsAt": "2026-10-28T13:18:04.502Z",
+            "endWhenRecovered": 100,
+            "notificationConfigs": [
+              {
+                "id": "9d1a3cd5-94bd-4957-9c59-c4810075d833",
+                "triggerType": "INVOICE_CREATED",
+                "reminderInterval": 2,
+                "reminderUnit": "DAILY",
+                "maxAttempts": 10,
+                "enabled": true,
+                "audit": {
+                  "createdAt": null,
+                  "updatedAt": null
+                }
+              }
+            ],
+            "members": [
+              {
+                "id": "da85ed9e-b61d-4fa5-812b-989d36aac3d7",
+                "debtorId": "34267137-0198-49c6-bcd1-8bbbeb682d77",
+                "amountOverride": 30,
+                "rotationOrder": null,
+                "status": "ACTIVE",
+                "creditBalance": 0,
+                "joinedAt": "2026-08-12T01:02:09.563812338Z",
+                "leftAt": null,
+                "audit": {
+                  "createdAt": null,
+                  "updatedAt": null
+                }
+              },
+              {
+                "id": "7186dee7-985c-4776-b182-1223dbf146a9",
+                "debtorId": "7700a518-6df6-4885-9e34-7b00d20ef3f8",
+                "amountOverride": 50,
+                "rotationOrder": null,
+                "status": "ACTIVE",
+                "creditBalance": 0,
+                "joinedAt": "2026-08-12T01:02:09.564074537Z",
+                "leftAt": null,
+                "audit": {
+                  "createdAt": null,
+                  "updatedAt": null
+                }
+              },
+              {
+                "id": "cb44daec-85f0-4917-8e30-0453d510441c",
+                "debtorId": "7cd7d176-f9ad-4102-9a95-bb1f5fd1ea7b",
+                "amountOverride": null,
+                "rotationOrder": null,
+                "status": "ACTIVE",
+                "creditBalance": 0,
+                "joinedAt": "2026-08-12T01:02:09.564078297Z",
+                "leftAt": null,
+                "audit": {
+                  "createdAt": null,
+                  "updatedAt": null
+                }
+              },
+              {
+                "id": "4557bca7-a718-41c7-9c82-ad780109b098",
+                "debtorId": "02b11ccd-b3c0-4cb9-abf5-ae9d54c4e048",
+                "amountOverride": null,
+                "rotationOrder": null,
+                "status": "ACTIVE",
+                "creditBalance": 0,
+                "joinedAt": "2026-08-12T01:02:09.564079877Z",
+                "leftAt": null,
+                "audit": {
+                  "createdAt": null,
+                  "updatedAt": null
+                }
+              }
+            ],
+            "audit": {
+              "createdAt": null,
+              "updatedAt": null
+            }
           }
