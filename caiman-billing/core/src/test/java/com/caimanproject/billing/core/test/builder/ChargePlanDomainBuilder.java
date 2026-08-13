@@ -39,6 +39,31 @@ public final class ChargePlanDomainBuilder {
                 .audit(buildAuditFull().build());
     }
 
+    public static ChargePlanMember.RestoreBuilder buildSplitChargePlanMemberFull() {
+        return buildChargePlanMemberFull().rotationOrder(null);
+    }
+
+    public static ChargePlan.RestoreBuilder buildSplitChargePlanDueTodayFull() {
+        return ChargePlan.restoreBuilder()
+                .id(UUID.randomUUID())
+                .name("AirBnB Trip")
+                .description("Split plan")
+                .type(ChargePlanType.SPLIT)
+                .status(ChargePlanStatus.ACTIVE)
+                .proofValidationMode(ProofValidationMode.MANUAL)
+                .totalAmount(new BigDecimal("100.00"))
+                .dueToleranceDays(5)
+                .cycleUnit(CycleUnit.DAILY)
+                .cycleInterval(1)
+                .cycleAnchorDate(LocalDate.now())
+                .notificationsEnabled(true)
+                .notificationTime(LocalTime.NOON)
+                .notificationTimezone(ZoneId.of("UTC"))
+                .startsAt(Instant.now())
+                .audit(buildAuditFull().build())
+                .members(List.of(buildSplitChargePlanMemberFull().build()));
+    }
+
     public static ChargePlan.RestoreBuilder buildRotatingChargePlanDueTodayFull() {
         return ChargePlan.restoreBuilder()
                 .id(UUID.randomUUID())

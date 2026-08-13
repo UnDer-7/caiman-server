@@ -249,6 +249,18 @@ public class ChargePlan {
                 .build();
     }
 
+    public Instant dueDateFrom(final LocalDate generationDate) {
+        return generationDate.plusDays(dueToleranceDays).atStartOfDay(ZoneOffset.UTC).toInstant();
+    }
+
+    public UUID requireId() {
+        return getId().orElseThrow(() -> new DomainException(List.of(ValidationError.builder()
+                .code(DomainExceptionCode.INVALID_VALUE)
+                .source(new ValidationErrorSourceBody("$.chargePlan.id", null))
+                .detail("ChargePlan returned by search gateway without a persisted id")
+                .build())));
+    }
+
     public boolean isGenerationDueOn(final LocalDate currentDate) {
         if (currentDate.isBefore(startsAt.atZone(ZoneOffset.UTC).toLocalDate())) {
             return false;
