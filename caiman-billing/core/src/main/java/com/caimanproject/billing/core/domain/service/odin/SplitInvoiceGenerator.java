@@ -6,6 +6,7 @@ import com.caimanproject.billing.core.domain.model.Invoice;
 import com.caimanproject.billing.core.port.out.ChargePlanPersistenceGateway;
 import com.caimanproject.billing.core.port.out.InvoicePersistenceGateway;
 import com.caimanproject.billing.core.port.out.InvoiceSearchGateway;
+import com.caimanproject.billing.core.port.out.NotifyInvoiceCreationGateway;
 import com.caimanproject.contracts.exception.LogField;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ class SplitInvoiceGenerator {
     private final InvoiceSearchGateway invoiceSearchGateway;
     private final InvoicePersistenceGateway invoicePersistenceGateway;
     private final ChargePlanPersistenceGateway chargePlanPersistenceGateway;
+    private final NotifyInvoiceCreationGateway notifyInvoiceCreationGateway;
 
     void generate(final ChargePlan chargePlan, final LocalDate today) {
         final var chargePlanId = chargePlan.requireId();
@@ -71,18 +73,20 @@ class SplitInvoiceGenerator {
                     .dueDate(chargePlan.dueDateFrom(today))
                     .build();
 
-            invoicePersistenceGateway.save(invoice);
+            final Invoice saved = invoicePersistenceGateway.save(invoice);
 
             if (member.getCreditBalance().compareTo(charge.updatedMember().getCreditBalance()) != 0) {
                 updatedChargePlan = updatedChargePlan.withUpdatedMember(charge.updatedMember());
             }
+
+            // todo: calcular scheduled_for
+            notifyInvoiceCreationGateway.notify(saved);
         }
 
         if (updatedChargePlan != chargePlan) {
             chargePlanPersistenceGateway.save(updatedChargePlan);
         }
 
-        // todo: send notifications
     }
 
     /**

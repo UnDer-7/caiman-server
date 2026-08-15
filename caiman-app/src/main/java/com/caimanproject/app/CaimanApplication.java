@@ -8,7 +8,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.ImportRuntimeHints;
+import org.springframework.scheduling.annotation.EnableAsync;
 
+@EnableAsync
 @ImportRuntimeHints(CaimanRuntimeHints.class)
 @EnableConfigurationProperties(CaimanServerPropsConfig.class)
 @SpringBootApplication(
