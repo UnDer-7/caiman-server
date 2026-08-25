@@ -13,6 +13,8 @@ public record InvoiceEventDto(
 
     UUID chargePlanId,
 
+    String chargePlanName,
+
     UUID chargePlanMemberId,
 
     Long cycleIndex,
@@ -22,6 +24,10 @@ public record InvoiceEventDto(
     BigDecimal amountDue,
 
     Instant dueDate,
+
+    Instant scheduledFor,
+
+    Integer maxAttempts,
 
     AuditEventDto audit
 ) {

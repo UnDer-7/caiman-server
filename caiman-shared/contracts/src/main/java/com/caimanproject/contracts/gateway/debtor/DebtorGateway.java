@@ -1,4 +1,4 @@
-package com.caimanproject.contracts.gateway;
+package com.caimanproject.contracts.gateway.debtor;
 
 import java.util.Set;
 import java.util.UUID;

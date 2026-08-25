@@ -196,6 +196,12 @@ public class ChargePlan {
                 members);
     }
 
+    public Optional<ChargePlanNotificationConfig> getInvoiceCreatedNotification() {
+        return notificationConfigs.stream()
+            .filter(ChargePlanNotificationConfig::isTriggerTypeInvoiceCreated)
+            .findFirst();
+    }
+
     public List<ChargePlanMember> getActiveMembers() {
         return getMembers().stream()
             .filter(ChargePlanMember::isActive)

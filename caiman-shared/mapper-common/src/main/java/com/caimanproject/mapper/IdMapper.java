@@ -1,8 +1,14 @@
 package com.caimanproject.mapper;
 
 import com.caimanproject.contracts.util.Constants;
+
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
@@ -12,6 +18,22 @@ import org.mapstruct.ReportingPolicy;
         injectionStrategy = InjectionStrategy.CONSTRUCTOR,
         unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface IdMapper {
+
+    default Set<String> toString(final Set<UUID> ids) {
+        if (ids == null) {
+            return null;
+        }
+
+        return ids.stream().map(this::toString).collect(Collectors.toSet());
+    }
+
+    default List<String> toString(final List<UUID> ids) {
+        if (ids == null) {
+            return null;
+        }
+
+        return ids.stream().map(this::toString).toList();
+    }
 
     default String toString(final UUID id) {
         return Optional.ofNullable(id).map(UUID::toString).orElse(null);

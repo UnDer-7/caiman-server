@@ -73,6 +73,10 @@ public class ChargePlanNotificationConfig {
         this(null, triggerType, reminderInterval, reminderUnit, maxAttempts, true, null);
     }
 
+    public boolean isTriggerTypeInvoiceCreated() {
+        return triggerType == TriggerType.INVOICE_CREATED;
+    }
+
     public boolean isPendingReminder() {
         return getTriggerType() == TriggerType.PENDING_REMINDER;
     }

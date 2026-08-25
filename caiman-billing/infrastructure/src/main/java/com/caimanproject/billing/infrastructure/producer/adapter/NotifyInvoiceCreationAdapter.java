@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Slf4j
@@ -22,8 +23,10 @@ public class NotifyInvoiceCreationAdapter implements NotifyInvoiceCreationGatewa
     private final InvoiceEventMapper invoiceEventMapper;
 
     @Override
-    public void notify(final Invoice invoice) {
-        final InvoiceEventDto payload = invoiceEventMapper.toEventDto(invoice);
+    public void notify(
+            final Invoice invoice, final String chargePlanName, final Instant scheduledFor, final int maxAttempts) {
+        final InvoiceEventDto payload =
+                invoiceEventMapper.toEventDto(invoice, chargePlanName, scheduledFor, maxAttempts);
         final MessageEvent.Metadata metadata = buildMetadata(invoice);
 
         final var message = new MessageEvent<>(metadata, payload);

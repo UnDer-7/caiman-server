@@ -9,7 +9,7 @@ import com.caimanproject.billing.core.port.in.command.CreateChargePlanCommand;
 import com.caimanproject.billing.core.port.in.command.CreateChargePlanMemberCommand;
 import com.caimanproject.billing.core.port.out.ChargePlanPersistenceGateway;
 import com.caimanproject.contracts.exception.BusinessException;
-import com.caimanproject.contracts.gateway.DebtorGateway;
+import com.caimanproject.contracts.gateway.debtor.DebtorGateway;
 import com.caimanproject.contracts.validation.ValidationError;
 import com.caimanproject.contracts.validation.ValidationErrorSourceBody;
 import com.caimanproject.contracts.validation.ValidationResult;

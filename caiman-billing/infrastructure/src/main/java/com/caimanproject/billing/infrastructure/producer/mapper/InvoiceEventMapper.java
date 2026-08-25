@@ -4,6 +4,7 @@ import com.caimanproject.billing.core.domain.model.Invoice;
 import com.caimanproject.contracts.event.InvoiceEventDto;
 import com.caimanproject.contracts.util.Constants;
 import com.caimanproject.mapper.OptionalMapper;
+import java.time.Instant;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
@@ -15,5 +16,6 @@ import org.mapstruct.ReportingPolicy;
     unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface InvoiceEventMapper {
 
-    InvoiceEventDto toEventDto(Invoice invoice);
+    InvoiceEventDto toEventDto(
+            Invoice invoice, String chargePlanName, Instant scheduledFor, Integer maxAttempts);
 }

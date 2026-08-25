@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,8 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 class SplitInvoiceGenerator {
+
+    private static final int DEFAULT_MAX_ATTEMPTS = 5; // BUSINESS_RULES.md §3.5 default
 
     private final InvoiceSearchGateway invoiceSearchGateway;
     private final InvoicePersistenceGateway invoicePersistenceGateway;
@@ -79,8 +82,34 @@ class SplitInvoiceGenerator {
                 updatedChargePlan = updatedChargePlan.withUpdatedMember(charge.updatedMember());
             }
 
-            // todo: calcular scheduled_for
-            notifyInvoiceCreationGateway.notify(saved);
+            if (chargePlan.getNotificationsEnabled()) {
+                chargePlan.getInvoiceCreatedNotification().ifPresentOrElse(
+                    config -> {
+                        final Instant scheduledFor = today
+                                .atTime(chargePlan.getNotificationTime())
+                                .atZone(chargePlan.getNotificationTimezone())
+                                .toInstant();
+                        final int maxAttempts = config.getMaxAttempts().orElse(DEFAULT_MAX_ATTEMPTS);
+
+                        notifyInvoiceCreationGateway.notify(
+                                saved, chargePlan.getName(), scheduledFor, maxAttempts);
+                    },
+                    () -> log.warn(
+                            LogField.Placeholders.THREE.getPlaceholder(),
+                            StructuredArguments.kv(
+                                    LogField.MSG.label(),
+                                    "INVOICE_CREATED notification config not found, skipping notification"),
+                            StructuredArguments.kv(LogField.CHARGE_PLAN_NAME.label(), chargePlan.getName()),
+                            StructuredArguments.kv(LogField.CHARGE_PLAN_ID.label(), chargePlanId)));
+            } else {
+                log.warn(
+                        LogField.Placeholders.THREE.getPlaceholder(),
+                        StructuredArguments.kv(
+                                LogField.MSG.label(),
+                                "notifications disabled for charge plan, skipping notification"),
+                        StructuredArguments.kv(LogField.CHARGE_PLAN_NAME.label(), chargePlan.getName()),
+                        StructuredArguments.kv(LogField.CHARGE_PLAN_ID.label(), chargePlanId));
+            }
         }
 
         if (updatedChargePlan != chargePlan) {

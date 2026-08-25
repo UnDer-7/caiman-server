@@ -678,9 +678,9 @@ After invoices are created (only for invoices with `status = PENDING`):
 4. Check if `debtor.email` is not null.  
 5. If all conditions are met:  
    - Generate a JWT upload token (signed, expires in 48 hours from `notification_time` today).  
-   - Calculate `scheduled_for`:  
+   - Calculate `scheduled_for`, reusing the same `today` (UTC date) determined in [5.1](#51-determining-whether-to-generate-invoices) — never re-read the system clock here, to stay consistent with `due_date`/`generation_date` and to keep generation deterministic for a given `today`:  
        
-     ZonedDateTime scheduledLocal \= LocalDate.now(planZone).atTime(notificationTime).atZone(planZone);  
+     ZonedDateTime scheduledLocal \= today.atTime(notificationTime).atZone(planZone);  
        
      Instant scheduledUtc \= scheduledLocal.toInstant();  
        
