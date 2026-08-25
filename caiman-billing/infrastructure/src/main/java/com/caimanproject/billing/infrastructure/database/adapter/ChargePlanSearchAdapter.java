@@ -5,12 +5,11 @@ import com.caimanproject.billing.core.domain.types.ChargePlanStatus;
 import com.caimanproject.billing.core.port.out.ChargePlanSearchGateway;
 import com.caimanproject.billing.infrastructure.database.mapper.ChargePlanEntityMapper;
 import com.caimanproject.billing.infrastructure.database.repository.ChargePlanRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Slf4j
 @Component
@@ -27,5 +26,4 @@ public class ChargePlanSearchAdapter implements ChargePlanSearchGateway {
 
         return chargePlanEntityMapper.toModel(found);
     }
-
 }

@@ -6,13 +6,11 @@ import com.caimanproject.contracts.util.Constants;
 import com.caimanproject.mapper.IdMapper;
 import com.caimanproject.mapper.OptionalMapper;
 import com.caimanproject.mapper.ZoneIdMapper;
+import java.util.List;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
-
-import java.util.Collection;
-import java.util.List;
 
 @Mapper(
         componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
@@ -29,6 +27,7 @@ import java.util.List;
 public interface ChargePlanEntityMapper {
 
     ChargePlan toModel(ChargePlanEntity entity);
+
     List<ChargePlan> toModel(List<ChargePlanEntity> entity);
 
     @Mapping(target = "members", ignore = true)

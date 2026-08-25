@@ -33,7 +33,8 @@ class RunOdinServiceTest {
     @Test
     void should_dispatch_to_rotating_generator_when_type_is_rotating_and_due_today() {
         // Given
-        final var chargePlan = ChargePlanDomainBuilder.buildRotatingChargePlanDueTodayFull().build();
+        final var chargePlan =
+                ChargePlanDomainBuilder.buildRotatingChargePlanDueTodayFull().build();
         Mockito.when(chargePlanSearchGateway.getAllActives()).thenReturn(List.of(chargePlan));
 
         // When

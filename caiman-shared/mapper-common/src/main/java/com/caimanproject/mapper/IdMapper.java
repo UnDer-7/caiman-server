@@ -1,14 +1,11 @@
 package com.caimanproject.mapper;
 
 import com.caimanproject.contracts.util.Constants;
-
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;

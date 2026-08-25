@@ -8,11 +8,6 @@ import com.caimanproject.billing.core.port.out.InvoicePersistenceGateway;
 import com.caimanproject.billing.core.port.out.InvoiceSearchGateway;
 import com.caimanproject.billing.core.port.out.NotifyInvoiceCreationGateway;
 import com.caimanproject.contracts.exception.LogField;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import net.logstash.logback.argument.StructuredArguments;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
@@ -22,6 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.logstash.logback.argument.StructuredArguments;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -42,8 +41,7 @@ class SplitInvoiceGenerator {
             log.warn(
                     LogField.Placeholders.THREE.getPlaceholder(),
                     StructuredArguments.kv(
-                            LogField.MSG.label(),
-                            "SPLIT plan already generated its one-time invoice batch, skipping"),
+                            LogField.MSG.label(), "SPLIT plan already generated its one-time invoice batch, skipping"),
                     StructuredArguments.kv(LogField.CHARGE_PLAN_NAME.label(), chargePlan.getName()),
                     StructuredArguments.kv(LogField.CHARGE_PLAN_ID.label(), chargePlanId));
             return;
@@ -83,30 +81,31 @@ class SplitInvoiceGenerator {
             }
 
             if (chargePlan.getNotificationsEnabled()) {
-                chargePlan.getInvoiceCreatedNotification().ifPresentOrElse(
-                    config -> {
-                        final Instant scheduledFor = today
-                                .atTime(chargePlan.getNotificationTime())
-                                .atZone(chargePlan.getNotificationTimezone())
-                                .toInstant();
-                        final int maxAttempts = config.getMaxAttempts().orElse(DEFAULT_MAX_ATTEMPTS);
+                chargePlan
+                        .getInvoiceCreatedNotification()
+                        .ifPresentOrElse(
+                                config -> {
+                                    final Instant scheduledFor = today.atTime(chargePlan.getNotificationTime())
+                                            .atZone(chargePlan.getNotificationTimezone())
+                                            .toInstant();
+                                    final int maxAttempts =
+                                            config.getMaxAttempts().orElse(DEFAULT_MAX_ATTEMPTS);
 
-                        notifyInvoiceCreationGateway.notify(
-                                saved, chargePlan.getName(), scheduledFor, maxAttempts);
-                    },
-                    () -> log.warn(
-                            LogField.Placeholders.THREE.getPlaceholder(),
-                            StructuredArguments.kv(
-                                    LogField.MSG.label(),
-                                    "INVOICE_CREATED notification config not found, skipping notification"),
-                            StructuredArguments.kv(LogField.CHARGE_PLAN_NAME.label(), chargePlan.getName()),
-                            StructuredArguments.kv(LogField.CHARGE_PLAN_ID.label(), chargePlanId)));
+                                    notifyInvoiceCreationGateway.notify(
+                                            saved, chargePlan.getName(), scheduledFor, maxAttempts);
+                                },
+                                () -> log.warn(
+                                        LogField.Placeholders.THREE.getPlaceholder(),
+                                        StructuredArguments.kv(
+                                                LogField.MSG.label(),
+                                                "INVOICE_CREATED notification config not found, skipping notification"),
+                                        StructuredArguments.kv(LogField.CHARGE_PLAN_NAME.label(), chargePlan.getName()),
+                                        StructuredArguments.kv(LogField.CHARGE_PLAN_ID.label(), chargePlanId)));
             } else {
                 log.warn(
                         LogField.Placeholders.THREE.getPlaceholder(),
                         StructuredArguments.kv(
-                                LogField.MSG.label(),
-                                "notifications disabled for charge plan, skipping notification"),
+                                LogField.MSG.label(), "notifications disabled for charge plan, skipping notification"),
                         StructuredArguments.kv(LogField.CHARGE_PLAN_NAME.label(), chargePlan.getName()),
                         StructuredArguments.kv(LogField.CHARGE_PLAN_ID.label(), chargePlanId));
             }
@@ -115,13 +114,12 @@ class SplitInvoiceGenerator {
         if (updatedChargePlan != chargePlan) {
             chargePlanPersistenceGateway.save(updatedChargePlan);
         }
-
     }
 
     /**
-     * Computes the amount owed by each member without an {@code amountOverride}, splitting what's
-     * left of {@code totalAmount} after subtracting the overridden members' amounts evenly between them.
-     * Any leftover cent from rounding is added to the first member in the list.
+     * Computes the amount owed by each member without an {@code amountOverride}, splitting what's left of
+     * {@code totalAmount} after subtracting the overridden members' amounts evenly between them. Any leftover cent from
+     * rounding is added to the first member in the list.
      */
     private static Map<UUID, BigDecimal> computeNonOverriddenMemberShares(
             final BigDecimal totalAmount, final List<ChargePlanMember> activeMembers) {

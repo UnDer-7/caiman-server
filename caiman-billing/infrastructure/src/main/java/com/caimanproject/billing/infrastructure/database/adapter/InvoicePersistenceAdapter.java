@@ -25,5 +25,4 @@ public class InvoicePersistenceAdapter implements InvoicePersistenceGateway {
         final InvoiceEntity saved = invoiceRepository.save(invoiceEntity);
         return invoiceEntityMapper.toModel(saved);
     }
-
 }

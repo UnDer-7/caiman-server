@@ -1,37 +1,34 @@
 package com.caimanproject.contracts.event;
 
-import lombok.Builder;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
+import lombok.Builder;
 
 @Builder
 public record InvoiceEventDto(
-    UUID id,
+        UUID id,
 
-    UUID chargePlanId,
+        UUID chargePlanId,
 
-    String chargePlanName,
+        String chargePlanName,
 
-    UUID chargePlanMemberId,
+        UUID chargePlanMemberId,
 
-    Long cycleIndex,
+        Long cycleIndex,
 
-    LocalDate generationDate,
+        LocalDate generationDate,
 
-    BigDecimal amountDue,
+        BigDecimal amountDue,
 
-    Instant dueDate,
+        Instant dueDate,
 
-    Instant scheduledFor,
+        Instant scheduledFor,
 
-    Integer maxAttempts,
+        Integer maxAttempts,
 
-    AuditEventDto audit
-) {
+        AuditEventDto audit) {
 
     public static final String EVENT_TYPE_GENERATED = "invoice_generated";
-
 }

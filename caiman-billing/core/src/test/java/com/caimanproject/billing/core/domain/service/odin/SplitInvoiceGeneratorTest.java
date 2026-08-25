@@ -48,7 +48,8 @@ class SplitInvoiceGeneratorTest {
     @Test
     void should_not_save_invoice_when_already_generated_before() {
         // Given
-        final var chargePlan = ChargePlanDomainBuilder.buildSplitChargePlanDueTodayFull().build();
+        final var chargePlan =
+                ChargePlanDomainBuilder.buildSplitChargePlanDueTodayFull().build();
         Mockito.when(invoiceSearchGateway.existsAny(chargePlan.getId().orElseThrow()))
                 .thenReturn(true);
 
@@ -97,20 +98,22 @@ class SplitInvoiceGeneratorTest {
         // Then: 100 / 4 = 25.00 each, cycleIndex always 0
         final var captor = ArgumentCaptor.forClass(Invoice.class);
         Mockito.verify(invoicePersistenceGateway, Mockito.times(4)).save(captor.capture());
-        Assertions.assertThat(captor.getAllValues())
-                .allSatisfy(invoice -> {
-                    Assertions.assertThat(invoice.getAmountDue()).isEqualByComparingTo("25.00");
-                    Assertions.assertThat(invoice.getCycleIndex()).isEqualTo(0L);
-                    Assertions.assertThat(invoice.getGenerationDate()).isEqualTo(TODAY);
-                });
+        Assertions.assertThat(captor.getAllValues()).allSatisfy(invoice -> {
+            Assertions.assertThat(invoice.getAmountDue()).isEqualByComparingTo("25.00");
+            Assertions.assertThat(invoice.getCycleIndex()).isEqualTo(0L);
+            Assertions.assertThat(invoice.getGenerationDate()).isEqualTo(TODAY);
+        });
     }
 
     @Test
     void should_apply_rounding_remainder_to_first_member() {
         // Given
-        final var first = ChargePlanDomainBuilder.buildSplitChargePlanMemberFull().build();
-        final var second = ChargePlanDomainBuilder.buildSplitChargePlanMemberFull().build();
-        final var third = ChargePlanDomainBuilder.buildSplitChargePlanMemberFull().build();
+        final var first =
+                ChargePlanDomainBuilder.buildSplitChargePlanMemberFull().build();
+        final var second =
+                ChargePlanDomainBuilder.buildSplitChargePlanMemberFull().build();
+        final var third =
+                ChargePlanDomainBuilder.buildSplitChargePlanMemberFull().build();
         final var chargePlan = ChargePlanDomainBuilder.buildSplitChargePlanDueTodayFull()
                 .totalAmount(new BigDecimal("10.00"))
                 .members(List.of(first, second, third))
@@ -142,8 +145,10 @@ class SplitInvoiceGeneratorTest {
         final var rodrigo = ChargePlanDomainBuilder.buildSplitChargePlanMemberFull()
                 .amountOverride(new BigDecimal("50.00"))
                 .build();
-        final var gustavo = ChargePlanDomainBuilder.buildSplitChargePlanMemberFull().build();
-        final var cesar = ChargePlanDomainBuilder.buildSplitChargePlanMemberFull().build();
+        final var gustavo =
+                ChargePlanDomainBuilder.buildSplitChargePlanMemberFull().build();
+        final var cesar =
+                ChargePlanDomainBuilder.buildSplitChargePlanMemberFull().build();
         final var chargePlan = ChargePlanDomainBuilder.buildSplitChargePlanDueTodayFull()
                 .totalAmount(new BigDecimal("100.00"))
                 .members(List.of(mateus, rodrigo, gustavo, cesar))
@@ -162,8 +167,10 @@ class SplitInvoiceGeneratorTest {
                 .collect(Collectors.toMap(Invoice::getChargePlanMemberId, Invoice::getAmountDue));
 
         Assertions.assertThat(amountsByMember.get(mateus.getId().orElseThrow())).isEqualByComparingTo("30.00");
-        Assertions.assertThat(amountsByMember.get(rodrigo.getId().orElseThrow())).isEqualByComparingTo("50.00");
-        Assertions.assertThat(amountsByMember.get(gustavo.getId().orElseThrow())).isEqualByComparingTo("10.00");
+        Assertions.assertThat(amountsByMember.get(rodrigo.getId().orElseThrow()))
+                .isEqualByComparingTo("50.00");
+        Assertions.assertThat(amountsByMember.get(gustavo.getId().orElseThrow()))
+                .isEqualByComparingTo("10.00");
         Assertions.assertThat(amountsByMember.get(cesar.getId().orElseThrow())).isEqualByComparingTo("10.00");
     }
 
@@ -191,7 +198,8 @@ class SplitInvoiceGeneratorTest {
 
         final var chargePlanCaptor = ArgumentCaptor.forClass(ChargePlan.class);
         Mockito.verify(chargePlanPersistenceGateway).save(chargePlanCaptor.capture());
-        Assertions.assertThat(chargePlanCaptor.getValue().getMembers().getFirst().getCreditBalance())
+        Assertions.assertThat(
+                        chargePlanCaptor.getValue().getMembers().getFirst().getCreditBalance())
                 .isEqualByComparingTo("0.00");
     }
 
@@ -275,7 +283,8 @@ class SplitInvoiceGeneratorTest {
         Mockito.when(invoicePersistenceGateway.save(ArgumentMatchers.any()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        final Instant expectedDueDate = TODAY.plusDays(7).atStartOfDay(ZoneOffset.UTC).toInstant();
+        final Instant expectedDueDate =
+                TODAY.plusDays(7).atStartOfDay(ZoneOffset.UTC).toInstant();
 
         // When
         generator.generate(chargePlan, TODAY);
@@ -289,8 +298,9 @@ class SplitInvoiceGeneratorTest {
     @Test
     void should_throw_domain_exception_when_charge_plan_has_no_id() {
         // Given
-        final var chargePlanWithoutId =
-                ChargePlanDomainBuilder.buildSplitChargePlanDueTodayFull().id(null).build();
+        final var chargePlanWithoutId = ChargePlanDomainBuilder.buildSplitChargePlanDueTodayFull()
+                .id(null)
+                .build();
 
         // When / Then
         Assertions.assertThatThrownBy(() -> generator.generate(chargePlanWithoutId, TODAY))

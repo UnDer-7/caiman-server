@@ -3,13 +3,12 @@ package com.caimanproject.debtor.infrastructure.database.adapter;
 import com.caimanproject.contracts.gateway.debtor.DebtorGateway;
 import com.caimanproject.debtor.infrastructure.database.mapper.DebtorEntityMapper;
 import com.caimanproject.debtor.infrastructure.database.repository.DebtorRepository;
+import com.caimanproject.mapper.IdMapper;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import com.caimanproject.mapper.IdMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -33,10 +32,9 @@ public class DebtorQueryAdapter implements DebtorGateway {
         }
 
         final var idsStr = idMapper.toString(ids);
-        final var foundIds =
-                debtorRepository.findIdsByIdIn(idsStr).stream()
-                        .map(UUID::fromString)
-                        .collect(Collectors.toSet());
+        final var foundIds = debtorRepository.findIdsByIdIn(idsStr).stream()
+                .map(UUID::fromString)
+                .collect(Collectors.toSet());
 
         if (foundIds.size() == ids.size()) {
             return Collections.emptySet();
@@ -44,5 +42,4 @@ public class DebtorQueryAdapter implements DebtorGateway {
 
         return ids.stream().filter(Predicate.not(foundIds::contains)).collect(Collectors.toSet());
     }
-
 }

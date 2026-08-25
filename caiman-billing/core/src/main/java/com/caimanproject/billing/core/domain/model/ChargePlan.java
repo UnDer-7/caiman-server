@@ -198,14 +198,12 @@ public class ChargePlan {
 
     public Optional<ChargePlanNotificationConfig> getInvoiceCreatedNotification() {
         return notificationConfigs.stream()
-            .filter(ChargePlanNotificationConfig::isTriggerTypeInvoiceCreated)
-            .findFirst();
+                .filter(ChargePlanNotificationConfig::isTriggerTypeInvoiceCreated)
+                .findFirst();
     }
 
     public List<ChargePlanMember> getActiveMembers() {
-        return getMembers().stream()
-            .filter(ChargePlanMember::isActive)
-            .toList();
+        return getMembers().stream().filter(ChargePlanMember::isActive).toList();
     }
 
     public List<ChargePlanMember> getActiveMembersOrderedByRotation() {
@@ -222,7 +220,8 @@ public class ChargePlan {
         ValidationResult.of(missingRotationOrder).throwIfInvalid(DomainException::new);
 
         return activeMembers.stream()
-                .sorted(Comparator.comparingInt(member -> member.getRotationOrder().orElseThrow()))
+                .sorted(Comparator.comparingInt(
+                        member -> member.getRotationOrder().orElseThrow()))
                 .toList();
     }
 
@@ -256,7 +255,10 @@ public class ChargePlan {
     }
 
     public Instant dueDateFrom(final LocalDate generationDate) {
-        return generationDate.plusDays(dueToleranceDays).atStartOfDay(ZoneOffset.UTC).toInstant();
+        return generationDate
+                .plusDays(dueToleranceDays)
+                .atStartOfDay(ZoneOffset.UTC)
+                .toInstant();
     }
 
     public UUID requireId() {
@@ -275,7 +277,7 @@ public class ChargePlan {
         if (currentDate.isBefore(cycleAnchorDate)) {
             return false;
         }
-        
+
         return switch (cycleUnit) {
             case DAILY -> ChronoUnit.DAYS.between(cycleAnchorDate, currentDate) % cycleInterval == 0;
             case WEEKLY -> ChronoUnit.DAYS.between(cycleAnchorDate, currentDate) % (cycleInterval * 7L) == 0;
@@ -377,7 +379,8 @@ public class ChargePlan {
     }
 
     private boolean isMonthlyDue(final LocalDate currentDate) {
-        final long monthsBetween = ChronoUnit.MONTHS.between(cycleAnchorDate.withDayOfMonth(1), currentDate.withDayOfMonth(1));
+        final long monthsBetween =
+                ChronoUnit.MONTHS.between(cycleAnchorDate.withDayOfMonth(1), currentDate.withDayOfMonth(1));
 
         if (monthsBetween % cycleInterval != 0) {
             return false;

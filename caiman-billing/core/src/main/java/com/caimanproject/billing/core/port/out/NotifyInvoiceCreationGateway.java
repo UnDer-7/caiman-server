@@ -6,5 +6,4 @@ import java.time.Instant;
 public interface NotifyInvoiceCreationGateway {
 
     void notify(Invoice invoice, String chargePlanName, Instant scheduledFor, int maxAttempts);
-
 }

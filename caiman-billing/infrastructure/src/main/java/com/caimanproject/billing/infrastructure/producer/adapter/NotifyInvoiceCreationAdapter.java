@@ -5,14 +5,13 @@ import com.caimanproject.billing.core.port.out.NotifyInvoiceCreationGateway;
 import com.caimanproject.billing.infrastructure.producer.mapper.InvoiceEventMapper;
 import com.caimanproject.contracts.event.InvoiceEventDto;
 import com.caimanproject.contracts.event.MessageEvent;
+import java.time.Instant;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -36,9 +35,8 @@ public class NotifyInvoiceCreationAdapter implements NotifyInvoiceCreationGatewa
 
     private MessageEvent.Metadata buildMetadata(final Invoice invoice) {
         return new MessageEvent.Metadata(
-            UUID.randomUUID(), // todo: ver depois como pegar
-            InvoiceEventDto.EVENT_TYPE_GENERATED,
-            invoice.getId().orElseThrow().toString()
-        );
+                UUID.randomUUID(), // todo: ver depois como pegar
+                InvoiceEventDto.EVENT_TYPE_GENERATED,
+                invoice.getId().orElseThrow().toString());
     }
 }

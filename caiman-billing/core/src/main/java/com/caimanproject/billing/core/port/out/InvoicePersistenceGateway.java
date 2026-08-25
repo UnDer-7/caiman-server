@@ -5,5 +5,4 @@ import com.caimanproject.billing.core.domain.model.Invoice;
 public interface InvoicePersistenceGateway {
 
     Invoice save(Invoice invoice);
-
 }

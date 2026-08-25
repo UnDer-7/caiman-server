@@ -123,7 +123,8 @@ public class CreateChargePlanService implements CreateChargePlanUseCase {
 
         final ValidationResult validationRotationOrderGaps;
         if (validationRotationOrderPresent.isValid()) {
-                validationRotationOrderGaps = ChargePlan.validateRotationOrderGaps(members, BusinessExceptionCode.ROTATION_ORDER_GAP);
+            validationRotationOrderGaps =
+                    ChargePlan.validateRotationOrderGaps(members, BusinessExceptionCode.ROTATION_ORDER_GAP);
         } else {
             validationRotationOrderGaps = ValidationResult.valid();
         }

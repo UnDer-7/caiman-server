@@ -6,12 +6,11 @@ import com.caimanproject.billing.core.port.out.ChargePlanPersistenceGateway;
 import com.caimanproject.billing.core.port.out.InvoicePersistenceGateway;
 import com.caimanproject.billing.core.port.out.InvoiceSearchGateway;
 import com.caimanproject.contracts.exception.LogField;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.argument.StructuredArguments;
 import org.springframework.stereotype.Component;
-
-import java.time.LocalDate;
 
 @Slf4j
 @Component
@@ -45,8 +44,10 @@ class RotatingInvoiceGenerator {
             return;
         }
 
-        final Long currentCycleIndex =
-                invoiceSearchGateway.findMaxCycleIndex(chargePlanId).map(ci -> ci + 1).orElse(0L);
+        final Long currentCycleIndex = invoiceSearchGateway
+                .findMaxCycleIndex(chargePlanId)
+                .map(ci -> ci + 1)
+                .orElse(0L);
         final var currentMember = activeMembers.get(currentCycleIndex.intValue() % activeMembers.size());
         final var charge = currentMember.chargeForCycle(chargePlan.getTotalAmount());
 

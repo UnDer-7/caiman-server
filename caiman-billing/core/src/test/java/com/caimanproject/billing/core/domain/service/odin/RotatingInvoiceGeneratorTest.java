@@ -46,8 +46,8 @@ class RotatingInvoiceGeneratorTest {
     @Test
     void should_not_save_invoice_when_already_generated_today() {
         // Given
-        final var chargePlan = ChargePlanDomainBuilder.buildRotatingChargePlanDueTodayFull()
-                .build();
+        final var chargePlan =
+                ChargePlanDomainBuilder.buildRotatingChargePlanDueTodayFull().build();
         Mockito.when(invoiceSearchGateway.existsGeneratedOn(chargePlan.getId().orElseThrow(), TODAY))
                 .thenReturn(true);
 
@@ -121,7 +121,8 @@ class RotatingInvoiceGeneratorTest {
         Mockito.when(invoicePersistenceGateway.save(ArgumentMatchers.any()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        final Instant expectedDueDate = TODAY.plusDays(7).atStartOfDay(ZoneOffset.UTC).toInstant();
+        final Instant expectedDueDate =
+                TODAY.plusDays(7).atStartOfDay(ZoneOffset.UTC).toInstant();
 
         // When
         generator.generate(chargePlan, TODAY);

@@ -76,13 +76,15 @@ class ChargePlanTest {
             final var thrown = Assertions.assertThatThrownBy(chargePlan::getActiveMembersOrderedByRotation);
 
             // Then
-            thrown.isInstanceOfSatisfying(DomainException.class, exception -> Assertions.assertThat(
-                            exception.getErrors())
-                    .anySatisfy(error -> Assertions.assertThat(error.getSource().orElseThrow())
-                            .isInstanceOfSatisfying(
-                                    ValidationErrorSourceBody.class,
-                                    source -> Assertions.assertThat(source.body())
-                                            .isEqualTo("$.members[*].rotationOrder"))));
+            thrown.isInstanceOfSatisfying(
+                    DomainException.class,
+                    exception -> Assertions.assertThat(exception.getErrors())
+                            .anySatisfy(error -> Assertions.assertThat(
+                                            error.getSource().orElseThrow())
+                                    .isInstanceOfSatisfying(
+                                            ValidationErrorSourceBody.class,
+                                            source -> Assertions.assertThat(source.body())
+                                                    .isEqualTo("$.members[*].rotationOrder"))));
         }
     }
 

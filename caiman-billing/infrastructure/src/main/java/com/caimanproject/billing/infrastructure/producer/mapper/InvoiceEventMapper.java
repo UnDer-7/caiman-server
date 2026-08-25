@@ -10,12 +10,11 @@ import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(
-    componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
-    injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-    uses = {OptionalMapper.class},
-    unmappedTargetPolicy = ReportingPolicy.ERROR)
+        componentModel = Constants.MAPSTRUCT_COMPONENT_MODEL,
+        injectionStrategy = InjectionStrategy.CONSTRUCTOR,
+        uses = {OptionalMapper.class},
+        unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface InvoiceEventMapper {
 
-    InvoiceEventDto toEventDto(
-            Invoice invoice, String chargePlanName, Instant scheduledFor, Integer maxAttempts);
+    InvoiceEventDto toEventDto(Invoice invoice, String chargePlanName, Instant scheduledFor, Integer maxAttempts);
 }
