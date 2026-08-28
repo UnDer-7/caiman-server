@@ -15,8 +15,11 @@ databaseChangeLog:
               and DELETES the row on success or exhaustion.
               Only in-flight rows exist here (SCHEDULED, PROCESSING, FAILED).
               All history is in notification_log (append-only, never deleted).
-              payload is a JSON snapshot of all data needed to render the email,
-              captured at enqueue time to avoid stale reads during dispatch.
+              debtor_name / plan_name / amount_due / due_date / upload_link / cycle_index /
+              rejection_reason are a typed snapshot of all data needed to render the
+              notification, captured at enqueue time to avoid stale reads during dispatch
+              (e.g. the debtor changing their contact, or the plan being renamed, after
+              enqueue but before dispatch).
             columns:
               - column:
                   name: id
@@ -58,16 +61,62 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: payload
-                  type: text
+                  name: debtor_name
+                  type: varchar(255)
                   remarks: >
-                    JSON snapshot of all data needed to render and send the notification
-                    without additional DB queries at dispatch time.
-                    Captured at enqueue time. Includes: debtor name, plan name,
-                    invoice amount, due date, upload link (with JWT token), cycle index,
-                    and for payment result notifications: the outcome and rejection reason.
+                    Snapshot of the debtor's name at enqueue time, so later changes to
+                    the debtor record do not affect an already-scheduled notification.
                   constraints:
                     nullable: false
+              - column:
+                  name: plan_name
+                  type: varchar(255)
+                  remarks: Snapshot of charge_plan.name at enqueue time.
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount_due
+                  type: decimal(15,2)
+                  remarks: >
+                    Snapshot of the relevant invoice amount at enqueue time
+                    (invoice.amount_due for invoice-related triggers, the paid/rejected
+                    amount for payment result triggers).
+                  constraints:
+                    nullable: false
+              - column:
+                  name: due_date
+                  type: datetime
+                  remarks: >
+                    Snapshot of invoice.due_date at enqueue time. Only populated for
+                    invoice-related triggers (INVOICE_CREATED, PENDING_REMINDER,
+                    OVERDUE_REMINDER). Null for PAYMENT_APPROVED / PAYMENT_REJECTED.
+                  constraints:
+                    nullable: true
+              - column:
+                  name: upload_link
+                  type: varchar(1000)
+                  remarks: >
+                    Tokenized public proof-upload URL (JWT embedded), generated at
+                    enqueue time. Only populated for invoice-related triggers.
+                    Null for PAYMENT_APPROVED / PAYMENT_REJECTED.
+                  constraints:
+                    nullable: true
+              - column:
+                  name: cycle_index
+                  type: bigint
+                  remarks: >
+                    Snapshot of invoice.cycle_index at enqueue time. Only populated for
+                    invoice-related triggers. Null for PAYMENT_APPROVED / PAYMENT_REJECTED.
+                  constraints:
+                    nullable: true
+              - column:
+                  name: rejection_reason
+                  type: varchar(500)
+                  remarks: >
+                    Reason the payment proof was rejected, as returned by AI analysis
+                    or entered by the admin. Only populated for PAYMENT_REJECTED.
+                  constraints:
+                    nullable: true
               - column:
                   name: scheduled_for
                   type: datetime
