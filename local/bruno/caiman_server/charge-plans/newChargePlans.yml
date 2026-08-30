@@ -19,13 +19,13 @@ http:
         "dueToleranceDays": 2,
         "cycleUnit": "MONTHLY",
         "cycleInterval": 1,
-        "cycleAnchorDate": "2026-08-29",
+        "cycleAnchorDate": "2026-08-30",
         "notificationsEnabled": true,
         "notificationTime": "13:00:00",
         "notificationTimezone": "America/Sao_Paulo",
         "startsAt": "2026-06-28T13:18:04.502Z",
         "endsAt": "2026-10-28T13:18:04.502Z",
-        "endWhenRecovered": 100, // todo: tavelz remover?
+        "endWhenRecovered": 100, // todo: tavelz remover?y
         "notificationConfigs": [
           {
             "triggerType": "INVOICE_CREATED",
@@ -37,14 +37,14 @@ http:
         ],
         "members": [
           {
-            "debtorId": "ac259324-f0d2-428c-b683-abbedcdd4f15",
+            "debtorId": "0dc22383-9da8-42bb-8dac-54df599083bf",
             //       "rotationOrder": 1,
             // "amountOverride": 30,
             "status": "ACTIVE",
             "creditBalance": 0
           },
           {
-            "debtorId": "bc6818dc-e654-46a5-b66b-9440d472b379",
+            "debtorId": "af81968c-cea7-4feb-968a-5b77ad0a5324",
             //       "rotationOrder": 1,
             // "amountOverride": 50,
             "status": "ACTIVE",
