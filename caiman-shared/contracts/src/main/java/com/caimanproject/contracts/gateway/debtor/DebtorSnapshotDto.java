@@ -1,9 +1,8 @@
 package com.caimanproject.contracts.gateway.debtor;
 
-import lombok.Builder;
-
 import java.util.List;
 import java.util.UUID;
+import lombok.Builder;
 
 @Builder(toBuilder = true)
 public record DebtorSnapshotDto(

@@ -55,8 +55,7 @@ public class CreateInvoiceCreatedOutboxService implements CreateInvoiceCreatedOu
             log.info(
                     LogField.Placeholders.FOUR.getPlaceholder(),
                     StructuredArguments.kv(
-                            LogField.MSG.label(),
-                            "notifications disabled for debtor, skipping INVOICE_CREATED outbox"),
+                            LogField.MSG.label(), "notifications disabled for debtor, skipping INVOICE_CREATED outbox"),
                     StructuredArguments.kv(LogField.DEBTOR_ID.label(), command.debtorId()),
                     StructuredArguments.kv(LogField.INVOICE_ID.label(), command.invoiceId()),
                     StructuredArguments.kv(
@@ -123,8 +122,8 @@ public class CreateInvoiceCreatedOutboxService implements CreateInvoiceCreatedOu
     }
 
     /**
-     * Groups contacts by type and picks the lowest-priority (highest precedence) contact within each group —
-     * one recipient per distinct contact type, never one per raw contact row.
+     * Groups contacts by type and picks the lowest-priority (highest precedence) contact within each group — one
+     * recipient per distinct contact type, never one per raw contact row.
      */
     private static Map<String, String> resolveRecipientsByContactType(final DebtorSnapshotDto debtor) {
         return debtor.contacts().stream()

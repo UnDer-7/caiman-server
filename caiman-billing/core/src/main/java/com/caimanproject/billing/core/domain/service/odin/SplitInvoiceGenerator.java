@@ -90,7 +90,9 @@ class SplitInvoiceGenerator {
                     .flatMap(ChargePlanNotificationConfig::getMaxAttempts)
                     .orElse(DEFAULT_MAX_ATTEMPTS);
             final boolean invoiceCreatedNotificationEnabled = chargePlan.getNotificationsEnabled()
-                    && invoiceCreatedNotification.map(ChargePlanNotificationConfig::getEnabled).orElse(true);
+                    && invoiceCreatedNotification
+                            .map(ChargePlanNotificationConfig::getEnabled)
+                            .orElse(true);
 
             notifyInvoiceCreationGateway.notify(
                     saved,

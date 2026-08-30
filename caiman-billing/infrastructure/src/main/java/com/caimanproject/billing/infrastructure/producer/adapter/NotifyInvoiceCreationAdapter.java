@@ -61,7 +61,8 @@ public class NotifyInvoiceCreationAdapter implements NotifyInvoiceCreationGatewa
                 LogField.Placeholders.FOUR.getPlaceholder(),
                 StructuredArguments.kv(LogField.MSG.label(), "invoice creation notification event published"),
                 StructuredArguments.kv(LogField.CHARGE_PLAN_NAME.label(), chargePlanName),
-                StructuredArguments.kv(LogField.INVOICE_ID.label(), invoice.getId().orElseThrow()),
+                StructuredArguments.kv(
+                        LogField.INVOICE_ID.label(), invoice.getId().orElseThrow()),
                 StructuredArguments.kv(LogField.CORRELATION_ID.label(), metadata.correlationId()));
     }
 
