@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 import lombok.Builder;
 
@@ -52,4 +53,15 @@ public record CreateChargePlanRequestDto(
 
         @Valid List<CreateChargePlanNotificationConfigRequestDto> notificationConfigs,
 
-        @Valid List<CreateChargePlanMemberRequestDto> members) {}
+        @Valid List<CreateChargePlanMemberRequestDto> members) {
+
+    public CreateChargePlanRequestDto {
+        if (notificationConfigs == null) {
+            notificationConfigs = Collections.emptyList();
+        }
+
+        if (members == null) {
+            members = Collections.emptyList();
+        }
+    }
+}

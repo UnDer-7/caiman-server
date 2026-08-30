@@ -43,6 +43,22 @@ HTTP Request
 
 ---
 
+## Required Request Headers (pre-Layer-1)
+
+Every request — before it reaches any `@CaimanEndpoint` controller — is checked by `RequiredHeaderFilterConfig` (`caiman-web-support`, `@Order(2)`), a servlet filter that runs ahead of Spring MVC dispatch. It is not one of the three validation layers above; it rejects the request at the transport level, before a `Command` or even a `RequestDto` exists.
+
+**Required on every request:**
+- `X-Correlation-ID` — must be present, non-blank, and a valid UUID (`Constants.UUID_FORMAT`).
+- `X-Channel` — must be present and non-blank.
+
+**Response:** `400 Bad Request` (via `EntrypointException`), same `ProblemDetailDto` shape as Layer 1, with `source.header` pointing at the missing/invalid header. Both `correlationId` and `channel` are then echoed back at the root of every error response body for the rest of the request's lifecycle.
+
+**Exempt paths:** `/favicon.ico`, the management/actuator base path, OpenAPI docs, and Swagger UI — see `RequiredHeaderFilterConfig.ignoredPaths`. No other path is exempt.
+
+**Caveat — public/tokenized-link endpoints:** endpoints meant to be hit directly from an email link (e.g. the planned `POST /public/invoices/{id}/proof`, `caiman-payment`, not yet implemented) are **not** currently exempted by `ignoredPaths`. A browser following a plain link sets no custom headers, so such an endpoint would get rejected with 400 before ever reaching the controller. When that endpoint is implemented, either add its path to `ignoredPaths` or have it generate/accept default values for these headers — otherwise the "debtor clicks the email link" flow described in `BUSINESS_RULES.md` breaks.
+
+---
+
 ## Layer 1 — Controller / Entrypoint
 
 **Responsibility:** Reject malformed input before it reaches the application core.

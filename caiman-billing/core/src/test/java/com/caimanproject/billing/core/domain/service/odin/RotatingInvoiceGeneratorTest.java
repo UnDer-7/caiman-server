@@ -6,6 +6,7 @@ import com.caimanproject.billing.core.domain.types.InvoiceStatus;
 import com.caimanproject.billing.core.port.out.ChargePlanPersistenceGateway;
 import com.caimanproject.billing.core.port.out.InvoicePersistenceGateway;
 import com.caimanproject.billing.core.port.out.InvoiceSearchGateway;
+import com.caimanproject.billing.core.port.out.NotifyInvoiceCreationGateway;
 import com.caimanproject.billing.core.test.builder.ChargePlanDomainBuilder;
 import com.caimanproject.contracts.exception.DomainException;
 import com.caimanproject.test.annotation.UnitTest;
@@ -37,6 +38,9 @@ class RotatingInvoiceGeneratorTest {
 
     @Mock
     ChargePlanPersistenceGateway chargePlanPersistenceGateway;
+
+    @Mock
+    NotifyInvoiceCreationGateway notifyInvoiceCreationGateway;
 
     @InjectMocks
     RotatingInvoiceGenerator generator;
@@ -212,6 +216,39 @@ class RotatingInvoiceGeneratorTest {
 
         // Then: creditBalance stayed 0 -> 0, nothing changed, no need to persist the plan
         Mockito.verify(chargePlanPersistenceGateway, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    void should_notify_invoice_creation_gateway_for_the_current_cycle_member() {
+        // Given
+        final var member = ChargePlanDomainBuilder.buildChargePlanMemberFull()
+                .rotationOrder(1)
+                .build();
+        final var chargePlan = ChargePlanDomainBuilder.buildRotatingChargePlanDueTodayFull()
+                .totalAmount(new BigDecimal("90.00"))
+                .members(List.of(member))
+                .build();
+        Mockito.when(invoiceSearchGateway.existsGeneratedOn(Mockito.any(), Mockito.any()))
+                .thenReturn(false);
+        Mockito.when(invoiceSearchGateway.findMaxCycleIndex(Mockito.any())).thenReturn(Optional.empty());
+        Mockito.when(invoicePersistenceGateway.save(ArgumentMatchers.any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        generator.generate(chargePlan, TODAY);
+
+        // Then: the ROTATING path must notify exactly like SPLIT does — this was the missing call
+        final var invoiceCaptor = ArgumentCaptor.forClass(Invoice.class);
+        Mockito.verify(notifyInvoiceCreationGateway)
+                .notify(
+                        invoiceCaptor.capture(),
+                        ArgumentMatchers.eq(member.getDebtorId()),
+                        ArgumentMatchers.eq(chargePlan.getName()),
+                        ArgumentMatchers.eq(true),
+                        ArgumentMatchers.any(Instant.class),
+                        ArgumentMatchers.anyInt());
+        Assertions.assertThat(invoiceCaptor.getValue().getChargePlanMemberId())
+                .isEqualTo(member.getId().orElseThrow());
     }
 
     @Test

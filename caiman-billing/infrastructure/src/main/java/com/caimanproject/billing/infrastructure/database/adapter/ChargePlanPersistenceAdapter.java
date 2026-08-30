@@ -31,7 +31,7 @@ public class ChargePlanPersistenceAdapter implements ChargePlanPersistenceGatewa
         chargePlanEntity.addMembers(chargePlanMembersEntity);
         chargePlanEntity.addNotificationConfigs(chargePlanNotificationsEntity);
 
-        final var chargePlanSaved = chargePlanRepository.save(chargePlanEntity);
+        final var chargePlanSaved = chargePlanRepository.saveAndFlush(chargePlanEntity);
 
         return chargePlanEntityMapper.toModel(chargePlanSaved);
     }
