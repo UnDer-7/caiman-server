@@ -31,7 +31,9 @@ public enum LogField {
     SQLITE_PATH,
     ERROR_CODES,
     CHARGE_PLAN_ID,
-    CHARGE_PLAN_NAME;
+    CHARGE_PLAN_NAME,
+    INVOICE_ID,
+    RECIPIENT;
 
     public String label() {
         return this.name().toLowerCase();

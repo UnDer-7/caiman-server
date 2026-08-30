@@ -1,10 +1,13 @@
 package com.caimanproject.debtor.infrastructure.database.adapter;
 
 import com.caimanproject.contracts.gateway.debtor.DebtorGateway;
+import com.caimanproject.contracts.gateway.debtor.DebtorSnapshotDto;
 import com.caimanproject.debtor.infrastructure.database.mapper.DebtorEntityMapper;
+import com.caimanproject.debtor.infrastructure.database.mapper.DebtorSnapshotMapper;
 import com.caimanproject.debtor.infrastructure.database.repository.DebtorRepository;
 import com.caimanproject.mapper.IdMapper;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -21,6 +24,7 @@ public class DebtorQueryAdapter implements DebtorGateway {
 
     private final DebtorRepository debtorRepository;
     private final DebtorEntityMapper debtorEntityMapper;
+    private final DebtorSnapshotMapper debtorSnapshotMapper;
     private final IdMapper idMapper;
 
     /** {@inheritDoc} */
@@ -41,5 +45,15 @@ public class DebtorQueryAdapter implements DebtorGateway {
         }
 
         return ids.stream().filter(Predicate.not(foundIds::contains)).collect(Collectors.toSet());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<DebtorSnapshotDto> findById(final UUID id) {
+        return debtorRepository
+                .findById(id.toString())
+                .map(debtorEntityMapper::toModel)
+                .map(debtorSnapshotMapper::toSnapshotDto);
     }
 }

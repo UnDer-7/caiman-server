@@ -6,6 +6,7 @@ import com.caimanproject.billing.core.domain.types.InvoiceStatus;
 import com.caimanproject.billing.core.port.out.ChargePlanPersistenceGateway;
 import com.caimanproject.billing.core.port.out.InvoicePersistenceGateway;
 import com.caimanproject.billing.core.port.out.InvoiceSearchGateway;
+import com.caimanproject.billing.core.port.out.NotifyInvoiceCreationGateway;
 import com.caimanproject.billing.core.test.builder.ChargePlanDomainBuilder;
 import com.caimanproject.contracts.exception.DomainException;
 import com.caimanproject.test.annotation.UnitTest;
@@ -39,6 +40,9 @@ class SplitInvoiceGeneratorTest {
 
     @Mock
     ChargePlanPersistenceGateway chargePlanPersistenceGateway;
+
+    @Mock
+    NotifyInvoiceCreationGateway notifyInvoiceCreationGateway;
 
     @InjectMocks
     SplitInvoiceGenerator generator;

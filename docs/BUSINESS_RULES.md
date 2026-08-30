@@ -668,30 +668,39 @@ For each `charge_plan` with `status = ACTIVE`:
 
 > **Not yet handled:** if some members have `amount_override` set, step 4's "otherwise" branch still divides by `total_active_members` (not by the count of non-overridden members), which can make the sum diverge from `total_amount` by more than the `0.01` rounding case covers. See open discussion — needs a decision before this diverges further from §3.1's override-sum validation.
 
-### 5.4 Post-Generation: Enqueue INVOICE\_CREATED Notification
+### 5.4 Post-Generation: Notify Invoice Creation
 
-After invoices are created (only for invoices with `status = PENDING`):
+Billing and notification are separate bounded contexts communicating asynchronously — there is no shared transaction and no direct table access across the boundary (see `AGENT.md` § Module dependency rules). This section describes what each side is responsible for.
 
-1. Check if `charge_plan.notifications_enabled = true`.  
-2. Check if a `charge_plan_notification_config` row exists for this plan with `trigger_type = INVOICE_CREATED`.  
-3. Check if `debtor.notifications_enabled = true` (via member → debtor join).  
-4. Check if `debtor.email` is not null.  
-5. If all conditions are met:  
-   - Generate a JWT upload token (signed, expires in 48 hours from `notification_time` today).  
-   - Calculate `scheduled_for`, reusing the same `today` (UTC date) determined in [5.1](#51-determining-whether-to-generate-invoices) — never re-read the system clock here, to stay consistent with `due_date`/`generation_date` and to keep generation deterministic for a given `today`:  
-       
-     ZonedDateTime scheduledLocal \= today.atTime(notificationTime).atZone(planZone);  
-       
-     Instant scheduledUtc \= scheduledLocal.toInstant();  
-       
-   - Create `notification_outbox` entry with:  
-     - `trigger_type = INVOICE_CREATED`  
-     - `status = SCHEDULED`  
-     - `attempt_count = 0`  
-     - `max_attempts` \= value from `charge_plan_notification_config`  
-     - `payload` \= JSON snapshot: `{ debtorName, planName, amountDue, dueDate, uploadLink, cycleIndex }`  
-     - `scheduled_for` \= calculated UTC instant  
-6. All inserts (invoice \+ outbox) happen in a **single transaction**.
+**Billing's responsibility — publish, never decide:**
+
+After each invoice is created (invoices with `status = PENDING`), billing publishes one invoice-created event **unconditionally**, for every invoice, regardless of `charge_plan.notifications_enabled`. Whether a notification actually gets dispatched is entirely `caiman-notification`'s decision (see below) — billing only forwards the data it uniquely owns:
+
+1. Resolve `max_attempts`: value from the `charge_plan_notification_config` row for `trigger_type = INVOICE_CREATED`, or the default (§3.5) if no such row exists. Absence of a config row is **not** a reason to skip — it only means "use the default."
+2. Resolve `invoiceCreatedNotificationEnabled` = `charge_plan.notifications_enabled AND charge_plan_notification_config.enabled` (the latter defaults to `true` when no config row exists for this trigger — same "absence ≠ disabled" rule as `max_attempts`). Both flags are billing-owned, so billing collapses them into this single resolved fact before publishing — it does not forward the two raw flags separately, and it does not decide anything beyond this AND.
+3. Calculate `scheduled_for`, reusing the same `today` (UTC date) determined in [5.1](#51-determining-whether-to-generate-invoices) — never re-read the system clock here, to stay consistent with `due_date`/`generation_date` and to keep generation deterministic for a given `today`:
+
+   ZonedDateTime scheduledLocal \= today.atTime(notificationTime).atZone(planZone);
+
+   Instant scheduledUtc \= scheduledLocal.toInstant();
+4. Publish the event carrying: `invoiceId`, `debtorId` (from `charge_plan_member.debtor_id`), `chargePlanName`, `invoiceCreatedNotificationEnabled` (resolved in step 2 — forwarded as data, not acted upon here), `cycleIndex`, `amountDue`, `dueDate`, `uploadLink` (built from `invoice.upload_token`, see §12), `scheduledFor`, `maxAttempts`.
+
+**Notification's responsibility — decide, then enqueue:**
+
+On receiving the event, `caiman-notification` decides whether and how to notify, using only data it owns or was handed in the payload:
+
+1. If `invoiceCreatedNotificationEnabled = false`: skip entirely. No error, no retry.
+2. Fetch the debtor snapshot (name, `notifications_enabled`, contacts) via the debtor gateway. If not found: skip, log a warning.
+3. If `debtor.notifications_enabled = false`: skip.
+4. Resolve recipients per §11.5 (group contacts by type, lowest `priority` wins per group, one `notification_outbox` row per supported channel).
+5. For each resolved channel, create a `notification_outbox` entry with:
+   - `trigger_type = INVOICE_CREATED`
+   - `status = SCHEDULED`
+   - `attempt_count = 0`
+   - `max_attempts`, `scheduled_for`, `amount_due`, `due_date`, `upload_link`, `cycle_index` \= values carried on the event
+   - `recipient`, `channel`, `debtor_name` \= resolved in step 4
+
+Invoice creation and outbox creation are **not** part of the same transaction — outbox rows are created asynchronously, after the invoice transaction has already committed.
 
 ---
 
@@ -1198,14 +1207,25 @@ With the delete-on-terminal-state approach, only three statuses exist in the out
 
 ### 11.5 Multi-Channel Dispatch
 
-In v0, only `EMAIL` is supported. Huginn selects the `debtor_contact` row with the **lowest `priority` value** for `contact_type = EMAIL`. If no EMAIL contact exists: log a warning and skip. No error, no retry.
+Recipient and channel resolution happen once, at **outbox creation time** — not at Huginn dispatch time. This matches the `recipient` / `channel` snapshot columns on `notification_outbox`, which exist precisely so Huginn never has to re-read `debtor_contact` during dispatch.
+
+For each trigger (e.g. `INVOICE_CREATED`), the creating use case:
+
+1. Groups the debtor's `debtor_contact` rows by `contact_type`.
+2. Within each group, picks the row with the **lowest `priority` value** (§3.4) — this resolves redundant contacts of the *same* type (e.g. two `EMAIL` addresses on file), it never causes multiple sends on the same channel.
+3. Maps each remaining group's `contact_type` to a `notification_outbox.channel` value. If no dispatcher is implemented yet for that `contact_type`, log a warning and skip that group — no error, no retry. This is forward-compatible: a `contact_type` can be added in `caiman-debtor` before its dispatcher is implemented in `caiman-notification`; it is simply skipped until then.
+4. Creates **one `notification_outbox` row per remaining group** — one row per distinct supported channel, not one row per raw `debtor_contact` row. A debtor with two `EMAIL` contacts and one `WHATSAPP` contact produces **two** outbox rows (one `EMAIL`, one `WHATSAPP`), not three.
+
+In v0, only `EMAIL` has a dispatcher implemented — any other `contact_type` on file produces no outbox row until its dispatcher ships.
+
+If the debtor has no contact of any supported type: log a warning and skip entirely. No error, no retry.
 
 ### 11.6 Email Dispatch Rules
 
 - Email is sent using the configured SMTP settings (application properties).  
 - Subject and body are rendered from templates (implementation detail, not a business rule).  
-- If the debtor has no `EMAIL` contact (no row with `contact_type = 'EMAIL'`): log a warning and skip. No error, no retry.  
-- If `debtor.email` is missing in the outbox payload (stale snapshot): do not attempt to send. Log as `FAILED` with reason `"Recipient email missing in payload"`. Delete the outbox entry immediately (do not retry — this is a config error, not a transient failure).
+- Recipient resolution (contact lookup, priority tie-break) happens once at outbox creation time — see §11.5. Huginn only reads the `recipient` value already snapshotted on the outbox row; it never re-queries `debtor_contact`.
+- If `recipient` is somehow missing on the outbox row (defensive check only — a row is never created without a resolved recipient, see §11.5): log as `FAILED` with reason `"Recipient missing in payload"`. Delete the outbox entry immediately (do not retry — this is a data-integrity error, not a transient failure).
 
 ## 12\. Admin Operations
 

@@ -39,6 +39,8 @@ public class Invoice {
 
     private final Instant dueDate;
 
+    private final UUID uploadToken;
+
     @Getter(AccessLevel.NONE)
     private final String cancellationReason;
 
@@ -61,6 +63,7 @@ public class Invoice {
             final BigDecimal amountPaid,
             final InvoiceStatus status,
             final Instant dueDate,
+            final UUID uploadToken,
             final String cancellationReason,
             final Instant cancelledAt,
             final Instant paidAt,
@@ -81,6 +84,7 @@ public class Invoice {
         this.amountPaid = amountPaid;
         this.status = status;
         this.dueDate = dueDate;
+        this.uploadToken = uploadToken;
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
 
         final var fieldValidations = DomainValidation.validateAll(List.of(
@@ -92,7 +96,8 @@ public class Invoice {
                 DomainValidation.validate(amountDue, "$.amountDue", DomainExceptionCode.INVALID_VALUE),
                 DomainValidation.validate(amountPaid, "$.amountPaid", DomainExceptionCode.INVALID_VALUE),
                 DomainValidation.validate(status, "$.status", DomainExceptionCode.INVALID_VALUE),
-                DomainValidation.validate(dueDate, "$.dueDate", DomainExceptionCode.INVALID_VALUE)));
+                DomainValidation.validate(dueDate, "$.dueDate", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(uploadToken, "$.uploadToken", DomainExceptionCode.INVALID_VALUE)));
 
         fieldValidations.throwIfInvalid(DomainException::new);
     }
@@ -115,6 +120,7 @@ public class Invoice {
                 BigDecimal.ZERO,
                 isFullyCoveredByCredit(amountDue) ? InvoiceStatus.PAID : InvoiceStatus.PENDING,
                 dueDate,
+                UUID.randomUUID(),
                 null,
                 null,
                 isFullyCoveredByCredit(amountDue) ? Instant.now() : null,

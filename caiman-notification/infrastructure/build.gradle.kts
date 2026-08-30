@@ -4,7 +4,9 @@ dependencies {
 
     // --- Internal: external-libraries ---
     implementation(project(":caiman-contracts"))
+    implementation(project(":caiman-mapper-common"))
     implementation(project(":caiman-jpa-support"))
+    annotationProcessor(project(":caiman-mapper-spi"))
 
     // --- Persistence ---
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")

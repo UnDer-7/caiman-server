@@ -2,6 +2,7 @@ package com.caimanproject.billing.core.domain.service.odin;
 
 import com.caimanproject.billing.core.domain.model.ChargePlan;
 import com.caimanproject.billing.core.domain.model.ChargePlanMember;
+import com.caimanproject.billing.core.domain.model.ChargePlanNotificationConfig;
 import com.caimanproject.billing.core.domain.model.Invoice;
 import com.caimanproject.billing.core.port.out.ChargePlanPersistenceGateway;
 import com.caimanproject.billing.core.port.out.InvoicePersistenceGateway;
@@ -80,35 +81,24 @@ class SplitInvoiceGenerator {
                 updatedChargePlan = updatedChargePlan.withUpdatedMember(charge.updatedMember());
             }
 
-            if (chargePlan.getNotificationsEnabled()) {
-                chargePlan
-                        .getInvoiceCreatedNotification()
-                        .ifPresentOrElse(
-                                config -> {
-                                    final Instant scheduledFor = today.atTime(chargePlan.getNotificationTime())
-                                            .atZone(chargePlan.getNotificationTimezone())
-                                            .toInstant();
-                                    final int maxAttempts =
-                                            config.getMaxAttempts().orElse(DEFAULT_MAX_ATTEMPTS);
+            final Instant scheduledFor = today.atTime(chargePlan.getNotificationTime())
+                    .atZone(chargePlan.getNotificationTimezone())
+                    .toInstant();
+            final Optional<ChargePlanNotificationConfig> invoiceCreatedNotification =
+                    chargePlan.getInvoiceCreatedNotification();
+            final int maxAttempts = invoiceCreatedNotification
+                    .flatMap(ChargePlanNotificationConfig::getMaxAttempts)
+                    .orElse(DEFAULT_MAX_ATTEMPTS);
+            final boolean invoiceCreatedNotificationEnabled = chargePlan.getNotificationsEnabled()
+                    && invoiceCreatedNotification.map(ChargePlanNotificationConfig::getEnabled).orElse(true);
 
-                                    notifyInvoiceCreationGateway.notify(
-                                            saved, chargePlan.getName(), scheduledFor, maxAttempts);
-                                },
-                                () -> log.warn(
-                                        LogField.Placeholders.THREE.getPlaceholder(),
-                                        StructuredArguments.kv(
-                                                LogField.MSG.label(),
-                                                "INVOICE_CREATED notification config not found, skipping notification"),
-                                        StructuredArguments.kv(LogField.CHARGE_PLAN_NAME.label(), chargePlan.getName()),
-                                        StructuredArguments.kv(LogField.CHARGE_PLAN_ID.label(), chargePlanId)));
-            } else {
-                log.warn(
-                        LogField.Placeholders.THREE.getPlaceholder(),
-                        StructuredArguments.kv(
-                                LogField.MSG.label(), "notifications disabled for charge plan, skipping notification"),
-                        StructuredArguments.kv(LogField.CHARGE_PLAN_NAME.label(), chargePlan.getName()),
-                        StructuredArguments.kv(LogField.CHARGE_PLAN_ID.label(), chargePlanId));
-            }
+            notifyInvoiceCreationGateway.notify(
+                    saved,
+                    member.getDebtorId(),
+                    chargePlan.getName(),
+                    invoiceCreatedNotificationEnabled,
+                    scheduledFor,
+                    maxAttempts);
         }
 
         if (updatedChargePlan != chargePlan) {

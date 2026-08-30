@@ -39,7 +39,8 @@ import lombok.ToString;
         indexes = {
             @Index(name = "idx_invoice_status_due_date", columnList = "status, due_date"),
             @Index(name = "idx_invoice_charge_plan_member", columnList = "charge_plan_member_id"),
-            @Index(name = "idx_invoice_charge_plan", columnList = "charge_plan_id")
+            @Index(name = "idx_invoice_charge_plan", columnList = "charge_plan_id"),
+            @Index(name = "uq_invoice_upload_token", columnList = "upload_token", unique = true)
         })
 public class InvoiceEntity implements AuditableEntity {
 
@@ -80,6 +81,9 @@ public class InvoiceEntity implements AuditableEntity {
 
     @Column(name = "due_date", nullable = false)
     private Instant dueDate;
+
+    @Column(name = "upload_token", length = 36, nullable = false)
+    private String uploadToken;
 
     @Column(name = "cancellation_reason", length = 500)
     private String cancellationReason;

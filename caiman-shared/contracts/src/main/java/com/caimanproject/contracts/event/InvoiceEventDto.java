@@ -16,6 +16,10 @@ public record InvoiceEventDto(
 
         UUID chargePlanMemberId,
 
+        UUID debtorId,
+
+        Boolean invoiceCreatedNotificationEnabled,
+
         Long cycleIndex,
 
         LocalDate generationDate,
@@ -23,6 +27,8 @@ public record InvoiceEventDto(
         BigDecimal amountDue,
 
         Instant dueDate,
+
+        String uploadLink,
 
         Instant scheduledFor,
 
