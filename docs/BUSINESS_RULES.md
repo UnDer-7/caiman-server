@@ -354,7 +354,7 @@ All enum columns use `VARCHAR`. Valid values per column:
 | `invoice.status` | `PENDING`, `SENT`, `OVERDUE`, `PARTIALLY_PAID`, `PAID`, `CANCELLED` |
 | `payment.method` | `PIX`, `BANK_TRANSFER`, `CASH`, `VENMO`, `OTHER` |
 | `payment_proof.status` | `PENDING_ANALYSIS`, `PENDING_MANUAL_REVIEW`, `APPROVED`, `REJECTED` |
-| `notification_outbox.status` | `SCHEDULED`, `PROCESSING`, `FAILED` |
+| `notification_outbox.status` | `SCHEDULED`, `PROCESSING`, `RETRY_SCHEDULED` |
 | `notification_log.status` | `SENT`, `FAILED` |
 | `notification_outbox.trigger_type` | `INVOICE_CREATED`, `PENDING_REMINDER`, `OVERDUE_REMINDER`, `PAYMENT_APPROVED`, `PAYMENT_REJECTED` |
 | `notification_outbox.channel` | `EMAIL` |
@@ -1114,7 +1114,7 @@ Huginn runs **every minute**. It only dispatches. It never generates invoices or
 
 1\. SELECT \* FROM notification\_outbox
 
-   WHERE status \= 'SCHEDULED'
+   WHERE status IN ('SCHEDULED', 'RETRY\_SCHEDULED')
 
      AND scheduled\_for \<= NOW() (UTC)
 
@@ -1158,7 +1158,7 @@ Huginn runs **every minute**. It only dispatches. It never generates invoices or
 
           UPDATE notification\_outbox SET
 
-            status \= 'SCHEDULED',
+            status \= 'RETRY\_SCHEDULED',
 
             scheduled\_for \= next\_retry,
 
@@ -1174,9 +1174,9 @@ With the delete-on-terminal-state approach, only three statuses exist in the out
 | :---- | :---- |
 | `SCHEDULED` | Waiting to be dispatched. `scheduled_for` not yet reached, or rescheduled after a failed attempt. |
 | `PROCESSING` | Currently being dispatched by Huginn. Prevents double-dispatch. |
-| `FAILED` | Last attempt failed. Will be retried. `attempt_count < max_attempts`. |
+| `RETRY_SCHEDULED` | Last attempt failed and will be retried. `attempt_count < max_attempts`. `scheduled_for` holds the next retry time. |
 
-`SENT` and `EXHAUSTED` never persist in the outbox — the row is deleted before those states would be set.
+`SENT`, `EXHAUSTED`, and a standalone `FAILED` outbox status never persist — a row is either still in-flight (`SCHEDULED` / `PROCESSING` / `RETRY_SCHEDULED`) or deleted once it reaches a terminal state (sent, or exhausted after the final failed attempt). `notification_log.status = FAILED` records each failed attempt regardless; it does not imply an outbox status of the same name.
 
 ### 11.3 Invoice Status Transition on INVOICE\_CREATED Dispatch
 
@@ -1358,7 +1358,7 @@ Remove from the `notification_outbox` table definition in **V1** (before any dat
 
 ### A.3 Remove `notification_outbox` statuses `SENT` and `EXHAUSTED`
 
-The outbox only holds in-flight entries. Terminal states (`SENT`, `EXHAUSTED`) never persist — the row is deleted. Valid outbox statuses are: `SCHEDULED`, `PROCESSING`, `FAILED` only.
+The outbox only holds in-flight entries. Terminal states (`SENT`, `EXHAUSTED`) never persist — the row is deleted. Valid outbox statuses are: `SCHEDULED`, `PROCESSING`, `RETRY_SCHEDULED` only. (`RETRY_SCHEDULED` replaces an earlier `FAILED` outbox status — renamed for clarity, since a persisted row in this state always means "will be retried," never "permanently failed." `notification_log.status = FAILED` is unrelated and unaffected — it is the per-attempt audit entry, not an outbox state.)
 
 Update the application-layer enum. No DDL change needed (stored as `VARCHAR`).
 
