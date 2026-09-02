@@ -172,8 +172,61 @@ public class NotificationOutbox {
         return status == NotificationOutboxStatus.PROCESSING;
     }
 
-    public boolean isFailed() {
-        return status == NotificationOutboxStatus.FAILED;
+    public boolean isRetryScheduled() {
+        return status == NotificationOutboxStatus.RETRY_SCHEDULED;
+    }
+
+    public NotificationOutbox markProcessing(final Instant now) {
+        return toRestoreBuilder()
+                .status(NotificationOutboxStatus.PROCESSING)
+                .lastAttemptedAt(now)
+                .build();
+    }
+
+    public NotificationOutbox markFailedAndReschedule(
+            final Instant nextRetry, final Instant attemptedAt, final String errorMessage) {
+        return toRestoreBuilder()
+                .status(NotificationOutboxStatus.RETRY_SCHEDULED)
+                .attemptCount(this.attemptCount + 1)
+                .scheduledFor(nextRetry)
+                .lastAttemptedAt(attemptedAt)
+                .lastError(errorMessage)
+                .build();
+    }
+
+    public NotificationOutbox markStuckReset() {
+        return toRestoreBuilder()
+                .status(NotificationOutboxStatus.SCHEDULED)
+                .attemptCount(this.attemptCount + 1)
+                .lastError("Reset from stuck PROCESSING state")
+                .build();
+    }
+
+    public boolean isExhausted() {
+        return this.attemptCount >= this.maxAttempts;
+    }
+
+    private RestoreBuilder toRestoreBuilder() {
+        return NotificationOutbox.restoreBuilder()
+                .id(id)
+                .invoiceId(invoiceId)
+                .triggerType(triggerType)
+                .channel(channel)
+                .recipient(recipient)
+                .debtorName(debtorName)
+                .planName(planName)
+                .amountDue(amountDue)
+                .dueDate(dueDate)
+                .uploadLink(uploadLink)
+                .cycleIndex(cycleIndex)
+                .rejectionReason(rejectionReason)
+                .scheduledFor(scheduledFor)
+                .status(status)
+                .attemptCount(attemptCount)
+                .maxAttempts(maxAttempts)
+                .lastAttemptedAt(lastAttemptedAt)
+                .lastError(lastError)
+                .audit(audit);
     }
 
     public Optional<UUID> getId() {

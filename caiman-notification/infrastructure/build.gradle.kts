@@ -16,4 +16,7 @@ dependencies {
     implementation(libs.mapstruct)
     annotationProcessor(libs.lombok.mapstruct.binding)
     annotationProcessor(libs.mapstruct.processor)
+
+    // --- Test ---
+    testImplementation(testFixtures(project(":caiman-notification-core")))
 }
