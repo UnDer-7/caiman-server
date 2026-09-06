@@ -33,7 +33,12 @@ public enum LogField {
     CHARGE_PLAN_ID,
     CHARGE_PLAN_NAME,
     INVOICE_ID,
-    RECIPIENT;
+    RECIPIENT,
+    PAYMENT_TYPE,
+    DECLARED_AMOUNT,
+    PROOF_FILE_NAME,
+    PROOF_CONTENT_TYPE,
+    PROOF_FILE_SIZE_BYTES;
 
     public String label() {
         return this.name().toLowerCase();

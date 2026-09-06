@@ -1,0 +1,139 @@
+info:
+  name: Get Proof Page
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: http://localhost:8080/public/proofs?token=b08def18-e865-4894-8d9e-09ac1c857d7e
+  params:
+    - name: token
+      value: b08def18-e865-4894-8d9e-09ac1c857d7e
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: Paid
+    request:
+      url: http://localhost:8080/public/proofs?token=b08def18-e865-4894-8d9e-09ac1c857d7e
+      method: GET
+      params:
+        - name: token
+          value: b08def18-e865-4894-8d9e-09ac1c857d7e
+          type: query
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: content-type
+          value: text/html;charset=UTF-8
+        - name: content-language
+          value: en-US
+        - name: transfer-encoding
+          value: chunked
+        - name: date
+          value: Sat, 05 Sep 2026 20:11:08 GMT
+        - name: keep-alive
+          value: timeout=60
+        - name: connection
+          value: keep-alive
+      body:
+        type: html
+        data: |-
+          <!DOCTYPE html>
+          <html lang="en">
+              <head>
+                  <meta charset="UTF-8">
+                      <meta name="viewport" content="width=device-width, initial-scale=1">
+                          <title>Payment Proof Upload</title>
+                          <style>body { font-family: system-ui, sans-serif; max-width: 480px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+                  h1 { font-size: 1.25rem; }
+                  dl { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 1rem; }
+                  dt { font-weight: 600; }
+                  dd { margin: 0; }
+                  fieldset { margin-top: 1.5rem; border: 1px solid #ccc; border-radius: 6px; }
+                  label { display: block; margin: 0.5rem 0; }
+                  button { margin-top: 1rem; padding: 0.5rem 1rem; }
+                  .status-message { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; background: #f0f0f0; }
+                  .error-message { color: #b00020; margin-top: 1rem; }
+                  .success-message { color: #146c2e; margin-top: 1rem; }</style>
+                      </meta>
+                      <body>
+                          <h1>Payment Proof Upload</h1>
+                          <dl>
+                              <dt>Plan</dt>
+                              <dd>Proof Test Plan</dd>
+                              <dt>Debtor</dt>
+                              <dd>Proof Test Debtor</dd>
+                              <dt>Amount due</dt>
+                              <dd>100</dd>
+                              <dt>Amount paid</dt>
+                              <dd>100</dd>
+                              <dt>Due date</dt>
+                              <dd>2026-09-08T00:00:00Z</dd>
+                              <dt>Cycle</dt>
+                              <dd>0</dd>
+                          </dl>
+                          <div class="status-message">This invoice has already been paid.</div>
+                          <script>/*<![CDATA[*/
+                  const token = "b08def18-e865-4894-8d9e-09ac1c857d7e";
+                  const form = document.getElementById('proof-form');
+
+                  if (form) {
+                      const declaredAmountField = document.getElementById('declared-amount-field');
+                      const declaredAmountInput = declaredAmountField.querySelector('input');
+
+                      form.querySelectorAll('input[name="paymentType"]').forEach((radio) => {
+                          radio.addEventListener('change', () => {
+                              const isPartial = radio.value === 'PARTIAL' && radio.checked;
+                              declaredAmountField.hidden = !isPartial;
+                              declaredAmountInput.required = isPartial;
+                          });
+                      });
+
+                      form.addEventListener('submit', (event) => {
+                          event.preventDefault();
+                          const resultEl = document.getElementById('result');
+                          resultEl.textContent = '';
+                          resultEl.className = '';
+
+                          const formData = new FormData(form);
+                          if (declaredAmountField.hidden) {
+                              formData.delete('declaredAmount');
+                          }
+
+                          fetch('/public/proofs?token=' + encodeURIComponent(token), {
+                              method: 'POST',
+                              body: formData,
+                          })
+                              .then(async (response) => {
+                                  const body = await response.json().catch(() => ({}));
+                                  if (response.ok) {
+                                      form.hidden = true;
+                                      resultEl.className = 'success-message';
+                                      resultEl.textContent = body.message || 'Proof received.';
+                                  } else {
+                                      resultEl.className = 'error-message';
+                                      const detail = (body.errors && body.errors[0] && (body.errors[0].detail || body.errors[0].message))
+                                          || body.detail
+                                          || 'Something went wrong. Please try again.';
+                                      resultEl.textContent = detail;
+                                  }
+                              })
+                              .catch(() => {
+                                  resultEl.className = 'error-message';
+                                  resultEl.textContent = 'Network error. Please try again.';
+                              });
+                      });
+                  }
+                  /*]]>*/</script>
+                      </body>
+                  </meta>
+              </head>
+          </html>

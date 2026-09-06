@@ -55,7 +55,7 @@ Every request — before it reaches any `@CaimanEndpoint` controller — is chec
 
 **Exempt paths:** `/favicon.ico`, the management/actuator base path, OpenAPI docs, and Swagger UI — see `RequiredHeaderFilterConfig.ignoredPaths`. No other path is exempt.
 
-**Caveat — public/tokenized-link endpoints:** endpoints meant to be hit directly from an email link (e.g. the planned `POST /public/invoices/{id}/proof`, `caiman-payment`, not yet implemented) are **not** currently exempted by `ignoredPaths`. A browser following a plain link sets no custom headers, so such an endpoint would get rejected with 400 before ever reaching the controller. When that endpoint is implemented, either add its path to `ignoredPaths` or have it generate/accept default values for these headers — otherwise the "debtor clicks the email link" flow described in `BUSINESS_RULES.md` breaks.
+**Caveat — public/tokenized-link endpoints:** endpoints meant to be hit directly from an email link (`GET/POST /public/proofs`, `caiman-payment`, design in progress — see `docs/superpowers/specs/2026-09-02-public-proof-upload-page-design.md`) must be added to `ignoredPaths`. A browser following a plain link sets no custom headers, so `GET /public/proofs` would otherwise be rejected with 400 before ever reaching the controller — this is a hard requirement for that spec, not optional. `POST /public/proofs` is called via `fetch()` from the page's own JS and could technically set these headers, but is exempted too for consistency (an anonymous debtor has no meaningful `X-Correlation-ID`/`X-Channel` to send).
 
 ---
 

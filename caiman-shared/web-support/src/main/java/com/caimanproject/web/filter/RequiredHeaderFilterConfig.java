@@ -63,7 +63,8 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
         this.objectMapper = objectMapper;
         this.caimanExceptionMapper = caimanExceptionMapper;
 
-        final var customIgnoredPath = List.of("/favicon.ico", managementBasePath, managementBasePath + "/**");
+        final var customIgnoredPath =
+                List.of("/favicon.ico", managementBasePath, managementBasePath + "/**", "/public/proofs", "/public/proofs" + "/**");
 
         this.ignoredPaths = Stream.of(getApiDocsPaths(), getSwaggerUiPaths(), customIgnoredPath)
                 .flatMap(Collection::stream)

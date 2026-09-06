@@ -155,7 +155,7 @@ Caiman fills the gap: **recurring and one-time informal billing between a single
 | **NotificationLog** | Immutable append-only audit log of every notification dispatch attempt. |
 | **Odin** | The daily scheduler job (`OdinJob`), runs once at `00:00 UTC`. Generates invoices, detects overdue status, and enqueues notifications into the `notification_outbox`. Named after the Norse god Odin — the all-seeing figure who surveys everything under his watch once a day, makes decisions, and sets events in motion. Odin observes, decides, and dispatches; he does not deliver messages himself — that is Huginn's role. |
 | **Huginn** | The minutely dispatcher job (`HuginnJob`), runs every minute. Reads `SCHEDULED` entries from `notification_outbox` and dispatches notifications with exponential backoff retry logic. Named after one of Odin's two ravens — Huginn (thought) — who flies across the world carrying messages and always completes his mission. Thematically paired with Odin: Odin decides and enqueues; Huginn executes and delivers. |
-| **Upload Token** | A short-lived JWT (48h) embedded in the notification email link. Authorizes a debtor to upload a proof for a specific invoice without requiring a login. |
+| **Upload Token** | A UUID (`invoice.upload_token`), generated once when the invoice is created and never rotated or expired. Embedded in the notification email link. Authorizes a debtor to view and upload a proof for that specific invoice without requiring a login — see [Section 7](#7-payment-proof--upload-flow) and the [public proof upload page design](superpowers/specs/2026-09-02-public-proof-upload-page-design.md). |
 
 ---
 
@@ -209,7 +209,7 @@ Caiman is composed of two services deployed together via Docker Compose:
 **Authentication:**
 
 - Admin access is protected by a static API token configured at application startup via environment variable (`CAIMAN_API_TOKEN`). The frontend passes this token in every request to the backend.  
-- Debtor-facing public endpoints are protected by short-lived JWT upload tokens embedded in email links. No login required.
+- Debtor-facing public endpoints are protected by a persisted, non-expiring UUID upload token (`invoice.upload_token`) embedded in email links. No login required.
 
 ---
 
@@ -758,19 +758,26 @@ For each `invoice` with `status = SENT` and `due_date >= current UTC date`:
 
 ## 7\. Payment Proof — Upload Flow
 
+### 7.0 Public Proof Page (GET)
+
+**Endpoint:** `GET /public/proofs?token={uuid}` (unauthenticated, HTML page)
+
+The link the debtor receives by email points here. No separate admin frontend is required to view or act on it — see the [public proof upload page design](superpowers/specs/2026-09-02-public-proof-upload-page-design.md) for the full page contract (states, layout, error handling). Full details live in that spec, not duplicated here.
+
 ### 7.1 Token Validation
 
-**Endpoint:** `POST /public/invoices/{invoiceId}/proof` (unauthenticated, token in header or query param)
+**Endpoint:** `POST /public/proofs?token={uuid}` (unauthenticated)
 
 **Rules:**
 
-1. Extract JWT token from the request.  
-2. Verify JWT signature using the application's secret key.  
-3. Verify JWT has not expired (`exp` claim).  
-4. Verify JWT `invoiceId` claim matches the `{invoiceId}` in the URL.  
-5. Verify a `payment_proof` record does **not** already exist for this invoice with `status NOT IN (REJECTED)`. If an active proof already exists, return `409 Conflict` — a proof is already pending or approved.  
-6. Verify the invoice `status` is not `PAID` or `CANCELLED`. If so, return `409 Conflict`.  
-7. If all checks pass: accept the file upload.
+1. Extract the token from the query param.  
+2. Look up the `invoice` by `upload_token = token` (`UNIQUE` index — the token is the lookup key, there is no separate `{invoiceId}` path segment to cross-check against).  
+3. If no invoice matches: `404 Not Found`.  
+4. Verify a `payment_proof` record does **not** already exist for this invoice with `status NOT IN (REJECTED)`. If an active proof already exists, return `409 Conflict` — a proof is already pending or approved.  
+5. Verify the invoice `status` is not `PAID` or `CANCELLED`. If so, return `409 Conflict`.  
+6. If all checks pass: accept the file upload.
+
+The token never expires and is never rotated — see the [Upload Token](#core-concepts--glossary) glossary entry. A debtor can use the original email link at any time in the future, as long as the invoice still accepts a proof.
 
 ### 7.2 File Storage
 
@@ -1094,13 +1101,13 @@ The `payload` JSON stored in `notification_outbox` must contain all data needed 
 
   "cycleIndex": 4,
 
-  "uploadLink": "https://caiman.local/public/invoices/{id}/proof?token=eyJ...",
+  "uploadLink": "https://caiman.local/public/proofs?token=<invoice.upload_token>",
 
   "triggerType": "INVOICE\_CREATED"
 
 }
 
-The upload link embeds a JWT token generated at enqueue time. Token expires 48 hours after `scheduled_for`.
+The upload link embeds `invoice.upload_token` (UUID, set once at invoice creation). It never expires and never changes — resending the link (§12.1) reuses the same token.
 
 ---
 
@@ -1236,11 +1243,11 @@ If the debtor has no contact of any supported type: log a warning and skip entir
 **Rules:**
 
 1. Invoice must not be `PAID` or `CANCELLED`.  
-2. Generate a new JWT upload token (48h expiry from now).  
+2. Reuse the invoice's existing `upload_token` — it is never rotated (see [Upload Token](#core-concepts--glossary)).  
 3. Create a new `notification_outbox` entry with:  
    - `trigger_type = INVOICE_CREATED`  
    - `scheduled_for = NOW()` (send immediately on next Huginn run)  
-   - Fresh payload snapshot with the new token.  
+   - Fresh payload snapshot carrying the same `uploadLink`.  
 4. Log as `LINK_RESENT` in `notification_log` (add this `trigger_type` value).  
 5. Does **not** change the invoice status.
 

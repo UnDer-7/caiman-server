@@ -55,7 +55,8 @@ sequenceDiagram
 
     rect rgb(235, 255, 245)
         Note over Debtor,AI: Fase 6 — Upload e Análise do Comprovante
-        Debtor->>PA: POST /public/invoices/{id}/proof (token JWT)
+        Debtor->>PA: GET /public/proofs?token=... (HTML page)
+        Debtor->>PA: POST /public/proofs?token=... (multipart upload)
         PA->>BI: Busca dados da Invoice (gateway síncrono)
         BI-->>PA: Dados da Invoice
         PA-->>Debtor: 202 Comprovante recebido

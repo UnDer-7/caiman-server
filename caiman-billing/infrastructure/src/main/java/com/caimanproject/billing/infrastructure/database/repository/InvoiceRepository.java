@@ -28,4 +28,6 @@ public interface InvoiceRepository extends CrudRepository<InvoiceEntity, String>
         SELECT COUNT(i) > 0 FROM InvoiceEntity i WHERE i.chargePlan.id = :chargePlanId
         """)
     boolean existsByChargePlanId(@Param("chargePlanId") String chargePlanId);
+
+    Optional<InvoiceEntity> findByUploadToken(String uploadToken);
 }

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Payment Proof Upload</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 480px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+        h1 { font-size: 1.25rem; }
+        dl { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 1rem; }
+        dt { font-weight: 600; }
+        dd { margin: 0; }
+        fieldset { margin-top: 1.5rem; border: 1px solid #ccc; border-radius: 6px; }
+        label { display: block; margin: 0.5rem 0; }
+        [hidden] { display: none !important; }
+        button { margin-top: 1rem; padding: 0.5rem 1rem; }
+        .status-message { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; background: #f0f0f0; }
+        .error-message { color: #b00020; margin-top: 1rem; }
+        .success-message { color: #146c2e; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <h1>Payment Proof Upload</h1>
+
+    <dl>
+        <dt>Plan</dt>
+        <dd th:text="${page.chargePlanName}">Plan Name</dd>
+        <dt>Debtor</dt>
+        <dd th:text="${page.debtorName}">Debtor Name</dd>
+        <dt>Amount due</dt>
+        <dd th:text="${page.amountDue}">0.00</dd>
+        <dt>Amount paid</dt>
+        <dd th:text="${page.amountPaid}">0.00</dd>
+        <dt>Due date</dt>
+        <dd th:text="${page.dueDate}">2026-01-01</dd>
+        <dt>Cycle</dt>
+        <dd th:text="${page.cycleIndex}">1</dd>
+    </dl>
+
+    <div th:if="${page.formEnabled}">
+        <form id="proof-form">
+            <fieldset>
+                <legend>Payment type</legend>
+                <label>
+                    <input type="radio" name="paymentType" value="TOTAL" checked>
+                    Full payment
+                </label>
+                <label>
+                    <input type="radio" name="paymentType" value="PARTIAL">
+                    Partial payment
+                </label>
+                <label id="declared-amount-field" hidden>
+                    Declared amount
+                    <input type="number" name="declaredAmount" step="0.01" min="0.01">
+                </label>
+            </fieldset>
+
+            <label>
+                Proof file
+                <input type="file" name="file" required>
+            </label>
+
+            <button type="submit">Send</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <div class="status-message" th:unless="${page.formEnabled}" th:text="${page.statusMessage}">
+        This invoice does not accept a proof right now.
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const token = /*[[${token}]]*/ '';
+        const form = document.getElementById('proof-form');
+
+        if (form) {
+            const declaredAmountField = document.getElementById('declared-amount-field');
+            const declaredAmountInput = declaredAmountField.querySelector('input');
+
+            form.querySelectorAll('input[name="paymentType"]').forEach((radio) => {
+                radio.addEventListener('change', () => {
+                    const isPartial = radio.value === 'PARTIAL' && radio.checked;
+                    declaredAmountField.hidden = !isPartial;
+                    declaredAmountInput.required = isPartial;
+                });
+            });
+
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const resultEl = document.getElementById('result');
+                resultEl.textContent = '';
+                resultEl.className = '';
+
+                const formData = new FormData(form);
+                if (declaredAmountField.hidden) {
+                    formData.delete('declaredAmount');
+                }
+
+                fetch('/public/proofs?token=' + encodeURIComponent(token), {
+                    method: 'POST',
+                    body: formData,
+                })
+                    .then(async (response) => {
+                        const body = await response.json().catch(() => ({}));
+                        if (response.ok) {
+                            form.hidden = true;
+                            resultEl.className = 'success-message';
+                            resultEl.textContent = body.message || 'Proof received.';
+                        } else {
+                            resultEl.className = 'error-message';
+                            const detail = (body.errors && body.errors[0] && (body.errors[0].detail || body.errors[0].message))
+                                || body.detail
+                                || 'Something went wrong. Please try again.';
+                            resultEl.textContent = detail;
+                        }
+                    })
+                    .catch(() => {
+                        resultEl.className = 'error-message';
+                        resultEl.textContent = 'Network error. Please try again.';
+                    });
+            });
+        }
+        /*]]>*/
+    </script>
+</body>
+</html>
