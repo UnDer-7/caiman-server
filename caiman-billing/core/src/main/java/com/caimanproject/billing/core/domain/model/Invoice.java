@@ -131,6 +131,31 @@ public class Invoice {
         return amountDue != null && amountDue.compareTo(BigDecimal.ZERO) == 0;
     }
 
+    public Invoice markSent() {
+        if (status != InvoiceStatus.PENDING) {
+            return this;
+        }
+        return toRestoreBuilder().status(InvoiceStatus.SENT).build();
+    }
+
+    private RestoreBuilder toRestoreBuilder() {
+        return Invoice.restoreBuilder()
+                .id(id)
+                .chargePlanId(chargePlanId)
+                .chargePlanMemberId(chargePlanMemberId)
+                .cycleIndex(cycleIndex)
+                .generationDate(generationDate)
+                .amountDue(amountDue)
+                .amountPaid(amountPaid)
+                .status(status)
+                .dueDate(dueDate)
+                .uploadToken(uploadToken)
+                .cancellationReason(cancellationReason)
+                .cancelledAt(cancelledAt)
+                .paidAt(paidAt)
+                .audit(audit);
+    }
+
     public Optional<UUID> getId() {
         return Optional.ofNullable(id);
     }

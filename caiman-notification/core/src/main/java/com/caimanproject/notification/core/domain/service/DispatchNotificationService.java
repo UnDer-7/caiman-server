@@ -5,6 +5,7 @@ import com.caimanproject.notification.core.domain.types.NotificationChannel;
 import com.caimanproject.notification.core.port.out.NotificationLogPersistenceGateway;
 import com.caimanproject.notification.core.port.out.NotificationOutboxPersistenceGateway;
 import com.caimanproject.notification.core.port.out.NotificationSenderGateway;
+import com.caimanproject.notification.core.port.out.NotifyInvoiceSentGateway;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -21,15 +22,18 @@ public class DispatchNotificationService {
     private final Map<NotificationChannel, NotificationSenderGateway> sendersByChannel;
     private final NotificationOutboxPersistenceGateway outboxGateway;
     private final NotificationLogPersistenceGateway logGateway;
+    private final NotifyInvoiceSentGateway notifyInvoiceSentGateway;
 
     public DispatchNotificationService(
             final List<NotificationSenderGateway> senders,
             final NotificationOutboxPersistenceGateway outboxGateway,
-            final NotificationLogPersistenceGateway logGateway) {
+            final NotificationLogPersistenceGateway logGateway,
+            final NotifyInvoiceSentGateway notifyInvoiceSentGateway) {
         this.sendersByChannel = senders.stream()
                 .collect(Collectors.toMap(NotificationSenderGateway::supportedChannel, Function.identity()));
         this.outboxGateway = outboxGateway;
         this.logGateway = logGateway;
+        this.notifyInvoiceSentGateway = notifyInvoiceSentGateway;
     }
 
     public void dispatch(final NotificationOutbox outbox, final Instant now) {
@@ -46,7 +50,7 @@ public class DispatchNotificationService {
         if (success) {
             logGateway.logSent(processing, now);
             outboxGateway.delete(processing.getId().orElseThrow());
-            // TODO: notify invoice sent status
+            notifyInvoiceSentGateway.notify(processing, now);
             return;
         }
 

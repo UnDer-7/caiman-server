@@ -1113,7 +1113,7 @@ The upload link embeds `invoice.upload_token` (UUID, set once at invoice creatio
 
 ## 11\. Notification Dispatch — Huginn
 
-Huginn runs **every minute**. It only dispatches. It never generates invoices or changes invoice status.
+Huginn runs **every minute**. It only dispatches. It never generates invoices, and it never changes invoice status directly — on a successful send it publishes a `notification_sent` event (async, `ApplicationEventPublisher`); `caiman-billing` is the one that reacts to that event and updates the invoice (see §11.3).
 
 **The `notification_outbox` is a work queue, not a history table.** Huginn **deletes** rows from the outbox when they reach a terminal state (sent or exhausted). All history is preserved in `notification_log` (append-only, never deleted). This keeps the outbox small and fast regardless of how long the system runs.
 
@@ -1143,9 +1143,7 @@ Huginn runs **every minute**. It only dispatches. It never generates invoices or
 
       \- DELETE FROM notification\_outbox WHERE id \= :entryId
 
-      \- If trigger\_type \= INVOICE\_CREATED AND invoice.status \= PENDING:
-
-          UPDATE invoice SET status \= 'SENT'
+      \- Publish `notification_sent` event (async, invoice\_id \+ trigger\_type \+ sent\_at) — see §11.3
 
    d. On FAILURE:
 
@@ -1187,9 +1185,15 @@ With the delete-on-terminal-state approach, only three statuses exist in the out
 
 ### 11.3 Invoice Status Transition on INVOICE\_CREATED Dispatch
 
-- When Huginn successfully sends an `INVOICE_CREATED` notification:  
-  - If the linked invoice has `status = PENDING` → set `status = SENT`.  
-  - If the invoice is already in any other state → do not change it.
+This is an async, event-driven handoff, not a synchronous cross-context call — `caiman-notification` publishes a fact and moves on; it does not know or care who reacts to it, and it does not wait for a response.
+
+- On every successful dispatch (any `trigger_type`), `caiman-notification` publishes a `notification_sent` event (`ApplicationEventPublisher`) carrying `invoice_id`, `trigger_type`, and `sent_at`. This happens **unconditionally**, after the outbox row is already deleted and the log entry already written — the notification side's job is done regardless of what happens next.
+- `caiman-billing` consumes this event (`@EventListener`, async) and decides what to do with it — mirrors the same "producer publishes, consumer decides" split already used for invoice-created notifications (§5.4):
+  - If `trigger_type != INVOICE_CREATED` → ignore, no status change.
+  - If `trigger_type = INVOICE_CREATED` and the invoice's `status = PENDING` → set `status = SENT`.
+  - If the invoice is already in any other state, or no longer exists → ignore, no error.
+- Consequence of being async: there is a brief window (until the listener runs) where the invoice is still `PENDING` even though the email was already sent. Nothing reads that field synchronously in this flow, so the window is harmless.
+- Why not a synchronous gateway call instead: by the time this event fires, `caiman-notification` has already deleted the outbox row and logged the send — there is no compensating transaction if a synchronous call to `caiman-billing` failed at this point, and no retry path (the outbox row is gone). A synchronous call here would also make Huginn's dispatch loop depend on `caiman-billing` being up for something that isn't `caiman-notification`'s concern once the email is sent.
 
 ### 11.4 Idempotency — Stuck PROCESSING Entries
 

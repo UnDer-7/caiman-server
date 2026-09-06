@@ -50,7 +50,8 @@ sequenceDiagram
         Note over NO,Debtor: Fase 5 — Envio da Cobrança (Huginn · a cada minuto)
         NO->>NO: Huginn lê outbox (status SCHEDULED)
         NO->>Debtor: Email com link de upload (SMTP)
-        NO->>BI: Atualiza Invoice: PENDING → SENT (gateway síncrono)
+        NO-->>BI: NotificationSentEvent (assíncrono)
+        BI->>BI: Invoice: PENDING → SENT (se trigger_type = INVOICE_CREATED)
     end
 
     rect rgb(235, 255, 245)
@@ -79,6 +80,7 @@ sequenceDiagram
 ## Notas
 
 - **Fase 3** — `caiman-billing` nunca acessa diretamente o banco de `caiman-debtor`. A busca ocorre via gateway (`DebtorGateway`) definido em `caiman-contracts` e implementado em `caiman-debtor:infrastructure`.
+- **Fase 5** — `caiman-notification` não chama `caiman-billing` de forma síncrona para atualizar o status da invoice. Ao concluir o envio com sucesso, publica um evento `NotificationSentEvent` (`invoiceId` + `triggerType` + `sentAt`) via `ApplicationEventPublisher` e segue seu fluxo — outbox já deletado, log já escrito. `caiman-billing` ouve esse evento (`@EventListener`, assíncrono) e decide se transiciona a invoice: só reage a `triggerType = INVOICE_CREATED` e só quando o status atual é `PENDING`; qualquer outro caso é ignorado silenciosamente. Ver `BUSINESS_RULES.md` §11.3 para a justificativa de ser assíncrono em vez de um gateway síncrono.
 - **Fase 6** — `caiman-payment` nunca acessa diretamente o banco de `caiman-billing`. A busca da Invoice ocorre via gateway (`InvoiceGateway`) definido em `caiman-contracts`.
 - **Fase 7** — `PaymentProofApprovedEvent` é consumido de forma independente por `caiman-billing` (baixa financeira) e `caiman-notification` (notificação ao devedor). Ambos reagem ao mesmo evento publicado por `caiman-payment`.
 - **Odin** (scheduler diário em `caiman-billing`) também detecta invoices vencidas e agenda lembretes de cobrança — esses ciclos de reminder seguem o mesmo caminho da Fase 5, mas com `trigger_type` `OVERDUE_REMINDER` ou `PENDING_REMINDER`.

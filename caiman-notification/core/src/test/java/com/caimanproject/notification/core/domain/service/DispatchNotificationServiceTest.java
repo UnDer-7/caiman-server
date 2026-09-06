@@ -6,6 +6,7 @@ import com.caimanproject.notification.core.domain.types.NotificationOutboxStatus
 import com.caimanproject.notification.core.port.out.NotificationLogPersistenceGateway;
 import com.caimanproject.notification.core.port.out.NotificationOutboxPersistenceGateway;
 import com.caimanproject.notification.core.port.out.NotificationSenderGateway;
+import com.caimanproject.notification.core.port.out.NotifyInvoiceSentGateway;
 import com.caimanproject.notification.core.test.builder.NotificationOutboxDomainBuilder;
 import com.caimanproject.test.annotation.UnitTest;
 import java.time.Instant;
@@ -33,12 +34,16 @@ class DispatchNotificationServiceTest {
     @Mock
     NotificationSenderGateway emailSenderGateway;
 
+    @Mock
+    NotifyInvoiceSentGateway notifyInvoiceSentGateway;
+
     DispatchNotificationService service;
 
     @BeforeEach
     void setUp() {
         Mockito.lenient().when(emailSenderGateway.supportedChannel()).thenReturn(NotificationChannel.EMAIL);
-        service = new DispatchNotificationService(List.of(emailSenderGateway), outboxGateway, logGateway);
+        service = new DispatchNotificationService(
+                List.of(emailSenderGateway), outboxGateway, logGateway, notifyInvoiceSentGateway);
     }
 
     @Test
@@ -62,6 +67,7 @@ class DispatchNotificationServiceTest {
         Mockito.verify(logGateway).logSent(Mockito.any(NotificationOutbox.class), Mockito.eq(now));
         Mockito.verify(outboxGateway).delete(outbox.getId().orElseThrow());
         Mockito.verify(logGateway, Mockito.never()).logFailed(Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(notifyInvoiceSentGateway).notify(Mockito.any(NotificationOutbox.class), Mockito.eq(now));
     }
 
     @Test
@@ -116,7 +122,8 @@ class DispatchNotificationServiceTest {
     @Test
     void should_skip_and_leave_processing_when_no_sender_for_channel() {
         // Given
-        final var noSenderService = new DispatchNotificationService(List.of(), outboxGateway, logGateway);
+        final var noSenderService =
+                new DispatchNotificationService(List.of(), outboxGateway, logGateway, notifyInvoiceSentGateway);
         final var outbox =
                 NotificationOutboxDomainBuilder.buildNotificationOutboxFull().build();
         final var now = Instant.now();
@@ -128,5 +135,6 @@ class DispatchNotificationServiceTest {
         // Then
         Mockito.verify(outboxGateway, Mockito.never()).delete(Mockito.any(UUID.class));
         Mockito.verifyNoInteractions(logGateway);
+        Mockito.verifyNoInteractions(notifyInvoiceSentGateway);
     }
 }
