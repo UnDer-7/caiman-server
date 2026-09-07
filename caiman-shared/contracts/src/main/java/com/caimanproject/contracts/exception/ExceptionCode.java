@@ -8,14 +8,6 @@ public interface ExceptionCode {
 
     ModulePrefix getModulePrefix();
 
-    CaimanException createException(String detail);
-
-    CaimanException createException(String detail, Throwable originalCause);
-
-    CaimanException createException(Throwable originalCause);
-
-    CaimanException createException();
-
     default String getFullCode() {
         return this.getModulePrefix().toString() + "_" + this.getCode();
     }
@@ -24,9 +16,12 @@ public interface ExceptionCode {
         APP,
         WEB_SUPPORT,
 
-        BILLING,
         NOTIFICATION,
         PAYMENT,
+        PAYMENT_DOMAIN,
+
+        BILLING_DOMAIN,
+        BILLING_BUSINESS,
 
         DEBTOR_DOMAIN,
         DEBTOR_BUSINESS,

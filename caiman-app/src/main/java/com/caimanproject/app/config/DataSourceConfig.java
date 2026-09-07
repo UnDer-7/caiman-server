@@ -6,6 +6,7 @@ import com.caimanproject.contracts.exception.LogField;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.sql.DataSource;
@@ -82,6 +83,10 @@ public class DataSourceConfig {
         config.setTransactionMode(SQLiteConfig.TransactionMode.IMMEDIATE);
         // SQLite does not enforce FK constraints by default; enable explicitly
         config.enforceForeignKeys(true);
+        // Force TEXT storage for date/time binds; default is INTEGER (epoch ms), which
+        // gets coerced to unparseable raw-digit TEXT on TEXT-affinity columns (datetime cols)
+        config.setDateClass("TEXT");
+        config.setDateStringFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
         var ds = new SQLiteDataSource(config);
         ds.setUrl("jdbc:sqlite:" + sqliteFile);
@@ -98,12 +103,39 @@ public class DataSourceConfig {
                 Files.createFile(path);
             }
         } catch (IOException e) {
-            throw AppExceptionCode.SQLITE_FILE_INITIALIZATION_FAILED.createException(
-                    "path=" + path.toAbsolutePath(), e);
+            log.error(
+                    LogField.Placeholders.THREE.getPlaceholder(),
+                    StructuredArguments.kv(LogField.MSG.label(), "Failed to initialize SQLite database file"),
+                    StructuredArguments.kv(
+                            LogField.ERROR_CODES.label(),
+                            AppExceptionCode.SQLITE_FILE_INITIALIZATION_FAILED.getFullCode()),
+                    StructuredArguments.kv(LogField.SQLITE_PATH.label(), path.toAbsolutePath()),
+                    e);
+            throw new UncheckedIOException("Failed to initialize SQLite database file: " + path.toAbsolutePath(), e);
         }
+
+        if (!Files.isReadable(path)) {
+            throwNotAccessible(path, "not readable");
+        }
+        if (!Files.isWritable(path)) {
+            throwNotAccessible(path, "not writable");
+        }
+
         log.info(
                 LogField.Placeholders.TWO.getPlaceholder(),
                 StructuredArguments.kv(LogField.MSG.label(), "SQLite database file ready"),
                 StructuredArguments.kv(LogField.SQLITE_PATH.label(), path.toAbsolutePath()));
+    }
+
+    private void throwNotAccessible(final Path path, final String reason) {
+        log.error(
+                LogField.Placeholders.THREE.getPlaceholder(),
+                StructuredArguments.kv(LogField.MSG.label(), "SQLite database file is " + reason),
+                StructuredArguments.kv(
+                        LogField.ERROR_CODES.label(), AppExceptionCode.SQLITE_FILE_INITIALIZATION_FAILED.getFullCode()),
+                StructuredArguments.kv(LogField.SQLITE_PATH.label(), path.toAbsolutePath()));
+        throw new IllegalStateException(
+                "SQLite database file '%s' is %s. Check the file's permissions or CAIMAN_SERVER_DATABASE_SQLITE_FILE."
+                        .formatted(path.toAbsolutePath(), reason));
     }
 }

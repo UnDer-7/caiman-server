@@ -11,6 +11,8 @@ public interface CaimanServerProps {
 
     DatabaseProp database();
 
+    PaymentProp payment();
+
     interface LoggingProp {
         String level();
 
@@ -73,5 +75,9 @@ public interface CaimanServerProps {
         String url();
 
         String description();
+    }
+
+    interface PaymentProp {
+        String proofStorageFolderPath();
     }
 }

@@ -5,6 +5,7 @@ import org.sonarqube.gradle.SonarExtension
 plugins {
     java
     jacoco
+    idea
     alias(libs.plugins.spring.boot) apply false
     alias(libs.plugins.spring.dependency.management) apply false
     alias(libs.plugins.graalvm.native) apply false
@@ -32,6 +33,13 @@ jacoco {
     toolVersion = jacocoToolVersion
 }
 
+idea {
+    module {
+        isDownloadJavadoc = true
+        isDownloadSources = true
+    }
+}
+
 // Classes with no meaningful coverage value: bootstrap, wiring, exceptions, generated code.
 // Use *Foo*.class (not *Foo.class) so Ant glob's trailing * also matches inner-class suffixes
 // like $Inner — e.g. "**/*Config*.class" covers both FooConfig.class and FooConfig$Bar.class.
@@ -55,7 +63,7 @@ subprojects {
     }
 
     group = "com.caimanproject"
-    version = "v0.0.2"
+    version = "v0.1.0"
 
     java {
         toolchain {
@@ -76,6 +84,10 @@ subprojects {
             mavenBom("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
             mavenBom("org.springdoc:springdoc-openapi-bom:$springdocVersion")
         }
+    }
+
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.add("-parameters")
     }
 
     tasks.withType<Test> {

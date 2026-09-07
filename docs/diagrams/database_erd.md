@@ -89,14 +89,17 @@ erDiagram
     varchar id PK
     varchar invoice_id FK
     varchar file_path
+    varchar original_filename
+    varchar file_content_type
+    bigint file_size_bytes
     varchar upload_token
-    datetime token_expires_at
     decimal ai_extracted_value "nullable"
     decimal final_value "nullable"
     boolean requires_manual_review
     text ai_raw_response "nullable"
     varchar status
     datetime created_at
+    datetime updated_at
   }
 
   NOTIFICATION_OUTBOX {

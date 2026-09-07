@@ -1,8 +1,10 @@
 package com.caimanproject.debtor.core.domain.model;
 
+import com.caimanproject.contracts.exception.DomainException;
 import com.caimanproject.contracts.util.DomainValidation;
-import com.caimanproject.debtor.core.domain.exception.domain.DomainExceptionCode;
 import com.caimanproject.debtor.core.domain.types.ContactType;
+import com.caimanproject.debtor.core.domain.types.DomainExceptionCode;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,11 +36,21 @@ public class DebtorContact {
             final Integer priority,
             final Audit audit) {
 
+        // Optional
         this.id = id;
-        this.contactType = validateOrThrows(contactType, "contactType");
-        this.contactValue = validateOrThrows(contactValue, "contactValue");
-        this.priority = validateOrThrows(priority, "priority");
+
+        // Required
+        this.contactType = contactType;
+        this.contactValue = contactValue;
+        this.priority = priority;
         this.audit = Objects.requireNonNullElseGet(audit, Audit::new);
+
+        final var fieldValidations = DomainValidation.validateAll(List.of(
+                DomainValidation.validate(contactType, "$.contactType", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(contactValue, "$.contactValue", DomainExceptionCode.INVALID_VALUE),
+                DomainValidation.validate(priority, "$.priority", DomainExceptionCode.INVALID_VALUE)));
+
+        fieldValidations.throwIfInvalid(DomainException::new);
     }
 
     @Builder(builderMethodName = "createBuilder", builderClassName = "CreateBuilder")
@@ -48,9 +60,5 @@ public class DebtorContact {
 
     public Optional<UUID> getId() {
         return Optional.ofNullable(id);
-    }
-
-    private static <T> T validateOrThrows(final T value, final String valueName) {
-        return DomainValidation.validateOrThrows(value, valueName, DomainExceptionCode.INVALID_VALUE::createException);
     }
 }

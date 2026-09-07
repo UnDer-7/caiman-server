@@ -24,7 +24,8 @@ public class CaimanRuntimeHints implements RuntimeHintsRegistrar {
                 .registerType(CaimanServerPropsConfig.OpenApiApplicationPropImpl.class, MemberCategory.values())
                 .registerType(CaimanServerPropsConfig.OpenApiApplicationContactPropImpl.class, MemberCategory.values())
                 .registerType(
-                        CaimanServerPropsConfig.OpenApiApplicationDocumentationPropImpl.class, MemberCategory.values());
+                        CaimanServerPropsConfig.OpenApiApplicationDocumentationPropImpl.class, MemberCategory.values())
+                .registerType(CaimanServerPropsConfig.PaymentPropImpl.class, MemberCategory.values());
 
         // hibernate-community-dialects has no native-image support. Hibernate loads the dialect
         // by class name via ClassLoaderServiceImpl.classForName() so it must be explicitly registered.

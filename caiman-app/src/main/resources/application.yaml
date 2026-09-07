@@ -19,6 +19,8 @@ caiman-server:
     username: ${CAIMAN_SERVER_DATABASE_USERNAME:}
     password: ${CAIMAN_SERVER_DATABASE_PASSWORD:}
     sqlite-file: ${CAIMAN_SERVER_DATABASE_SQLITE_FILE:}
+  payment:
+    proof-storage-folder-path: ${CAIMAN_SERVER_PAYMENT_PROOF_STORAGE_FOLDER_PATH}
   open-api:
     api-docs:
       path: ${CAIMAN_SERVER_OPEN_API_API_DOCS_PATH}
@@ -38,6 +40,11 @@ caiman-server:
 spring:
   application:
     name: ${caiman-server.project.name}
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
   jpa:
     open-in-view: false
@@ -99,3 +106,9 @@ management:
       enabled: true
     readinessstate:
       enabled: true
+
+jobrunr:
+  background-job-server:
+    enabled: true
+  dashboard:
+    enabled: true

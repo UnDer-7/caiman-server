@@ -10,15 +10,20 @@ http:
     type: json
     data: |-
       {
-          "name": "Gggwp",
+          "name": "cesar",
           "notes": "eu mesmo",
           "notificationsEnabled": true,
           "active": true,
           "contacts": [
               {
                   "contactType": "EMAIL",
-                  "contactValue": "admin@gmail.com",
+                  "contactValue": "cesar1@gmail.com",
                   "priority": 1
+              },
+                    {
+                  "contactType": "EMAIL",
+                  "contactValue": "cesar2@gmail.com",
+                  "priority": 2
               }
           ]
       }

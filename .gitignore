@@ -42,6 +42,7 @@ build/
 .docker_volume/
 .sdkmanrc
 .tmp/
+/proof_storage/
 *.db
 *.db-wal
 *.db-shm

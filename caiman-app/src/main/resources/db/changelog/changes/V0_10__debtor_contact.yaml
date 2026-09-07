@@ -70,19 +70,31 @@ databaseChangeLog:
   - changeSet:
       id: 10-debtor-contact-unique-type-value
       author: caiman
-      dbms: "!sqlite"
       changes:
-        - addUniqueConstraint:
+        - createIndex:
+            indexName: uq_dc_debtor_type_value
             tableName: debtor_contact
-            columnNames: debtor_id, contact_type, contact_value
-            constraintName: uq_dc_debtor_type_value
+            unique: true
+            columns:
+              - column:
+                  name: debtor_id
+              - column:
+                  name: contact_type
+              - column:
+                  name: contact_value
 
   - changeSet:
       id: 10-debtor-contact-unique-type-priority
       author: caiman
-      dbms: "!sqlite"
       changes:
-        - addUniqueConstraint:
+        - createIndex:
+            indexName: uq_dc_debtor_type_priority
             tableName: debtor_contact
-            columnNames: debtor_id, contact_type, priority
-            constraintName: uq_dc_debtor_type_priority
+            unique: true
+            columns:
+              - column:
+                  name: debtor_id
+              - column:
+                  name: contact_type
+              - column:
+                  name: priority

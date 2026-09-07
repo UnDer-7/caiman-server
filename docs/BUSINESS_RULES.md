@@ -69,6 +69,15 @@ Devedor envia comprovante pelo link normal cobrindo apenas sua invoice. Admin vi
 
 ---
 
+### P-002 — SPLIT recorrente (todos os membros cobrados a cada ciclo)
+
+**Contexto:**  
+O tipo `SPLIT` hoje (v0) é definido como **evento único**: gera um invoice por membro ativo uma única vez na vida do plano (ex: rateio de uma viagem AirBnB) — ver [5.3](#53-generation-for-split-plans). Existe um caso de uso distinto e ainda não suportado: rateio **recorrente**, onde todos os membros pagam sua parte a cada ciclo (ex: aluguel dividido entre roommates, todo mês). Isso não é `ROTATING` (que cobra só um membro por vez, revezando) nem o `SPLIT` atual (evento único) — é um terceiro comportamento.
+
+**Decisão:** ❌ Não implementado em v0. Candidato a v1, possivelmente como um terceiro `charge_plan.type` (ou uma flag de recorrência em `SPLIT`) — a definir quando o caso de uso surgir. `charge_plan.cycle_interval`/`cycle_unit` já existem no schema e seriam reaproveitados sem mudança de DDL.
+
+---
+
 ## Table of Contents
 
 - [Project Overview](#project-overview)  
@@ -137,7 +146,7 @@ Caiman fills the gap: **recurring and one-time informal billing between a single
 | **Debtor** | A person who owes money in one or more charge plans. Does not have a system login. Interacts only via tokenized email links. |
 | **ChargePlan** | The core entity. Defines a billing arrangement: who owes, how much, how often, and when it ends. Two subtypes: `ROTATING` and `SPLIT`. |
 | **ROTATING plan** | A charge plan where only one member pays per cycle, rotating in a defined order. Example: shared YouTube Premium where each person pays one month per cycle. |
-| **SPLIT plan** | A charge plan where all members are charged each cycle, splitting the total amount. Example: AirBnB trip split among 5 people. |
+| **SPLIT plan** | A charge plan where all active members are charged once, splitting the total amount between them. Example: AirBnB trip split among 5 people. Unlike `ROTATING`, it does **not** repeat on the plan's cycle rhythm — invoices are generated exactly once, on the first tick reached, and never again for that plan (see [5.3](#53-generation-for-split-plans)). A recurring variant (all members charged every cycle) is not yet supported — see [P-002](#p-002--split-recorrente-todos-os-membros-cobrados-a-cada-ciclo). |
 | **ChargePlanMember** | The association between a `Debtor` and a `ChargePlan`. Holds per-member config (amount override, rotation order, credit balance). |
 | **Invoice** | A single billing record issued to one member for one billing cycle. Generated automatically by the scheduler. |
 | **Payment** | A confirmed payment event linked to an invoice. An invoice can have multiple payments (partial payment support). |
@@ -146,7 +155,7 @@ Caiman fills the gap: **recurring and one-time informal billing between a single
 | **NotificationLog** | Immutable append-only audit log of every notification dispatch attempt. |
 | **Odin** | The daily scheduler job (`OdinJob`), runs once at `00:00 UTC`. Generates invoices, detects overdue status, and enqueues notifications into the `notification_outbox`. Named after the Norse god Odin — the all-seeing figure who surveys everything under his watch once a day, makes decisions, and sets events in motion. Odin observes, decides, and dispatches; he does not deliver messages himself — that is Huginn's role. |
 | **Huginn** | The minutely dispatcher job (`HuginnJob`), runs every minute. Reads `SCHEDULED` entries from `notification_outbox` and dispatches notifications with exponential backoff retry logic. Named after one of Odin's two ravens — Huginn (thought) — who flies across the world carrying messages and always completes his mission. Thematically paired with Odin: Odin decides and enqueues; Huginn executes and delivers. |
-| **Upload Token** | A short-lived JWT (48h) embedded in the notification email link. Authorizes a debtor to upload a proof for a specific invoice without requiring a login. |
+| **Upload Token** | A UUID (`invoice.upload_token`), generated once when the invoice is created and never rotated or expired. Embedded in the notification email link. Authorizes a debtor to view and upload a proof for that specific invoice without requiring a login — see [Section 7](#7-payment-proof--upload-flow) and the [public proof upload page design](superpowers/specs/2026-09-02-public-proof-upload-page-design.md). |
 
 ---
 
@@ -200,7 +209,7 @@ Caiman is composed of two services deployed together via Docker Compose:
 **Authentication:**
 
 - Admin access is protected by a static API token configured at application startup via environment variable (`CAIMAN_API_TOKEN`). The frontend passes this token in every request to the backend.  
-- Debtor-facing public endpoints are protected by short-lived JWT upload tokens embedded in email links. No login required.
+- Debtor-facing public endpoints are protected by a persisted, non-expiring UUID upload token (`invoice.upload_token`) embedded in email links. No login required.
 
 ---
 
@@ -345,7 +354,7 @@ All enum columns use `VARCHAR`. Valid values per column:
 | `invoice.status` | `PENDING`, `SENT`, `OVERDUE`, `PARTIALLY_PAID`, `PAID`, `CANCELLED` |
 | `payment.method` | `PIX`, `BANK_TRANSFER`, `CASH`, `VENMO`, `OTHER` |
 | `payment_proof.status` | `PENDING_ANALYSIS`, `PENDING_MANUAL_REVIEW`, `APPROVED`, `REJECTED` |
-| `notification_outbox.status` | `SCHEDULED`, `PROCESSING`, `FAILED` |
+| `notification_outbox.status` | `SCHEDULED`, `PROCESSING`, `RETRY_SCHEDULED` |
 | `notification_log.status` | `SENT`, `FAILED` |
 | `notification_outbox.trigger_type` | `INVOICE_CREATED`, `PENDING_REMINDER`, `OVERDUE_REMINDER`, `PAYMENT_APPROVED`, `PAYMENT_REJECTED` |
 | `notification_outbox.channel` | `EMAIL` |
@@ -418,7 +427,12 @@ All enum columns use `VARCHAR`. Valid values per column:
 - `ends_at` and `end_when_recovered` are both optional and independent. Both can be set simultaneously — the plan finishes when whichever condition is met first.  
 - `end_when_recovered` must be greater than zero if provided.  
 - `ends_at` must be in the future relative to `starts_at`.  
-- A newly created plan has no members. Members must be added via `POST /charge-plans/{planId}/members`.  
+- `starts_at` marks the official start date of the billing relationship (e.g. "this plan is active as of this date"). It is independent from `cycle_anchor_date`, which only defines the billing rhythm reference point and may be set in the past to model a pre-existing cadence without back-filling (see [Invoice Generation Cycle](INVOICE_GENERATION_CYCLE.md#past-anchor-date)). Odin will not generate invoices before `starts_at`, even if `cycle_anchor_date` computes a tick date earlier than it — see [5.1](#51-determining-whether-to-generate-invoices).  
+- The request body may optionally include a `members` list, following the same rules as `POST /charge-plans/{planId}/members` (see [4.1](#41-add-member-to-plan)). An empty or omitted list is valid — a plan can be created with no members and they can be added later via the dedicated endpoint.  
+- The request body may optionally include a `notificationConfigs` list, following the same rules as `PUT /charge-plans/{planId}/notification-config` (see [3.5](#35-notification-config)). An empty or omitted list is valid.  
+- `joined_at` for any member included in the creation request is still set by the application to the current UTC instant — never accepted from the request.  
+- For `SPLIT` plans, `rotation_order` must not be present on any member in the `members` list — the request is rejected with `422` if it is. This is stricter than the dedicated `POST /charge-plans/{planId}/members` endpoint (see [4.1](#41-add-member-to-plan)), which silently ignores and nulls the field instead of rejecting.  
+- For `SPLIT` plans, the sum of `amount_override` across all members in the `members` list must not exceed `total_amount` — the request is rejected with `422` if it does. A sum equal to `total_amount` is allowed (non-override members simply receive a `0.00` share, immediately `PAID`). This check only runs at creation time, against the members included in the same request — it is not (yet) re-validated when members are added or updated afterward via the dedicated member endpoints.  
 - The plan is not processed by the scheduler until it has at least one `ACTIVE` member.
 
 ### 3.2 Update Charge Plan
@@ -477,12 +491,12 @@ All enum columns use `VARCHAR`. Valid values per column:
 **Rules:**
 
 - `debtor_id` is required.  
-- The same debtor cannot be added to the same plan twice if they already have an `ACTIVE` membership. If the debtor has a `LEFT` membership, a new membership record is created (the old one is preserved for history).  
+- If a `charge_plan_member` record already exists for this `(debtor_id, charge_plan_id)` pair — regardless of status (`ACTIVE` or `LEFT`) — the endpoint returns `409 Conflict`. The database enforces `UNIQUE(debtor_id, charge_plan_id)` on `charge_plan_member`. To reactivate a member who previously left, use `PATCH /charge-plans/{planId}/members/{memberId}` instead.  
 - `amount_override` is optional. If not provided, the plan default is used.  
-- For `ROTATING` plans, `rotation_order` is required. The application validates that the provided value does not duplicate an existing `rotation_order` in the plan among `ACTIVE` members.  
+- For `ROTATING` plans, `rotation_order` is required. Together with the `rotation_order` of every existing `ACTIVE` member, the resulting set must be sequential integers starting at 1 with no gaps and no duplicates (e.g. 1,2,3 — not 1,3, and not two members sharing the same value). This is the same shape enforced by `PUT /charge-plans/{planId}/members/reorder` (see [4.2](#42-reorder-members-rotating-plans-only)) — it holds continuously, not just when explicitly reordering.  
 - For `SPLIT` plans, `rotation_order` is ignored and stored as `null`.  
 - `status` is always `ACTIVE` on creation.  
-- `credit_balance` is always `0.00` on creation.  
+- `credit_balance` defaults to `0.00` if not provided. Admin may supply an initial credit balance at creation time.  
 - `joined_at` is set to the current UTC instant.
 
 ### 4.2 Reorder Members (ROTATING plans only)
@@ -498,9 +512,17 @@ All enum columns use `VARCHAR`. Valid values per column:
 - All updates are applied in a single transaction.  
 - Takes effect on the next invoice generation cycle. Does not affect already-generated invoices.
 
-### 4.3 Remove Member from Plan (Member Leaves)
+### 4.3 Update Member Status (Leave or Reactivate)
 
 **Endpoint:** `PATCH /charge-plans/{planId}/members/{memberId}`
+
+This endpoint handles both directions of the `charge_plan_member` status lifecycle.
+
+---
+
+#### 4.3.1 Member Leaves (`ACTIVE → LEFT`)
+
+**Request:**
 
 {
 
@@ -516,6 +538,7 @@ All enum columns use `VARCHAR`. Valid values per column:
 
 **Rules:**
 
+- Only applicable when current `status = ACTIVE`. Returns `409 Conflict` if already `LEFT`.  
 - Sets `status = LEFT` and `left_at = leftAt` on the membership record.  
 - The member is immediately excluded from future invoice generation and rotation calculation.  
 - `leftAt` defaults to the current UTC instant if not provided.  
@@ -527,6 +550,32 @@ All enum columns use `VARCHAR`. Valid values per column:
 - If `cancelPendingInvoices = false` (default):  
   - Existing invoices are untouched. The member remains billable for open invoices.  
 - After the member is set to `LEFT`, the admin should call the reorder endpoint to update `rotation_order` for remaining members if desired.
+
+---
+
+#### 4.3.2 Member Reactivates (`LEFT → ACTIVE`)
+
+**Request:**
+
+{
+
+  "status": "ACTIVE",
+
+  "rotationOrder": 3,
+
+  "amountOverride": 50.00
+
+}
+
+**Rules:**
+
+- Only applicable when current `status = LEFT`. Returns `409 Conflict` if already `ACTIVE`.  
+- Sets `status = ACTIVE`, resets `joined_at` to the current UTC instant, and clears `left_at` (`null`).  
+- `credit_balance` is **preserved** from the previous membership — not reset to zero.  
+- `amount_override` from the request replaces the previous value. If not provided, it is cleared (`null`) and the plan default applies.  
+- For `ROTATING` plans, `rotation_order` is required. The application validates that the provided value does not duplicate an existing `rotation_order` among `ACTIVE` members.  
+- For `SPLIT` plans, `rotation_order` is ignored and stored as `null`.  
+- All updates happen in a single transaction.
 
 ### 4.4 Credit Balance (Manual Pre-payment)
 
@@ -557,6 +606,7 @@ Executed by **Odin**, which runs daily at `00:00 UTC`.
 
 For each `charge_plan` with `status = ACTIVE`:
 
+0. If `today (UTC date) < starts_at (UTC date)` → skip this plan. `starts_at` is a floor on generation, independent of the cycle rhythm — even if `cycle_anchor_date` computes a tick that falls before `starts_at` (e.g. an anchor set in the past to define the cadence), no invoice is generated until `starts_at` is reached.  
 1. Calculate the **next generation date** using:  
      
    next\_date \= cycle\_anchor\_date \+ (N \* cycle\_interval \* cycle\_unit)  
@@ -601,9 +651,12 @@ For each `charge_plan` with `status = ACTIVE`:
 
 ### 5.3 Generation for SPLIT Plans
 
+`SPLIT` is a **one-time** billing event (e.g. splitting an AirBnB trip cost). Unlike `ROTATING`, it does not keep generating on every future cycle tick — it generates its single batch of invoices (one per active member) exactly once in the plan's lifetime, then never again, regardless of payment status or how many future ticks `cycle_anchor_date`/`cycle_interval`/`cycle_unit` would otherwise produce.
+
+0. **One-time guard:** before anything else, check whether **any** `invoice` already exists for this `charge_plan_id` (regardless of date or `cycle_index`). If one does, skip this plan permanently — do not generate again. This check is independent of `charge_plan.status`: the plan remains `ACTIVE` (and subject to overdue detection / reminders on its existing invoices) after its one-time batch is generated; it does not transition to `FINISHED` just because invoices were generated. `FINISHED` still only happens via the existing mechanisms in [§13](#13-charge-plan-termination) (`ends_at`, `end_when_recovered`, or manual finish) — typically `end_when_recovered = total_amount` once fully paid.  
 1. Fetch all `charge_plan_member` records with `status = ACTIVE` for this plan.  
 2. If no active members → skip, log a warning.  
-3. Determine the current `cycle_index` (same logic as ROTATING).  
+3. `cycle_index = 0` (always — since this only ever runs once, there is no `max_cycle_index + 1` to compute; kept as a field on `invoice` for schema uniformity with `ROTATING`, not for member selection).  
 4. For each active member:  
    - Calculate `amount_due`:  
      - If `member.amount_override` is not null: `amount_due = amount_override`  
@@ -613,30 +666,41 @@ For each `charge_plan` with `status = ACTIVE`:
    - If `amount_due = 0`: mark as `PAID` immediately, skip notification.  
 5. **Rounding correction:** the sum of all member `amount_due` values may differ from `total_amount` by at most `0.01` due to rounding. Apply the rounding correction to the first member in the list (lowest `rotation_order` or insertion order).
 
-### 5.4 Post-Generation: Enqueue INVOICE\_CREATED Notification
+> **Not yet handled:** if some members have `amount_override` set, step 4's "otherwise" branch still divides by `total_active_members` (not by the count of non-overridden members), which can make the sum diverge from `total_amount` by more than the `0.01` rounding case covers. See open discussion — needs a decision before this diverges further from §3.1's override-sum validation.
 
-After invoices are created (only for invoices with `status = PENDING`):
+### 5.4 Post-Generation: Notify Invoice Creation
 
-1. Check if `charge_plan.notifications_enabled = true`.  
-2. Check if a `charge_plan_notification_config` row exists for this plan with `trigger_type = INVOICE_CREATED`.  
-3. Check if `debtor.notifications_enabled = true` (via member → debtor join).  
-4. Check if `debtor.email` is not null.  
-5. If all conditions are met:  
-   - Generate a JWT upload token (signed, expires in 48 hours from `notification_time` today).  
-   - Calculate `scheduled_for`:  
-       
-     ZonedDateTime scheduledLocal \= LocalDate.now(planZone).atTime(notificationTime).atZone(planZone);  
-       
-     Instant scheduledUtc \= scheduledLocal.toInstant();  
-       
-   - Create `notification_outbox` entry with:  
-     - `trigger_type = INVOICE_CREATED`  
-     - `status = SCHEDULED`  
-     - `attempt_count = 0`  
-     - `max_attempts` \= value from `charge_plan_notification_config`  
-     - `payload` \= JSON snapshot: `{ debtorName, planName, amountDue, dueDate, uploadLink, cycleIndex }`  
-     - `scheduled_for` \= calculated UTC instant  
-6. All inserts (invoice \+ outbox) happen in a **single transaction**.
+Billing and notification are separate bounded contexts communicating asynchronously — there is no shared transaction and no direct table access across the boundary (see `AGENT.md` § Module dependency rules). This section describes what each side is responsible for.
+
+**Billing's responsibility — publish, never decide:**
+
+After each invoice is created (invoices with `status = PENDING`), billing publishes one invoice-created event **unconditionally**, for every invoice, regardless of `charge_plan.notifications_enabled`. Whether a notification actually gets dispatched is entirely `caiman-notification`'s decision (see below) — billing only forwards the data it uniquely owns:
+
+1. Resolve `max_attempts`: value from the `charge_plan_notification_config` row for `trigger_type = INVOICE_CREATED`, or the default (§3.5) if no such row exists. Absence of a config row is **not** a reason to skip — it only means "use the default."
+2. Resolve `invoiceCreatedNotificationEnabled` = `charge_plan.notifications_enabled AND charge_plan_notification_config.enabled` (the latter defaults to `true` when no config row exists for this trigger — same "absence ≠ disabled" rule as `max_attempts`). Both flags are billing-owned, so billing collapses them into this single resolved fact before publishing — it does not forward the two raw flags separately, and it does not decide anything beyond this AND.
+3. Calculate `scheduled_for`, reusing the same `today` (UTC date) determined in [5.1](#51-determining-whether-to-generate-invoices) — never re-read the system clock here, to stay consistent with `due_date`/`generation_date` and to keep generation deterministic for a given `today`:
+
+   ZonedDateTime scheduledLocal \= today.atTime(notificationTime).atZone(planZone);
+
+   Instant scheduledUtc \= scheduledLocal.toInstant();
+4. Publish the event carrying: `invoiceId`, `debtorId` (from `charge_plan_member.debtor_id`), `chargePlanName`, `invoiceCreatedNotificationEnabled` (resolved in step 2 — forwarded as data, not acted upon here), `cycleIndex`, `amountDue`, `dueDate`, `uploadLink` (built from `invoice.upload_token`, see §12), `scheduledFor`, `maxAttempts`.
+
+**Notification's responsibility — decide, then enqueue:**
+
+On receiving the event, `caiman-notification` decides whether and how to notify, using only data it owns or was handed in the payload:
+
+1. If `invoiceCreatedNotificationEnabled = false`: skip entirely. No error, no retry.
+2. Fetch the debtor snapshot (name, `notifications_enabled`, contacts) via the debtor gateway. If not found: skip, log a warning.
+3. If `debtor.notifications_enabled = false`: skip.
+4. Resolve recipients per §11.5 (group contacts by type, lowest `priority` wins per group, one `notification_outbox` row per supported channel).
+5. For each resolved channel, create a `notification_outbox` entry with:
+   - `trigger_type = INVOICE_CREATED`
+   - `status = SCHEDULED`
+   - `attempt_count = 0`
+   - `max_attempts`, `scheduled_for`, `amount_due`, `due_date`, `upload_link`, `cycle_index` \= values carried on the event
+   - `recipient`, `channel`, `debtor_name` \= resolved in step 4
+
+Invoice creation and outbox creation are **not** part of the same transaction — outbox rows are created asynchronously, after the invoice transaction has already committed.
 
 ---
 
@@ -694,19 +758,26 @@ For each `invoice` with `status = SENT` and `due_date >= current UTC date`:
 
 ## 7\. Payment Proof — Upload Flow
 
+### 7.0 Public Proof Page (GET)
+
+**Endpoint:** `GET /public/proofs?token={uuid}` (unauthenticated, HTML page)
+
+The link the debtor receives by email points here. No separate admin frontend is required to view or act on it — see the [public proof upload page design](superpowers/specs/2026-09-02-public-proof-upload-page-design.md) for the full page contract (states, layout, error handling). Full details live in that spec, not duplicated here.
+
 ### 7.1 Token Validation
 
-**Endpoint:** `POST /public/invoices/{invoiceId}/proof` (unauthenticated, token in header or query param)
+**Endpoint:** `POST /public/proofs?token={uuid}` (unauthenticated)
 
 **Rules:**
 
-1. Extract JWT token from the request.  
-2. Verify JWT signature using the application's secret key.  
-3. Verify JWT has not expired (`exp` claim).  
-4. Verify JWT `invoiceId` claim matches the `{invoiceId}` in the URL.  
-5. Verify a `payment_proof` record does **not** already exist for this invoice with `status NOT IN (REJECTED)`. If an active proof already exists, return `409 Conflict` — a proof is already pending or approved.  
-6. Verify the invoice `status` is not `PAID` or `CANCELLED`. If so, return `409 Conflict`.  
-7. If all checks pass: accept the file upload.
+1. Extract the token from the query param.  
+2. Look up the `invoice` by `upload_token = token` (`UNIQUE` index — the token is the lookup key, there is no separate `{invoiceId}` path segment to cross-check against).  
+3. If no invoice matches: `404 Not Found`.  
+4. Verify a `payment_proof` record does **not** already exist for this invoice with `status NOT IN (REJECTED)`. If an active proof already exists, return `422 Unprocessable Entity` — a proof is already pending or approved. (Corrected from an earlier `409 Conflict` — this project's error framework has no `409` exception type; business-rule violations are `422`, per `BusinessException`.)
+5. Verify the invoice `status` is not `PAID` or `CANCELLED`. If so, return `422 Unprocessable Entity`.  
+6. If all checks pass: accept the file upload.
+
+The token never expires and is never rotated — see the [Upload Token](#core-concepts--glossary) glossary entry. A debtor can use the original email link at any time in the future, as long as the invoice still accepts a proof.
 
 ### 7.2 File Storage
 
@@ -727,7 +798,6 @@ After file is saved:
      - `AI_AUTO` or `AI_ASSISTED` → `PENDING_ANALYSIS`  
      - `MANUAL` → `PENDING_MANUAL_REVIEW`  
    - `upload_token` \= the token used (for audit)  
-   - `token_expires_at` \= the token's `exp` claim  
    - `requires_manual_review = false`  
    - All value fields (`ai_extracted_value`, `final_value`) \= `null`  
 3. If mode is `AI_AUTO` or `AI_ASSISTED`: trigger async AI analysis (see [Section 8](#8-payment-proof--ai-analysis-flow)) in a background thread.  
@@ -1030,19 +1100,19 @@ The `payload` JSON stored in `notification_outbox` must contain all data needed 
 
   "cycleIndex": 4,
 
-  "uploadLink": "https://caiman.local/public/invoices/{id}/proof?token=eyJ...",
+  "uploadLink": "https://caiman.local/public/proofs?token=<invoice.upload_token>",
 
   "triggerType": "INVOICE\_CREATED"
 
 }
 
-The upload link embeds a JWT token generated at enqueue time. Token expires 48 hours after `scheduled_for`.
+The upload link embeds `invoice.upload_token` (UUID, set once at invoice creation). It never expires and never changes — resending the link (§12.1) reuses the same token.
 
 ---
 
 ## 11\. Notification Dispatch — Huginn
 
-Huginn runs **every minute**. It only dispatches. It never generates invoices or changes invoice status.
+Huginn runs **every minute**. It only dispatches. It never generates invoices, and it never changes invoice status directly — on a successful send it publishes a `notification_sent` event (async, `ApplicationEventPublisher`); `caiman-billing` is the one that reacts to that event and updates the invoice (see §11.3).
 
 **The `notification_outbox` is a work queue, not a history table.** Huginn **deletes** rows from the outbox when they reach a terminal state (sent or exhausted). All history is preserved in `notification_log` (append-only, never deleted). This keeps the outbox small and fast regardless of how long the system runs.
 
@@ -1050,7 +1120,7 @@ Huginn runs **every minute**. It only dispatches. It never generates invoices or
 
 1\. SELECT \* FROM notification\_outbox
 
-   WHERE status \= 'SCHEDULED'
+   WHERE status IN ('SCHEDULED', 'RETRY\_SCHEDULED')
 
      AND scheduled\_for \<= NOW() (UTC)
 
@@ -1072,9 +1142,7 @@ Huginn runs **every minute**. It only dispatches. It never generates invoices or
 
       \- DELETE FROM notification\_outbox WHERE id \= :entryId
 
-      \- If trigger\_type \= INVOICE\_CREATED AND invoice.status \= PENDING:
-
-          UPDATE invoice SET status \= 'SENT'
+      \- Publish `notification_sent` event (async, invoice\_id \+ trigger\_type \+ sent\_at) — see §11.3
 
    d. On FAILURE:
 
@@ -1094,7 +1162,7 @@ Huginn runs **every minute**. It only dispatches. It never generates invoices or
 
           UPDATE notification\_outbox SET
 
-            status \= 'SCHEDULED',
+            status \= 'RETRY\_SCHEDULED',
 
             scheduled\_for \= next\_retry,
 
@@ -1110,15 +1178,21 @@ With the delete-on-terminal-state approach, only three statuses exist in the out
 | :---- | :---- |
 | `SCHEDULED` | Waiting to be dispatched. `scheduled_for` not yet reached, or rescheduled after a failed attempt. |
 | `PROCESSING` | Currently being dispatched by Huginn. Prevents double-dispatch. |
-| `FAILED` | Last attempt failed. Will be retried. `attempt_count < max_attempts`. |
+| `RETRY_SCHEDULED` | Last attempt failed and will be retried. `attempt_count < max_attempts`. `scheduled_for` holds the next retry time. |
 
-`SENT` and `EXHAUSTED` never persist in the outbox — the row is deleted before those states would be set.
+`SENT`, `EXHAUSTED`, and a standalone `FAILED` outbox status never persist — a row is either still in-flight (`SCHEDULED` / `PROCESSING` / `RETRY_SCHEDULED`) or deleted once it reaches a terminal state (sent, or exhausted after the final failed attempt). `notification_log.status = FAILED` records each failed attempt regardless; it does not imply an outbox status of the same name.
 
 ### 11.3 Invoice Status Transition on INVOICE\_CREATED Dispatch
 
-- When Huginn successfully sends an `INVOICE_CREATED` notification:  
-  - If the linked invoice has `status = PENDING` → set `status = SENT`.  
-  - If the invoice is already in any other state → do not change it.
+This is an async, event-driven handoff, not a synchronous cross-context call — `caiman-notification` publishes a fact and moves on; it does not know or care who reacts to it, and it does not wait for a response.
+
+- On every successful dispatch (any `trigger_type`), `caiman-notification` publishes a `notification_sent` event (`ApplicationEventPublisher`) carrying `invoice_id`, `trigger_type`, and `sent_at`. This happens **unconditionally**, after the outbox row is already deleted and the log entry already written — the notification side's job is done regardless of what happens next.
+- `caiman-billing` consumes this event (`@EventListener`, async) and decides what to do with it — mirrors the same "producer publishes, consumer decides" split already used for invoice-created notifications (§5.4):
+  - If `trigger_type != INVOICE_CREATED` → ignore, no status change.
+  - If `trigger_type = INVOICE_CREATED` and the invoice's `status = PENDING` → set `status = SENT`.
+  - If the invoice is already in any other state, or no longer exists → ignore, no error.
+- Consequence of being async: there is a brief window (until the listener runs) where the invoice is still `PENDING` even though the email was already sent. Nothing reads that field synchronously in this flow, so the window is harmless.
+- Why not a synchronous gateway call instead: by the time this event fires, `caiman-notification` has already deleted the outbox row and logged the send — there is no compensating transaction if a synchronous call to `caiman-billing` failed at this point, and no retry path (the outbox row is gone). A synchronous call here would also make Huginn's dispatch loop depend on `caiman-billing` being up for something that isn't `caiman-notification`'s concern once the email is sent.
 
 ### 11.4 Idempotency — Stuck PROCESSING Entries
 
@@ -1143,14 +1217,25 @@ With the delete-on-terminal-state approach, only three statuses exist in the out
 
 ### 11.5 Multi-Channel Dispatch
 
-In v0, only `EMAIL` is supported. Huginn selects the `debtor_contact` row with the **lowest `priority` value** for `contact_type = EMAIL`. If no EMAIL contact exists: log a warning and skip. No error, no retry.
+Recipient and channel resolution happen once, at **outbox creation time** — not at Huginn dispatch time. This matches the `recipient` / `channel` snapshot columns on `notification_outbox`, which exist precisely so Huginn never has to re-read `debtor_contact` during dispatch.
+
+For each trigger (e.g. `INVOICE_CREATED`), the creating use case:
+
+1. Groups the debtor's `debtor_contact` rows by `contact_type`.
+2. Within each group, picks the row with the **lowest `priority` value** (§3.4) — this resolves redundant contacts of the *same* type (e.g. two `EMAIL` addresses on file), it never causes multiple sends on the same channel.
+3. Maps each remaining group's `contact_type` to a `notification_outbox.channel` value. If no dispatcher is implemented yet for that `contact_type`, log a warning and skip that group — no error, no retry. This is forward-compatible: a `contact_type` can be added in `caiman-debtor` before its dispatcher is implemented in `caiman-notification`; it is simply skipped until then.
+4. Creates **one `notification_outbox` row per remaining group** — one row per distinct supported channel, not one row per raw `debtor_contact` row. A debtor with two `EMAIL` contacts and one `WHATSAPP` contact produces **two** outbox rows (one `EMAIL`, one `WHATSAPP`), not three.
+
+In v0, only `EMAIL` has a dispatcher implemented — any other `contact_type` on file produces no outbox row until its dispatcher ships.
+
+If the debtor has no contact of any supported type: log a warning and skip entirely. No error, no retry.
 
 ### 11.6 Email Dispatch Rules
 
 - Email is sent using the configured SMTP settings (application properties).  
 - Subject and body are rendered from templates (implementation detail, not a business rule).  
-- If the debtor has no `EMAIL` contact (no row with `contact_type = 'EMAIL'`): log a warning and skip. No error, no retry.  
-- If `debtor.email` is missing in the outbox payload (stale snapshot): do not attempt to send. Log as `FAILED` with reason `"Recipient email missing in payload"`. Delete the outbox entry immediately (do not retry — this is a config error, not a transient failure).
+- Recipient resolution (contact lookup, priority tie-break) happens once at outbox creation time — see §11.5. Huginn only reads the `recipient` value already snapshotted on the outbox row; it never re-queries `debtor_contact`.
+- If `recipient` is somehow missing on the outbox row (defensive check only — a row is never created without a resolved recipient, see §11.5): log as `FAILED` with reason `"Recipient missing in payload"`. Delete the outbox entry immediately (do not retry — this is a data-integrity error, not a transient failure).
 
 ## 12\. Admin Operations
 
@@ -1161,11 +1246,11 @@ In v0, only `EMAIL` is supported. Huginn selects the `debtor_contact` row with t
 **Rules:**
 
 1. Invoice must not be `PAID` or `CANCELLED`.  
-2. Generate a new JWT upload token (48h expiry from now).  
+2. Reuse the invoice's existing `upload_token` — it is never rotated (see [Upload Token](#core-concepts--glossary)).  
 3. Create a new `notification_outbox` entry with:  
    - `trigger_type = INVOICE_CREATED`  
    - `scheduled_for = NOW()` (send immediately on next Huginn run)  
-   - Fresh payload snapshot with the new token.  
+   - Fresh payload snapshot carrying the same `uploadLink`.  
 4. Log as `LINK_RESENT` in `notification_log` (add this `trigger_type` value).  
 5. Does **not** change the invoice status.
 
@@ -1283,7 +1368,7 @@ Remove from the `notification_outbox` table definition in **V1** (before any dat
 
 ### A.3 Remove `notification_outbox` statuses `SENT` and `EXHAUSTED`
 
-The outbox only holds in-flight entries. Terminal states (`SENT`, `EXHAUSTED`) never persist — the row is deleted. Valid outbox statuses are: `SCHEDULED`, `PROCESSING`, `FAILED` only.
+The outbox only holds in-flight entries. Terminal states (`SENT`, `EXHAUSTED`) never persist — the row is deleted. Valid outbox statuses are: `SCHEDULED`, `PROCESSING`, `RETRY_SCHEDULED` only. (`RETRY_SCHEDULED` replaces an earlier `FAILED` outbox status — renamed for clarity, since a persisted row in this state always means "will be retried," never "permanently failed." `notification_log.status = FAILED` is unrelated and unaffected — it is the per-attempt audit entry, not an outbox state.)
 
 Update the application-layer enum. No DDL change needed (stored as `VARCHAR`).
 
@@ -1315,4 +1400,14 @@ No DDL change needed (stored as `VARCHAR`). Update application-layer enum only.
 
 ### A.8 Default notification config rows on ChargePlan creation
 
-When a new `ChargePlan` is created, the application must automatically insert `charge_plan_notification_config` rows for `PAYMENT_APPROVED` and `PAYMENT_REJECTED` with notifications enabled. This is application logic, not a DDL change.  
+When a new `ChargePlan` is created, the application must automatically insert `charge_plan_notification_config` rows for `PAYMENT_APPROVED` and `PAYMENT_REJECTED` with notifications enabled. This is application logic, not a DDL change.
+
+### A.9 Unique constraint on `charge_plan_member(debtor_id, charge_plan_id)`
+
+Each debtor can have at most one `charge_plan_member` record per plan (regardless of status). `POST /charge-plans/{planId}/members` always inserts; `PATCH` updates the existing record for reactivation. The database enforces this invariant via a simple unique constraint:
+
+```sql
+UNIQUE (debtor_id, charge_plan_id)
+```
+
+Add to the `charge_plan_member` table definition in the existing migration (`V0_04__charge_plan_member.yaml`) or as a separate `addUniqueConstraint` changeset.

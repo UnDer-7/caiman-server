@@ -13,16 +13,6 @@ databaseChangeLog:
                   name: status
 
         - createIndex:
-            indexName: idx_cpnc_plan_trigger
-            tableName: charge_plan_notification_config
-            remarks: Lookup of notification config by plan and trigger type. Unique per plan.
-            columns:
-              - column:
-                  name: charge_plan_id
-              - column:
-                  name: trigger_type
-
-        - createIndex:
             indexName: idx_cpm_charge_plan_status
             tableName: charge_plan_member
             remarks: >

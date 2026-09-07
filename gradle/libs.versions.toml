@@ -9,12 +9,14 @@ jacoco = "0.8.15"
 native-build-tools = "1.1.2"
 spotless = "8.7.0"
 sonarqube = "7.3.1.8318"
+jobrunr = "8.7.1"
 
 [libraries]
 mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
 mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
 lombok-mapstruct-binding = { module = "org.projectlombok:lombok-mapstruct-binding", version.ref = "lombok-mapstruct-binding" }
 logstash_logback_encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash-logback-encoder" }
+jobrunr = { module = "org.jobrunr:jobrunr-spring-boot-4-starter", version.ref = "jobrunr" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }

@@ -13,6 +13,8 @@ caiman-server:
     name: caiman-server-test
     version: 0.0.1
     description: Test description
+  payment:
+    proof-storage-folder-path: /tmp/caiman-test-proofs
   open-api:
     api-docs:
       path: /v3/api-docs
@@ -51,6 +53,10 @@ spring:
   threads:
     virtual:
       enabled: true
+
+jobrunr:
+  dashboard:
+    enabled: false
 
 springdoc:
   api-docs:

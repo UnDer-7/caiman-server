@@ -9,7 +9,7 @@ import com.caimanproject.debtor.entrypoint.mapper.DebtorWebMapper;
 import com.caimanproject.debtor.entrypoint.payload.request.CreateDebtorContactRequestDto;
 import com.caimanproject.debtor.entrypoint.payload.request.CreateDebtorRequestDto;
 import com.caimanproject.debtor.entrypoint.payload.response.DebtorResponseDto;
-import com.caimanproject.web.annotation.CaimanEndpoint;
+import com.caimanproject.web.annotation.CaimanRestController;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 @Slf4j
 @RequiredArgsConstructor
-@CaimanEndpoint("/v1/debtors")
+@CaimanRestController("/v1/debtors")
 public class DebtorController implements DebtorControllerSpec {
 
     private final DebtorWebMapper debtorWebMapper;

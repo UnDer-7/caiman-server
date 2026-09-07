@@ -1,28 +1,33 @@
 package com.caimanproject.contracts.exception;
 
-public abstract class TechnicalException extends CaimanException {
+import com.caimanproject.contracts.validation.ValidationError;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+
+@Slf4j
+public class TechnicalException extends CaimanException {
 
     private static final ErrorHttpStatus HTTP_STATUS = ErrorHttpStatus.INTERNAL_SERVER_ERROR;
+    private static final String TITLE = "Internal Server Error";
+    private static final String DETAIL =
+            "An unexpected error occurred. Please contact support if the problem persists.";
 
-    protected TechnicalException(
-            final ExceptionCode exceptionCode, final String detail, final Throwable originalCause) {
-        super(exceptionCode, HTTP_STATUS, detail, originalCause);
+    public TechnicalException(final List<ValidationError> errors, final Throwable originalCause) {
+        super(HTTP_STATUS, TITLE, DETAIL, errors, originalCause);
     }
 
-    protected TechnicalException(final ExceptionCode exceptionCode, final Throwable originalCause) {
-        super(exceptionCode, HTTP_STATUS, originalCause);
-    }
-
-    protected TechnicalException(final ExceptionCode exceptionCode, final String detail) {
-        super(exceptionCode, HTTP_STATUS, detail);
-    }
-
-    protected TechnicalException(final ExceptionCode exceptionCode) {
-        super(exceptionCode, HTTP_STATUS);
+    public TechnicalException(final List<ValidationError> errors) {
+        super(HTTP_STATUS, TITLE, DETAIL, errors);
     }
 
     @Override
-    protected final LogLevel getLogLevel() {
+    protected LogLevel getLogLevel() {
         return LogLevel.ERROR;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return log;
     }
 }

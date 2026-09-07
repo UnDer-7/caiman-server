@@ -1,7 +1,8 @@
 package com.caimanproject.debtor.core.domain.model;
 
-import com.caimanproject.debtor.core.domain.exception.domain.DomainExceptionCode;
+import com.caimanproject.contracts.exception.DomainException;
 import com.caimanproject.debtor.core.domain.types.ContactType;
+import com.caimanproject.debtor.core.domain.types.DomainExceptionCode;
 import com.caimanproject.debtor.core.test.builder.DebtorDomainBuilder;
 import com.caimanproject.test.annotation.UnitTest;
 import java.util.List;
@@ -30,11 +31,12 @@ class DebtorTest {
         void should_return_duplicate_contacts(
                 final List<DebtorContact> contacts, final List<String> expectedDuplicateValues) {
             // When
-            final var result = Debtor.getDuplicateContactsByValue(contacts);
+            final var result =
+                    Debtor.validateDuplicateContactsByValue(contacts, DomainExceptionCode.DUPLICATED_CONTACT_VALUE);
 
             // Then
-            Assertions.assertThat(result)
-                    .extracting(DebtorContact::getContactValue)
+            Assertions.assertThat(result.errors())
+                    .extracting(error -> error.getSource().orElseThrow().invalidValue())
                     .containsExactlyInAnyOrder(expectedDuplicateValues.toArray(new String[0]));
         }
 
@@ -42,10 +44,11 @@ class DebtorTest {
         @MethodSource("should_return_empty_when_no_duplicates__cases")
         void should_return_empty_when_no_duplicates(final List<DebtorContact> contacts) {
             // When
-            final var result = Debtor.getDuplicateContactsByValue(contacts);
+            final var result =
+                    Debtor.validateDuplicateContactsByValue(contacts, DomainExceptionCode.DUPLICATED_CONTACT_VALUE);
 
             // Then
-            Assertions.assertThat(result).isEmpty();
+            Assertions.assertThat(result.errors()).isEmpty();
         }
 
         static Stream<Arguments> should_return_empty_when_no_duplicates__cases() {
@@ -95,22 +98,27 @@ class DebtorTest {
         void should_return_duplicate_contacts(
                 final List<DebtorContact> contacts, final List<String> expectedDuplicateValues) {
             // When
-            final var result = Debtor.getDuplicateContactsByPriority(contacts);
+            final var result = Debtor.validateDuplicateContactsByPriority(
+                    contacts, DomainExceptionCode.DUPLICATE_CONTACT_PRIORITY);
 
             // Then
-            Assertions.assertThat(result)
-                    .extracting(DebtorContact::getContactValue)
-                    .containsExactlyInAnyOrder(expectedDuplicateValues.toArray(new String[0]));
+            final var details = result.errors().stream()
+                    .map(error -> error.getDetail().orElseThrow())
+                    .toList();
+            Assertions.assertThat(details).hasSize(expectedDuplicateValues.size());
+            expectedDuplicateValues.forEach(
+                    value -> Assertions.assertThat(details).anyMatch(detail -> detail.contains(value)));
         }
 
         @ParameterizedTest
         @MethodSource("should_return_empty_when_no_duplicates__cases")
         void should_return_empty_when_no_duplicates(final List<DebtorContact> contacts) {
             // When
-            final var result = Debtor.getDuplicateContactsByPriority(contacts);
+            final var result = Debtor.validateDuplicateContactsByPriority(
+                    contacts, DomainExceptionCode.DUPLICATE_CONTACT_PRIORITY);
 
             // Then
-            Assertions.assertThat(result).isEmpty();
+            Assertions.assertThat(result.errors()).isEmpty();
         }
 
         static Stream<Arguments> should_return_empty_when_no_duplicates__cases() {
@@ -174,10 +182,14 @@ class DebtorTest {
                 final var abstractThrowableAssert = Assertions.assertThatThrownBy(debtorBuilder::build);
 
                 // Then
-                final var expectedException = DomainExceptionCode.DUPLICATED_CONTACT_VALUE.createException();
-                abstractThrowableAssert
-                        .isInstanceOf(expectedException.getClass())
-                        .hasMessageContainingAll(repeatedContactValue.toArray(new String[0]));
+                abstractThrowableAssert.isInstanceOfSatisfying(DomainException.class, exception -> {
+                    Assertions.assertThat(exception.getErrors())
+                            .allSatisfy(error -> Assertions.assertThat(
+                                            error.getCode().getFullCode())
+                                    .isEqualTo(DomainExceptionCode.DUPLICATED_CONTACT_VALUE.getFullCode()))
+                            .extracting(error -> error.getSource().orElseThrow().invalidValue())
+                            .containsExactlyInAnyOrderElementsOf(repeatedContactValue);
+                });
             }
 
             @ParameterizedTest
@@ -195,10 +207,15 @@ class DebtorTest {
                 final var abstractThrowableAssert = Assertions.assertThatThrownBy(debtorBuilder::build);
 
                 // Then
-                final var expectedException = DomainExceptionCode.DUPLICATE_CONTACT_PRIORITY.createException();
-                abstractThrowableAssert
-                        .isInstanceOf(expectedException.getClass())
-                        .hasMessageContainingAll(repeatedContactValue.toArray(new String[0]));
+                abstractThrowableAssert.isInstanceOfSatisfying(DomainException.class, exception -> {
+                    final var details = exception.getErrors().stream()
+                            .peek(error -> Assertions.assertThat(error.getCode().getFullCode())
+                                    .isEqualTo(DomainExceptionCode.DUPLICATE_CONTACT_PRIORITY.getFullCode()))
+                            .map(error -> error.getDetail().orElseThrow())
+                            .toList();
+                    repeatedContactValue.forEach(
+                            value -> Assertions.assertThat(details).anyMatch(detail -> detail.contains(value)));
+                });
             }
 
             @Test
@@ -245,10 +262,14 @@ class DebtorTest {
                 final var abstractThrowableAssert = Assertions.assertThatThrownBy(debtorBuilder::build);
 
                 // Then
-                final var expectedException = DomainExceptionCode.DUPLICATED_CONTACT_VALUE.createException();
-                abstractThrowableAssert
-                        .isInstanceOf(expectedException.getClass())
-                        .hasMessageContainingAll(repeatedContactValue.toArray(new String[0]));
+                abstractThrowableAssert.isInstanceOfSatisfying(DomainException.class, exception -> {
+                    Assertions.assertThat(exception.getErrors())
+                            .allSatisfy(error -> Assertions.assertThat(
+                                            error.getCode().getFullCode())
+                                    .isEqualTo(DomainExceptionCode.DUPLICATED_CONTACT_VALUE.getFullCode()))
+                            .extracting(error -> error.getSource().orElseThrow().invalidValue())
+                            .containsExactlyInAnyOrderElementsOf(repeatedContactValue);
+                });
             }
 
             @ParameterizedTest
@@ -269,10 +290,15 @@ class DebtorTest {
                 final var abstractThrowableAssert = Assertions.assertThatThrownBy(debtorBuilder::build);
 
                 // Then
-                final var expectedException = DomainExceptionCode.DUPLICATE_CONTACT_PRIORITY.createException();
-                abstractThrowableAssert
-                        .isInstanceOf(expectedException.getClass())
-                        .hasMessageContainingAll(repeatedContactValue.toArray(new String[0]));
+                abstractThrowableAssert.isInstanceOfSatisfying(DomainException.class, exception -> {
+                    final var details = exception.getErrors().stream()
+                            .peek(error -> Assertions.assertThat(error.getCode().getFullCode())
+                                    .isEqualTo(DomainExceptionCode.DUPLICATE_CONTACT_PRIORITY.getFullCode()))
+                            .map(error -> error.getDetail().orElseThrow())
+                            .toList();
+                    repeatedContactValue.forEach(
+                            value -> Assertions.assertThat(details).anyMatch(detail -> detail.contains(value)));
+                });
             }
 
             @Test

@@ -90,3 +90,17 @@ databaseChangeLog:
                   remarks: Timestamp of the last update to this record. Always stored in UTC.
                   constraints:
                     nullable: false
+
+  - changeSet:
+      id: 3-cpnc-unique-plan-trigger
+      author: caiman
+      changes:
+        - createIndex:
+            indexName: uq_cpnc_plan_trigger
+            tableName: charge_plan_notification_config
+            unique: true
+            columns:
+              - column:
+                  name: charge_plan_id
+              - column:
+                  name: trigger_type

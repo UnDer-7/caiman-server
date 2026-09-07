@@ -76,7 +76,7 @@ databaseChangeLog:
               - column:
                   name: due_tolerance_days
                   type: integer
-                  defaultValueNumeric: 5
+                  defaultValueNumeric: '5'
                   remarks: >
                     Number of days after invoice generation date to set due_date.
                     Example: generated on June 1 with tolerance 5 means due_date = June 6.

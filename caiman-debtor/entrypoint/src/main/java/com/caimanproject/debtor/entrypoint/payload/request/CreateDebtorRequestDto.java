@@ -1,10 +1,10 @@
 package com.caimanproject.debtor.entrypoint.payload.request;
 
+import com.caimanproject.web.annotation.composition.body.NotBlankBody;
+import com.caimanproject.web.annotation.composition.body.SizeBody;
 import com.caimanproject.web.constant.OpenApiConstants;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import java.util.Collections;
 import java.util.List;
 import lombok.Builder;
@@ -17,7 +17,9 @@ public record CreateDebtorRequestDto(
                 example = "John Doe",
                 nullable = false,
                 requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlank @Size(max = 255) String name,
+        @NotBlankBody
+        @SizeBody(max = 255)
+        String name,
 
         @Schema(
                 description = "Free-text notes about this debtor. Internal use only. Not sent in notifications.",

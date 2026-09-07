@@ -1,0 +1,48 @@
+package com.caimanproject.billing.core.port.in.command;
+
+import com.caimanproject.billing.core.domain.types.ChargePlanType;
+import com.caimanproject.billing.core.domain.types.CycleUnit;
+import com.caimanproject.billing.core.domain.types.ProofValidationMode;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.List;
+import lombok.Builder;
+
+@Builder
+public record CreateChargePlanCommand(
+        String name,
+
+        String description,
+
+        ChargePlanType type,
+
+        ProofValidationMode proofValidationMode,
+
+        BigDecimal totalAmount,
+
+        Integer dueToleranceDays,
+
+        CycleUnit cycleUnit,
+
+        Integer cycleInterval,
+
+        LocalDate cycleAnchorDate,
+
+        Boolean notificationsEnabled,
+
+        LocalTime notificationTime,
+
+        ZoneId notificationTimezone,
+
+        Instant startsAt,
+
+        Instant endsAt,
+
+        BigDecimal endWhenRecovered,
+
+        List<CreateChargePlanNotificationConfigCommand> notificationConfigs,
+
+        List<CreateChargePlanMemberCommand> members) {}

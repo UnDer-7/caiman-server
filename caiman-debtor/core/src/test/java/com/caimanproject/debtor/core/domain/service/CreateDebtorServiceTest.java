@@ -1,7 +1,8 @@
 package com.caimanproject.debtor.core.domain.service;
 
-import com.caimanproject.debtor.core.domain.exception.business.BusinessExceptionCode;
+import com.caimanproject.contracts.exception.BusinessException;
 import com.caimanproject.debtor.core.domain.model.Debtor;
+import com.caimanproject.debtor.core.domain.types.BusinessExceptionCode;
 import com.caimanproject.debtor.core.domain.types.ContactType;
 import com.caimanproject.debtor.core.port.in.command.CreateDebtorContactCommand;
 import com.caimanproject.debtor.core.port.out.DebtorPersistenceGateway;
@@ -51,10 +52,15 @@ class CreateDebtorServiceTest {
             final var abstractThrowableAssert = Assertions.assertThatThrownBy(() -> service.execute(command));
 
             // Then
-            final var expectedException = BusinessExceptionCode.DUPLICATE_CONTACT_BY_PRIORITY.createException();
-            abstractThrowableAssert
-                    .isInstanceOf(expectedException.getClass())
-                    .hasMessageContainingAll(expectedInMessage.toArray(new String[0]));
+            abstractThrowableAssert.isInstanceOfSatisfying(BusinessException.class, exception -> {
+                final var details = exception.getErrors().stream()
+                        .peek(error -> Assertions.assertThat(error.getCode().getFullCode())
+                                .isEqualTo(BusinessExceptionCode.DUPLICATE_CONTACT_BY_PRIORITY.getFullCode()))
+                        .map(error -> error.getDetail().orElseThrow())
+                        .toList();
+                expectedInMessage.forEach(
+                        value -> Assertions.assertThat(details).anyMatch(detail -> detail.contains(value)));
+            });
             Mockito.verify(debtorPersistenceGateway, Mockito.never()).save(Mockito.any());
         }
     }
@@ -77,10 +83,14 @@ class CreateDebtorServiceTest {
             final var abstractThrowableAssert = Assertions.assertThatThrownBy(() -> service.execute(command));
 
             // Then
-            final var expectedException = BusinessExceptionCode.DUPLICATE_CONTACT_BY_VALUE.createException();
-            abstractThrowableAssert
-                    .isInstanceOf(expectedException.getClass())
-                    .hasMessageContainingAll(expectedInMessage.toArray(new String[0]));
+            abstractThrowableAssert.isInstanceOfSatisfying(BusinessException.class, exception -> {
+                Assertions.assertThat(exception.getErrors())
+                        .allSatisfy(
+                                error -> Assertions.assertThat(error.getCode().getFullCode())
+                                        .isEqualTo(BusinessExceptionCode.DUPLICATE_CONTACT_BY_VALUE.getFullCode()))
+                        .extracting(error -> error.getSource().orElseThrow().invalidValue())
+                        .containsExactlyInAnyOrderElementsOf(expectedInMessage);
+            });
             Mockito.verify(debtorPersistenceGateway, Mockito.never()).save(Mockito.any());
         }
     }

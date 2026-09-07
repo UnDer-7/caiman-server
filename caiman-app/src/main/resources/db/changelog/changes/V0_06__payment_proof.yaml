@@ -56,20 +56,32 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: original_filename
+                  type: varchar(255)
+                  remarks: Client-supplied filename, for admin display. The on-disk filename is synthetic.
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file_content_type
+                  type: varchar(100)
+                  remarks: >
+                    Validated MIME type of the uploaded file, needed to serve/preview
+                    it later without re-sniffing it.
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file_size_bytes
+                  type: bigint
+                  remarks: File size in bytes, avoids a disk stat() just to show size in an admin UI.
+                  constraints:
+                    nullable: false
+              - column:
                   name: upload_token
                   type: varchar(500)
                   remarks: >
                     Short-lived JWT token that authorized the upload. Stored for audit.
                     Generated when the invoice notification email is sent.
                     A new token is issued when admin resends the notification link.
-                  constraints:
-                    nullable: false
-              - column:
-                  name: token_expires_at
-                  type: datetime
-                  remarks: >
-                    Expiry datetime of the upload_token. Requests after this datetime
-                    are rejected with 401. Always stored in UTC.
                   constraints:
                     nullable: false
               - column:

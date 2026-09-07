@@ -1,10 +1,16 @@
 package com.caimanproject.web.filter;
 
+import com.caimanproject.contracts.config.CaimanServerProps;
 import com.caimanproject.contracts.exception.CaimanException;
-import com.caimanproject.contracts.exception.LogField;
+import com.caimanproject.contracts.exception.EntrypointException;
+import com.caimanproject.contracts.util.Constants;
 import com.caimanproject.contracts.util.RequestConstants;
-import com.caimanproject.web.dto.response.ErrorResponseDto;
+import com.caimanproject.contracts.validation.ValidationError;
+import com.caimanproject.contracts.validation.ValidationErrorSourceHeader;
+import com.caimanproject.contracts.validation.ValidationResult;
+import com.caimanproject.web.constant.OpenApiConstants;
 import com.caimanproject.web.exception.WebSupportExceptionCode;
+import com.caimanproject.web.mapper.CaimanExceptionMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,18 +22,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -38,6 +40,8 @@ import tools.jackson.databind.ObjectMapper;
 @Configuration
 public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
     private static final String WILDCARD_PATH = "/**/*";
+
+    private final CaimanExceptionMapper caimanExceptionMapper;
 
     private final AntPathMatcher pathMatcher;
     private final Optional<SwaggerUiConfigProperties> swaggerUiConfigProperties;
@@ -50,15 +54,29 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
             final Optional<SwaggerUiConfigProperties> swaggerUiConfigProperties,
             final Optional<SpringDocConfigProperties> springDocConfigProperties,
             final ObjectMapper objectMapper,
-            @Value("${management.endpoints.web.base-path:/manage}") final String managementBasePath) {
+            @Value("${management.endpoints.web.base-path:/manage}") final String managementBasePath,
+            final CaimanExceptionMapper caimanExceptionMapper,
+            final CaimanServerProps caimanServerProps) {
 
         this.pathMatcher = pathMatcher;
 
         this.swaggerUiConfigProperties = swaggerUiConfigProperties;
         this.springDocConfigProperties = springDocConfigProperties;
         this.objectMapper = objectMapper;
+        this.caimanExceptionMapper = caimanExceptionMapper;
 
-        final var customIgnoredPath = List.of("/favicon.ico", managementBasePath, managementBasePath + "/**");
+        // Every unauthenticated, debtor-facing endpoint lives under /public (e.g. the proof upload page) —
+        // current and future ones alike skip the required X-Correlation-ID/X-Channel headers, since debtors
+        // never install a client. @CaimanController/@CaimanRestController get CAIMAN_SERVER_ENDPOINTS_PREFIX
+        // prepended by ControllersConfig, so the ignored path must carry the same prefix or it silently
+        // stops matching once a prefix is configured.
+        final var endpointsPrefix = Optional.ofNullable(
+                        caimanServerProps.server().endpointsPrefix())
+                .orElse("");
+        final var publicBasePath = endpointsPrefix + "/public";
+
+        final var customIgnoredPath = List.of(
+                "/favicon.ico", managementBasePath, managementBasePath + "/**", publicBasePath, publicBasePath + "/**");
 
         this.ignoredPaths = Stream.of(getApiDocsPaths(), getSwaggerUiPaths(), customIgnoredPath)
                 .flatMap(Collection::stream)
@@ -77,13 +95,20 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
             final HttpServletRequest request, final HttpServletResponse response, final FilterChain filterChain)
             throws ServletException, IOException {
 
-        final boolean isValid = validateRequiredHeaders(request, response);
-        if (isValid) {
+        final ValidationResult validationResult = validateRequiredHeaders(request);
+        if (validationResult.isValid()) {
             filterChain.doFilter(request, response);
+        } else {
+            final var exception = new EntrypointException(validationResult.errors());
+            buildErrorResponse(response, exception);
         }
     }
 
     private static boolean isValidUuid(final String value) {
+        if (value == null || value.isBlank()) {
+            return true;
+        }
+
         try {
             UUID.fromString(value);
             return true;
@@ -92,59 +117,50 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
         }
     }
 
-    private boolean validateRequiredHeaders(final HttpServletRequest request, final HttpServletResponse response)
-            throws IOException {
+    private ValidationResult validateRequiredHeaders(final HttpServletRequest request) {
         final String correlationId = request.getHeader(RequestConstants.Headers.X_CORRELATION_ID);
         final String channel = request.getHeader(RequestConstants.Headers.X_CHANNEL);
 
-        final List<String> missingHeaders = new ArrayList<>();
+        final var validations = new ArrayList<ValidationError>();
 
         if (correlationId == null || correlationId.isBlank()) {
-            missingHeaders.add(RequestConstants.Headers.X_CORRELATION_ID);
+            validations.add(ValidationError.builder()
+                    .code(WebSupportExceptionCode.INVALID_VALUES)
+                    .detail("Required field is null/blank")
+                    .source(new ValidationErrorSourceHeader(RequestConstants.Headers.X_CORRELATION_ID, correlationId))
+                    .build());
         }
 
         if (channel == null || channel.isBlank()) {
-            missingHeaders.add(RequestConstants.Headers.X_CHANNEL);
-        }
-
-        if (!missingHeaders.isEmpty()) {
-            sendMissingHeadersErrorResponse(response, missingHeaders);
-            return false;
+            validations.add(ValidationError.builder()
+                    .code(WebSupportExceptionCode.INVALID_VALUES)
+                    .detail("Required field is null/blank")
+                    .source(new ValidationErrorSourceHeader(RequestConstants.Headers.X_CHANNEL, channel))
+                    .build());
         }
 
         if (!isValidUuid(correlationId)) {
-            sendInvalidUuidErrorResponse(response, correlationId);
-            return false;
+            validations.add(ValidationError.builder()
+                    .code(WebSupportExceptionCode.INVALID_VALUES)
+                    .detail("Required uuid must be a valid format: %s (example: %s)"
+                            .formatted(Constants.UUID_FORMAT, OpenApiConstants.Examples.UUID))
+                    .source(new ValidationErrorSourceHeader(RequestConstants.Headers.X_CORRELATION_ID, correlationId))
+                    .build());
         }
 
-        return true;
+        return ValidationResult.of(validations);
     }
 
-    private void sendInvalidUuidErrorResponse(final HttpServletResponse response, final String invalidValue)
+    private void buildErrorResponse(final HttpServletResponse response, final CaimanException exception)
             throws IOException {
-        final var errorResponse = WebSupportExceptionCode.INVALID_VALUES.createException(
-                "Header '%s' must be a valid UUID format. Received: '%s'"
-                        .formatted(RequestConstants.Headers.X_CORRELATION_ID, invalidValue));
 
-        errorResponse.executeLogging();
+        exception.executeLogging();
+        final var responseBody = caimanExceptionMapper.toProblemDetailResponse(exception);
 
-        response.setStatus(HttpStatus.BAD_REQUEST.value());
+        response.setStatus(exception.getHttpStatusCode());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(objectMapper.writeValueAsString(buildErrorResponse(errorResponse)));
-    }
-
-    private void sendMissingHeadersErrorResponse(final HttpServletResponse response, final List<String> missingHeaders)
-            throws IOException {
-        final var errorResponse = WebSupportExceptionCode.INVALID_VALUES.createException(
-                "Missing headers. Headers: %s are required".formatted(missingHeaders));
-
-        errorResponse.executeLogging();
-
-        response.setStatus(errorResponse.getHttpStatusCode());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(objectMapper.writeValueAsString(buildErrorResponse(errorResponse)));
+        response.getWriter().write(objectMapper.writeValueAsString(responseBody));
     }
 
     private List<String> getApiDocsPaths() {
@@ -163,28 +179,5 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
                     return List.of(path, "/swagger-ui" + WILDCARD_PATH);
                 })
                 .orElse(List.of());
-    }
-
-    private static ErrorResponseDto buildErrorResponse(final CaimanException invalidValues) {
-        final Function<LogField, String> getFromMDC = field -> Optional.of(field)
-                .map(LogField::label)
-                .map(MDC::get)
-                .filter(Predicate.not(String::isBlank))
-                .orElse(null);
-
-        final String requestId = getFromMDC.apply(LogField.REQUEST_ID);
-        final String correlationId = getFromMDC.apply(LogField.CORRELATION_ID);
-        final String channel = getFromMDC.apply(LogField.CHANNEL);
-
-        return ErrorResponseDto.builder()
-                .code(invalidValues.getExceptionCode().getFullCode())
-                .timestamp(invalidValues.getTimestamp())
-                .message(invalidValues.getExceptionCode().getMessage())
-                .detail(invalidValues.getDetail().orElse(null))
-                .httpStatusCode(invalidValues.getHttpStatusCode())
-                .requestId(requestId)
-                .correlationId(correlationId)
-                .channel(channel)
-                .build();
     }
 }

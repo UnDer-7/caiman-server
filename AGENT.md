@@ -1,5 +1,11 @@
 # Caiman — Agent Instructions
 
+## CRITICAL: Language
+
+**All code, documentation, comments, commit messages, variable names, class names, test descriptions, and any other written artifact in this project must be in English.** No exceptions — Portuguese, Spanish, or any other language must not appear in the codebase.
+
+---
+
 ## CRITICAL: Spring Boot 4
 
 This project uses **Spring Boot 4**. Not Spring Boot 3. Most search results, Stack Overflow answers, and LLM training data reference Spring Boot 3 — that information is often **not applicable here**.
@@ -16,7 +22,9 @@ Key differences to watch:
 
 Caiman is an open-source, self-hosted personal billing management system. It allows a single admin to track and collect informal recurring or one-time shared expenses from a small group of people.
 
-**This repository is the backend API server only.** It exposes REST endpoints consumed by external clients (web app, Telegram bot, AI agent, etc.). Each client lives in its own repository. This project has no frontend, no HTML, no template rendering.
+**This repository is the backend API server only.** It exposes REST endpoints consumed by external clients (web app, Telegram bot, AI agent, etc.). Each client lives in its own repository. This project has no admin frontend and no template rendering framework for JSON endpoints.
+
+**Exception — public payment-proof upload page:** the debtor-facing proof upload flow (`GET/POST /public/proofs`) is the one place this backend serves HTML. Debtors never log in and never install any client app — the notification link they receive by email must work standalone, without depending on a separate admin frontend project (`caiman-web-client`, planned, admin-only). This page uses Thymeleaf (server-rendered, no JS framework/build step) and is the only controller in the project allowed to return HTML instead of JSON. See `docs/superpowers/specs/2026-09-02-public-proof-upload-page-design.md`.
 
 Core use cases:
 
@@ -351,7 +359,7 @@ Detailed description of each Gradle module: business purpose, owned DB tables, e
 **Purpose:** Handles payment proof upload, AI-assisted validation, and payment registration. Runs proof analysis asynchronously in a background thread.
 
 **Owned tables:**
-- `payment_proof` — `id`, `invoice_id`, `file_path`, `upload_token`, `token_expires_at`, `ai_extracted_value`, `final_value`, `requires_manual_review`, `ai_raw_response`, `status`, `created_at`
+- `payment_proof` — `id`, `invoice_id`, `file_path`, `original_filename`, `file_content_type`, `file_size_bytes`, `upload_token`, `ai_extracted_value`, `final_value`, `requires_manual_review`, `ai_raw_response`, `status`, `created_at`, `updated_at`
 - `payment` — `id`, `invoice_id`, `payment_proof_id`, `amount`, `method`, `approved_manually`, `paid_at`, `created_at`
 
 **Events produced:**
@@ -361,7 +369,8 @@ Detailed description of each Gradle module: business purpose, owned DB tables, e
 **Events consumed:** none (triggered by HTTP upload; invoice data fetched via `InvoiceGateway` from `caiman-contracts`)
 
 **Endpoints exposed:**
-- `POST /public/invoices/{id}/proof` — unauthenticated, JWT upload token required; debtor submits proof file
+- `GET /public/proofs?token={uuid}` — unauthenticated, HTML page (Thymeleaf); shows invoice data and the upload form, or an informational/error state — see the design spec
+- `POST /public/proofs?token={uuid}` — unauthenticated, `multipart/form-data`; debtor submits proof file
 - `GET /admin/proofs/pending-review` — list proofs awaiting manual review
 - `POST /admin/proofs/{id}/resolve` — admin approves or rejects proof (`{ decision, finalValue }`)
 - `POST /admin/invoices/{id}/payments` — admin registers manual payment directly (no proof)

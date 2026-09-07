@@ -1,7 +1,8 @@
 package com.caimanproject.web.config;
 
 import com.caimanproject.contracts.config.CaimanServerProps;
-import com.caimanproject.web.annotation.CaimanEndpoint;
+import com.caimanproject.web.annotation.CaimanController;
+import com.caimanproject.web.annotation.CaimanRestController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
@@ -24,7 +25,9 @@ public class ControllersConfig implements WebMvcConfigurer {
     private void configureControllerPrefix(final PathMatchConfigurer configurer) {
         final var endpointsPrefix = serverProps.server().endpointsPrefix();
         if (endpointsPrefix != null && !endpointsPrefix.isBlank()) {
-            configurer.addPathPrefix(endpointsPrefix, HandlerTypePredicate.forAnnotation(CaimanEndpoint.class));
+            configurer.addPathPrefix(
+                    endpointsPrefix,
+                    HandlerTypePredicate.forAnnotation(CaimanRestController.class, CaimanController.class));
         }
     }
 }
