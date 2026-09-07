@@ -6,17 +6,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.springframework.core.annotation.AliasFor;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-@Validated
 @Documented
-@RestController
+@Controller
 @RequestMapping
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface CaimanEndpoint {
+public @interface CaimanController {
 
     @AliasFor(annotation = RequestMapping.class, attribute = "path")
     String[] value() default {};

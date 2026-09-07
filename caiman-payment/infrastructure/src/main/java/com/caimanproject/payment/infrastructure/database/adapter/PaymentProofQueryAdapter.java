@@ -1,7 +1,7 @@
 package com.caimanproject.payment.infrastructure.database.adapter;
 
-import com.caimanproject.payment.core.port.out.ActiveProofExistsGateway;
-import com.caimanproject.payment.infrastructure.database.entity.PaymentProofStatus;
+import com.caimanproject.payment.core.domain.types.PaymentProofStatus;
+import com.caimanproject.payment.core.port.out.PaymentProofQueryGateway;
 import com.caimanproject.payment.infrastructure.database.repository.PaymentProofRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ActiveProofExistsAdapter implements ActiveProofExistsGateway {
+public class PaymentProofQueryAdapter implements PaymentProofQueryGateway {
 
     private final PaymentProofRepository paymentProofRepository;
 

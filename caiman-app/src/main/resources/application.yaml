@@ -19,6 +19,8 @@ caiman-server:
     username: ${CAIMAN_SERVER_DATABASE_USERNAME:}
     password: ${CAIMAN_SERVER_DATABASE_PASSWORD:}
     sqlite-file: ${CAIMAN_SERVER_DATABASE_SQLITE_FILE:}
+  payment:
+    proof-storage-folder-path: ${CAIMAN_SERVER_PAYMENT_PROOF_STORAGE_FOLDER_PATH}
   open-api:
     api-docs:
       path: ${CAIMAN_SERVER_OPEN_API_API_DOCS_PATH}

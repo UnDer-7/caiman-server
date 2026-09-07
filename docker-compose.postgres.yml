@@ -16,6 +16,7 @@ services:
       CAIMAN_SERVER_DATABASE_JDBC_URL: jdbc:postgresql://caiman-db:5432/caiman_server
       CAIMAN_SERVER_DATABASE_USERNAME: caiman_usr
       CAIMAN_SERVER_DATABASE_PASSWORD: caiman_pass
+      CAIMAN_SERVER_PAYMENT_PROOF_STORAGE_FOLDER_PATH: /app/data/proofs
       CAIMAN_SERVER_OPEN_API_API_DOCS_PATH: /api-docs
       CAIMAN_SERVER_OPEN_API_API_DOCS_ENABLE: "true"
       CAIMAN_SERVER_OPEN_API_SWAGGER_UI_REDIRECT_PATH: /
@@ -26,6 +27,7 @@ services:
         condition: service_healthy
     volumes:
       - caiman_logs:/app/logs
+      - caiman_proof_storage:/app/data
 
   caiman-db:
     # postgres:18-alpine - Repo: https://hub.docker.com/_/postgres
@@ -49,3 +51,5 @@ volumes:
     name: caiman_logs
   caiman_db_data:
     name: caiman_db_data
+  caiman_proof_storage:
+    name: caiman_proof_storage

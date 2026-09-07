@@ -18,6 +18,7 @@ public interface ExceptionCode {
 
         NOTIFICATION,
         PAYMENT,
+        PAYMENT_DOMAIN,
 
         BILLING_DOMAIN,
         BILLING_BUSINESS,

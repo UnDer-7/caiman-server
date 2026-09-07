@@ -8,7 +8,7 @@ import com.caimanproject.payment.core.domain.model.ProofPageView;
 import com.caimanproject.payment.core.domain.types.BusinessExceptionCode;
 import com.caimanproject.payment.core.port.in.GetProofPageUseCase;
 import com.caimanproject.payment.core.port.in.command.GetProofPageCommand;
-import com.caimanproject.payment.core.port.out.ActiveProofExistsGateway;
+import com.caimanproject.payment.core.port.out.PaymentProofQueryGateway;
 import java.util.Collections;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class GetProofPageService implements GetProofPageUseCase {
     private static final Set<String> FORM_DISABLED_STATUSES = Set.of(STATUS_PAID, STATUS_CANCELLED);
 
     private final InvoiceGateway invoiceGateway;
-    private final ActiveProofExistsGateway activeProofExistsGateway;
+    private final PaymentProofQueryGateway paymentProofQueryGateway;
 
     @Override
     public ProofPageView execute(final GetProofPageCommand command) {
@@ -33,7 +33,7 @@ public class GetProofPageService implements GetProofPageUseCase {
                         .code(BusinessExceptionCode.INVOICE_NOT_FOUND)
                         .build())));
 
-        final boolean activeProofExists = activeProofExistsGateway.existsActiveProof(invoice.id());
+        final boolean activeProofExists = paymentProofQueryGateway.existsActiveProof(invoice.id());
         final boolean formEnabled = !FORM_DISABLED_STATUSES.contains(invoice.status()) && !activeProofExists;
 
         return ProofPageView.builder()

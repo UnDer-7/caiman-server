@@ -113,9 +113,29 @@ public class DataSourceConfig {
                     e);
             throw new UncheckedIOException("Failed to initialize SQLite database file: " + path.toAbsolutePath(), e);
         }
+
+        if (!Files.isReadable(path)) {
+            throwNotAccessible(path, "not readable");
+        }
+        if (!Files.isWritable(path)) {
+            throwNotAccessible(path, "not writable");
+        }
+
         log.info(
                 LogField.Placeholders.TWO.getPlaceholder(),
                 StructuredArguments.kv(LogField.MSG.label(), "SQLite database file ready"),
                 StructuredArguments.kv(LogField.SQLITE_PATH.label(), path.toAbsolutePath()));
+    }
+
+    private void throwNotAccessible(final Path path, final String reason) {
+        log.error(
+                LogField.Placeholders.THREE.getPlaceholder(),
+                StructuredArguments.kv(LogField.MSG.label(), "SQLite database file is " + reason),
+                StructuredArguments.kv(
+                        LogField.ERROR_CODES.label(), AppExceptionCode.SQLITE_FILE_INITIALIZATION_FAILED.getFullCode()),
+                StructuredArguments.kv(LogField.SQLITE_PATH.label(), path.toAbsolutePath()));
+        throw new IllegalStateException(
+                "SQLite database file '%s' is %s. Check the file's permissions or CAIMAN_SERVER_DATABASE_SQLITE_FILE."
+                        .formatted(path.toAbsolutePath(), reason));
     }
 }

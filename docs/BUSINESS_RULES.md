@@ -773,8 +773,8 @@ The link the debtor receives by email points here. No separate admin frontend is
 1. Extract the token from the query param.  
 2. Look up the `invoice` by `upload_token = token` (`UNIQUE` index — the token is the lookup key, there is no separate `{invoiceId}` path segment to cross-check against).  
 3. If no invoice matches: `404 Not Found`.  
-4. Verify a `payment_proof` record does **not** already exist for this invoice with `status NOT IN (REJECTED)`. If an active proof already exists, return `409 Conflict` — a proof is already pending or approved.  
-5. Verify the invoice `status` is not `PAID` or `CANCELLED`. If so, return `409 Conflict`.  
+4. Verify a `payment_proof` record does **not** already exist for this invoice with `status NOT IN (REJECTED)`. If an active proof already exists, return `422 Unprocessable Entity` — a proof is already pending or approved. (Corrected from an earlier `409 Conflict` — this project's error framework has no `409` exception type; business-rule violations are `422`, per `BusinessException`.)
+5. Verify the invoice `status` is not `PAID` or `CANCELLED`. If so, return `422 Unprocessable Entity`.  
 6. If all checks pass: accept the file upload.
 
 The token never expires and is never rotated — see the [Upload Token](#core-concepts--glossary) glossary entry. A debtor can use the original email link at any time in the future, as long as the invoice still accepts a proof.
@@ -798,7 +798,6 @@ After file is saved:
      - `AI_AUTO` or `AI_ASSISTED` → `PENDING_ANALYSIS`  
      - `MANUAL` → `PENDING_MANUAL_REVIEW`  
    - `upload_token` \= the token used (for audit)  
-   - `token_expires_at` \= the token's `exp` claim  
    - `requires_manual_review = false`  
    - All value fields (`ai_extracted_value`, `final_value`) \= `null`  
 3. If mode is `AI_AUTO` or `AI_ASSISTED`: trigger async AI analysis (see [Section 8](#8-payment-proof--ai-analysis-flow)) in a background thread.  

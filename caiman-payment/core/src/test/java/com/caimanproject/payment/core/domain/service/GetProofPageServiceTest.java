@@ -4,7 +4,7 @@ import com.caimanproject.contracts.exception.NotFoundException;
 import com.caimanproject.contracts.gateway.invoice.InvoiceGateway;
 import com.caimanproject.contracts.gateway.invoice.InvoiceSnapshotDto;
 import com.caimanproject.payment.core.port.in.command.GetProofPageCommand;
-import com.caimanproject.payment.core.port.out.ActiveProofExistsGateway;
+import com.caimanproject.payment.core.port.out.PaymentProofQueryGateway;
 import com.caimanproject.test.annotation.UnitTest;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -28,7 +28,7 @@ class GetProofPageServiceTest {
     InvoiceGateway invoiceGateway;
 
     @Mock
-    ActiveProofExistsGateway activeProofExistsGateway;
+    PaymentProofQueryGateway paymentProofQueryGateway;
 
     @InjectMocks
     GetProofPageService service;
@@ -58,7 +58,7 @@ class GetProofPageServiceTest {
                 .cycleIndex(2)
                 .build();
         when(invoiceGateway.findByUploadToken(token)).thenReturn(Optional.of(snapshot));
-        when(activeProofExistsGateway.existsActiveProof(invoiceId)).thenReturn(false);
+        when(paymentProofQueryGateway.existsActiveProof(invoiceId)).thenReturn(false);
 
         final var view = service.execute(new GetProofPageCommand(token));
 
@@ -125,7 +125,7 @@ class GetProofPageServiceTest {
                 .cycleIndex(1)
                 .build();
         when(invoiceGateway.findByUploadToken(token)).thenReturn(Optional.of(snapshot));
-        when(activeProofExistsGateway.existsActiveProof(invoiceId)).thenReturn(true);
+        when(paymentProofQueryGateway.existsActiveProof(invoiceId)).thenReturn(true);
 
         final var view = service.execute(new GetProofPageCommand(token));
 

@@ -5,18 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Payment Proof Upload</title>
     <style>
-        body { font-family: system-ui, sans-serif; max-width: 480px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+        :root {
+            color-scheme: light dark;
+            --bg: #ffffff;
+            --fg: #1a1a1a;
+            --border: #ccc;
+            --status-bg: #f0f0f0;
+            --error: #b00020;
+            --success: #146c2e;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #121212;
+                --fg: #e8e8e8;
+                --border: #444;
+                --status-bg: #1e1e1e;
+                --error: #ff6b6b;
+                --success: #4caf6d;
+            }
+        }
+        body { font-family: system-ui, sans-serif; max-width: 480px; margin: 2rem auto; padding: 0 1rem; color: var(--fg); background: var(--bg); }
         h1 { font-size: 1.25rem; }
         dl { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 1rem; }
         dt { font-weight: 600; }
         dd { margin: 0; }
-        fieldset { margin-top: 1.5rem; border: 1px solid #ccc; border-radius: 6px; }
+        fieldset { margin-top: 1.5rem; border: 1px solid var(--border); border-radius: 6px; }
         label { display: block; margin: 0.5rem 0; }
         [hidden] { display: none !important; }
         button { margin-top: 1rem; padding: 0.5rem 1rem; }
-        .status-message { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; background: #f0f0f0; }
-        .error-message { color: #b00020; margin-top: 1rem; }
-        .success-message { color: #146c2e; margin-top: 1rem; }
+        .status-message { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; background: var(--status-bg); }
+        .error-message { color: var(--error); margin-top: 1rem; }
+        .success-message { color: var(--success); margin-top: 1rem; }
     </style>
 </head>
 <body>
@@ -72,6 +91,7 @@
     <script th:inline="javascript">
         /*<![CDATA[*/
         const token = /*[[${token}]]*/ '';
+        const endpointsPrefix = /*[[${endpointsPrefix}]]*/ '';
         const form = document.getElementById('proof-form');
 
         if (form) {
@@ -97,7 +117,7 @@
                     formData.delete('declaredAmount');
                 }
 
-                fetch('/public/proofs?token=' + encodeURIComponent(token), {
+                fetch(endpointsPrefix + '/public/proofs?token=' + encodeURIComponent(token), {
                     method: 'POST',
                     body: formData,
                 })

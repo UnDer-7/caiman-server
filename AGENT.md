@@ -359,7 +359,7 @@ Detailed description of each Gradle module: business purpose, owned DB tables, e
 **Purpose:** Handles payment proof upload, AI-assisted validation, and payment registration. Runs proof analysis asynchronously in a background thread.
 
 **Owned tables:**
-- `payment_proof` — `id`, `invoice_id`, `file_path`, `upload_token`, `token_expires_at`, `ai_extracted_value`, `final_value`, `requires_manual_review`, `ai_raw_response`, `status`, `created_at`
+- `payment_proof` — `id`, `invoice_id`, `file_path`, `original_filename`, `file_content_type`, `file_size_bytes`, `upload_token`, `ai_extracted_value`, `final_value`, `requires_manual_review`, `ai_raw_response`, `status`, `created_at`, `updated_at`
 - `payment` — `id`, `invoice_id`, `payment_proof_id`, `amount`, `method`, `approved_manually`, `paid_at`, `created_at`
 
 **Events produced:**

@@ -2,7 +2,7 @@ package com.caimanproject.web.config;
 
 import com.caimanproject.contracts.config.CaimanServerProps;
 import com.caimanproject.contracts.util.RequestConstants;
-import com.caimanproject.web.annotation.CaimanEndpoint;
+import com.caimanproject.web.annotation.CaimanRestController;
 import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
@@ -44,7 +44,7 @@ public class OpenApiConfig {
     @Bean
     public OperationCustomizer globalHeadersCustomizer() {
         return (Operation operation, HandlerMethod handlerMethod) -> {
-            if (!isCaimanEndpoint(handlerMethod)) {
+            if (!isCaimanRestController(handlerMethod)) {
                 return operation;
             }
 
@@ -75,7 +75,7 @@ public class OpenApiConfig {
     @Bean
     public OperationCustomizer globalApiResponsesCustomizer() {
         return (Operation operation, HandlerMethod handlerMethod) -> {
-            if (!isCaimanEndpoint(handlerMethod)) {
+            if (!isCaimanRestController(handlerMethod)) {
                 return operation;
             }
 
@@ -203,7 +203,7 @@ public class OpenApiConfig {
         return info;
     }
 
-    private static boolean isCaimanEndpoint(final HandlerMethod handlerMethod) {
-        return handlerMethod.getBeanType().isAnnotationPresent(CaimanEndpoint.class);
+    private static boolean isCaimanRestController(final HandlerMethod handlerMethod) {
+        return handlerMethod.getBeanType().isAnnotationPresent(CaimanRestController.class);
     }
 }

@@ -2,7 +2,7 @@ package com.caimanproject.payment.core.port.out;
 
 import java.util.UUID;
 
-public interface ActiveProofExistsGateway {
+public interface PaymentProofQueryGateway {
 
     /**
      * @param invoiceId invoice to check

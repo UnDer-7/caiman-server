@@ -5,7 +5,7 @@ import com.caimanproject.billing.entrypoint.controller.spec.ChargePlanController
 import com.caimanproject.billing.entrypoint.mapper.ChargePlanWebMapper;
 import com.caimanproject.billing.entrypoint.payload.request.CreateChargePlanRequestDto;
 import com.caimanproject.billing.entrypoint.payload.response.ChargePlanResponseDto;
-import com.caimanproject.web.annotation.CaimanEndpoint;
+import com.caimanproject.web.annotation.CaimanRestController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 @Slf4j
 @RequiredArgsConstructor
-@CaimanEndpoint("/v1/charge-plans")
+@CaimanRestController("/v1/charge-plans")
 public class ChargePlanController implements ChargePlanControllerSpec {
 
     private final ChargePlanWebMapper chargePlanWebMapper;

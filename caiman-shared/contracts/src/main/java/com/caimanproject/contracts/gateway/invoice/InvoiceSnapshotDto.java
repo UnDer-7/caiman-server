@@ -13,5 +13,6 @@ public record InvoiceSnapshotDto(
         BigDecimal amountDue,
         BigDecimal amountPaid,
         String status,
+        String proofValidationMode,
         Instant dueDate,
         int cycleIndex) {}

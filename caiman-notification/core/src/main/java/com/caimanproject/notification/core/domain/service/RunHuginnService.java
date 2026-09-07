@@ -41,7 +41,8 @@ public class RunHuginnService implements RunHuginnUseCase {
         notificationOutboxPersistenceGateway.findStuckProcessing(threshold).forEach(entry -> {
             final var reset = entry.markStuckReset();
             if (reset.isExhausted()) {
-                notificationLogPersistenceGateway.logFailed(reset, "Max attempts reached while stuck in PROCESSING state", now);
+                notificationLogPersistenceGateway.logFailed(
+                        reset, "Max attempts reached while stuck in PROCESSING state", now);
                 notificationOutboxPersistenceGateway.delete(reset.getId().orElseThrow());
             } else {
                 notificationOutboxPersistenceGateway.save(reset);

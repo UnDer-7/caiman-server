@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://localhost:8080/public/proofs?token=b08def18-e865-4894-8d9e-09ac1c857d7e
+  url: http://localhost:8080/api/public/proofs?token=f33167b6-2c6f-48d8-bed5-0777cd7f1850
   params:
     - name: token
-      value: b08def18-e865-4894-8d9e-09ac1c857d7e
+      value: f33167b6-2c6f-48d8-bed5-0777cd7f1850
       type: query
   auth: inherit
 
@@ -19,13 +19,13 @@ settings:
   maxRedirects: 5
 
 examples:
-  - name: Paid
+  - name: Proof not sent
     request:
-      url: http://localhost:8080/public/proofs?token=b08def18-e865-4894-8d9e-09ac1c857d7e
+      url: http://localhost:8080/api/public/proofs?token=f33167b6-2c6f-48d8-bed5-0777cd7f1850
       method: GET
       params:
         - name: token
-          value: b08def18-e865-4894-8d9e-09ac1c857d7e
+          value: f33167b6-2c6f-48d8-bed5-0777cd7f1850
           type: query
     response:
       status: 200
@@ -38,7 +38,7 @@ examples:
         - name: transfer-encoding
           value: chunked
         - name: date
-          value: Sat, 05 Sep 2026 20:11:08 GMT
+          value: Mon, 07 Sep 2026 03:38:35 GMT
         - name: keep-alive
           value: timeout=60
         - name: connection
@@ -52,37 +52,80 @@ examples:
                   <meta charset="UTF-8">
                       <meta name="viewport" content="width=device-width, initial-scale=1">
                           <title>Payment Proof Upload</title>
-                          <style>body { font-family: system-ui, sans-serif; max-width: 480px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+                          <style>:root {
+                      color-scheme: light dark;
+                      --bg: #ffffff;
+                      --fg: #1a1a1a;
+                      --border: #ccc;
+                      --status-bg: #f0f0f0;
+                      --error: #b00020;
+                      --success: #146c2e;
+                  }
+                  @media (prefers-color-scheme: dark) {
+                      :root {
+                          --bg: #121212;
+                          --fg: #e8e8e8;
+                          --border: #444;
+                          --status-bg: #1e1e1e;
+                          --error: #ff6b6b;
+                          --success: #4caf6d;
+                      }
+                  }
+                  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 2rem auto; padding: 0 1rem; color: var(--fg); background: var(--bg); }
                   h1 { font-size: 1.25rem; }
                   dl { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 1rem; }
                   dt { font-weight: 600; }
                   dd { margin: 0; }
-                  fieldset { margin-top: 1.5rem; border: 1px solid #ccc; border-radius: 6px; }
+                  fieldset { margin-top: 1.5rem; border: 1px solid var(--border); border-radius: 6px; }
                   label { display: block; margin: 0.5rem 0; }
+                  [hidden] { display: none !important; }
                   button { margin-top: 1rem; padding: 0.5rem 1rem; }
-                  .status-message { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; background: #f0f0f0; }
-                  .error-message { color: #b00020; margin-top: 1rem; }
-                  .success-message { color: #146c2e; margin-top: 1rem; }</style>
+                  .status-message { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; background: var(--status-bg); }
+                  .error-message { color: var(--error); margin-top: 1rem; }
+                  .success-message { color: var(--success); margin-top: 1rem; }</style>
                       </meta>
                       <body>
                           <h1>Payment Proof Upload</h1>
                           <dl>
                               <dt>Plan</dt>
-                              <dd>Proof Test Plan</dd>
+                              <dd>YouYube Premium</dd>
                               <dt>Debtor</dt>
-                              <dd>Proof Test Debtor</dd>
+                              <dd>cesar</dd>
                               <dt>Amount due</dt>
-                              <dd>100</dd>
+                              <dd>50</dd>
                               <dt>Amount paid</dt>
-                              <dd>100</dd>
+                              <dd>0</dd>
                               <dt>Due date</dt>
-                              <dd>2026-09-08T00:00:00Z</dd>
+                              <dd>2026-09-09T00:00:00Z</dd>
                               <dt>Cycle</dt>
                               <dd>0</dd>
                           </dl>
-                          <div class="status-message">This invoice has already been paid.</div>
-                          <script>/*<![CDATA[*/
-                  const token = "b08def18-e865-4894-8d9e-09ac1c857d7e";
+                          <div>
+                              <form id="proof-form">
+                                  <fieldset>
+                                      <legend>Payment type</legend>
+                                      <label>
+                                          <input type="radio" name="paymentType" value="PARTIAL" checked>
+                              Full payment
+                          </label>
+                          <label>
+                              <input type="radio">Partial payment</input>
+                                          <label id="declared-amount-field" hidden>
+                              Declared amount
+                              <input type="number" name="declaredAmount" step="0.01" min="0.01">
+                                          </label>
+                                      </label>
+                                      <label>
+                                          Proof file
+                                          <input type="file" name="file" required>
+                      </label>
+
+                      <button type="submit">Send</input>
+                                      </label>
+                                      <div id="result"></div>
+                                  </fieldset>
+                                  <script>/*<![CDATA[*/
+                  const token = "f33167b6-2c6f-48d8-bed5-0777cd7f1850";
                   const form = document.getElementById('proof-form');
 
                   if (form) {
@@ -133,6 +176,8 @@ examples:
                       });
                   }
                   /*]]>*/</script>
+                              </form>
+                          </div>
                       </body>
                   </meta>
               </head>

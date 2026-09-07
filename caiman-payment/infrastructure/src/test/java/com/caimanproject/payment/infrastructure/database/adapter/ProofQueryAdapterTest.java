@@ -1,6 +1,6 @@
 package com.caimanproject.payment.infrastructure.database.adapter;
 
-import com.caimanproject.payment.infrastructure.database.entity.PaymentProofStatus;
+import com.caimanproject.payment.core.domain.types.PaymentProofStatus;
 import com.caimanproject.payment.infrastructure.database.repository.PaymentProofRepository;
 import com.caimanproject.test.annotation.UnitTest;
 import java.util.UUID;
@@ -15,13 +15,13 @@ import static org.mockito.Mockito.when;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
-class ActiveProofExistsAdapterTest {
+class ProofQueryAdapterTest {
 
     @Mock
     PaymentProofRepository paymentProofRepository;
 
     @InjectMocks
-    ActiveProofExistsAdapter adapter;
+    PaymentProofQueryAdapter adapter;
 
     @Test
     void should_return_true_when_a_non_rejected_proof_exists_for_invoice() {

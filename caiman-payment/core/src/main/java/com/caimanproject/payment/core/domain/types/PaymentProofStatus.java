@@ -1,4 +1,4 @@
-package com.caimanproject.payment.infrastructure.database.entity;
+package com.caimanproject.payment.core.domain.types;
 
 public enum PaymentProofStatus {
     PENDING_ANALYSIS,

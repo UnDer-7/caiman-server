@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Link not found</title>
     <style>
-        body { font-family: system-ui, sans-serif; max-width: 480px; margin: 4rem auto; padding: 0 1rem; color: #1a1a1a; text-align: center; }
+        :root { color-scheme: light dark; --bg: #ffffff; --fg: #1a1a1a; }
+        @media (prefers-color-scheme: dark) {
+            :root { --bg: #121212; --fg: #e8e8e8; }
+        }
+        body { font-family: system-ui, sans-serif; max-width: 480px; margin: 4rem auto; padding: 0 1rem; color: var(--fg); background: var(--bg); text-align: center; }
         h1 { font-size: 1.25rem; }
     </style>
 </head>

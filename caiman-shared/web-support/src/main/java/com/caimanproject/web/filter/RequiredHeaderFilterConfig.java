@@ -1,5 +1,6 @@
 package com.caimanproject.web.filter;
 
+import com.caimanproject.contracts.config.CaimanServerProps;
 import com.caimanproject.contracts.exception.CaimanException;
 import com.caimanproject.contracts.exception.EntrypointException;
 import com.caimanproject.contracts.util.Constants;
@@ -54,7 +55,8 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
             final Optional<SpringDocConfigProperties> springDocConfigProperties,
             final ObjectMapper objectMapper,
             @Value("${management.endpoints.web.base-path:/manage}") final String managementBasePath,
-            final CaimanExceptionMapper caimanExceptionMapper) {
+            final CaimanExceptionMapper caimanExceptionMapper,
+            final CaimanServerProps caimanServerProps) {
 
         this.pathMatcher = pathMatcher;
 
@@ -63,8 +65,18 @@ public class RequiredHeaderFilterConfig extends OncePerRequestFilter {
         this.objectMapper = objectMapper;
         this.caimanExceptionMapper = caimanExceptionMapper;
 
-        final var customIgnoredPath =
-                List.of("/favicon.ico", managementBasePath, managementBasePath + "/**", "/public/proofs", "/public/proofs" + "/**");
+        // Every unauthenticated, debtor-facing endpoint lives under /public (e.g. the proof upload page) —
+        // current and future ones alike skip the required X-Correlation-ID/X-Channel headers, since debtors
+        // never install a client. @CaimanController/@CaimanRestController get CAIMAN_SERVER_ENDPOINTS_PREFIX
+        // prepended by ControllersConfig, so the ignored path must carry the same prefix or it silently
+        // stops matching once a prefix is configured.
+        final var endpointsPrefix = Optional.ofNullable(
+                        caimanServerProps.server().endpointsPrefix())
+                .orElse("");
+        final var publicBasePath = endpointsPrefix + "/public";
+
+        final var customIgnoredPath = List.of(
+                "/favicon.ico", managementBasePath, managementBasePath + "/**", publicBasePath, publicBasePath + "/**");
 
         this.ignoredPaths = Stream.of(getApiDocsPaths(), getSwaggerUiPaths(), customIgnoredPath)
                 .flatMap(Collection::stream)

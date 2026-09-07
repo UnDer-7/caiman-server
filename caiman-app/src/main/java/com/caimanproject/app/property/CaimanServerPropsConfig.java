@@ -28,7 +28,8 @@ public record CaimanServerPropsConfig(
         @NotNull @Valid ApplicationPropImpl server,
         @NotNull @Valid OpenApiPropImp openApi,
         @NotNull @Valid ProjectPropImpl project,
-        @NotNull @Valid DatabasePropImpl database)
+        @NotNull @Valid DatabasePropImpl database,
+        @NotNull @Valid PaymentPropImpl payment)
         implements CaimanServerProps {
 
     public record LoggingPropImpl(
@@ -102,4 +103,6 @@ public record CaimanServerPropsConfig(
     public record OpenApiApplicationDocumentationPropImpl(
             @NotBlank @URL String url, @NotBlank String description)
             implements CaimanServerProps.OpenApiApplicationDocumentationProp {}
+
+    public record PaymentPropImpl(@NotBlank String proofStorageFolderPath) implements CaimanServerProps.PaymentProp {}
 }

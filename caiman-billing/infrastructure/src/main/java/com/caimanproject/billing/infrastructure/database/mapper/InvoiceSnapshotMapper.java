@@ -18,5 +18,6 @@ public interface InvoiceSnapshotMapper {
 
     @Mapping(target = "chargePlanName", source = "chargePlan.name")
     @Mapping(target = "debtorName", ignore = true)
+    @Mapping(target = "proofValidationMode", source = "chargePlan.proofValidationMode")
     InvoiceSnapshotDto toSnapshotDto(InvoiceEntity entity);
 }

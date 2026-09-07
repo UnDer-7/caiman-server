@@ -83,6 +83,15 @@ class PublicProofControllerIT extends IntegrationTestController {
     }
 
     private UUID createInvoice(final String status, final BigDecimal amountDue, final BigDecimal amountPaid) {
+        return createInvoice(status, amountDue, amountPaid, chargePlanId, chargePlanMemberId);
+    }
+
+    private UUID createInvoice(
+            final String status,
+            final BigDecimal amountDue,
+            final BigDecimal amountPaid,
+            final UUID planId,
+            final UUID memberId) {
         final var invoiceId = UUID.randomUUID();
         final var token = UUID.randomUUID();
         final var now = Timestamp.from(Instant.now());
@@ -94,8 +103,8 @@ class PublicProofControllerIT extends IntegrationTestController {
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 invoiceId.toString(),
-                chargePlanId.toString(),
-                chargePlanMemberId.toString(),
+                planId.toString(),
+                memberId.toString(),
                 1L,
                 Date.valueOf(LocalDate.now()),
                 amountDue,
@@ -107,6 +116,53 @@ class PublicProofControllerIT extends IntegrationTestController {
                 now);
 
         return token;
+    }
+
+    private UUID[] createChargePlanWithMode(final String proofValidationMode) {
+        final var planId = UUID.randomUUID();
+        final var memberId = UUID.randomUUID();
+        final var now = Timestamp.from(Instant.now());
+
+        jdbcTemplate.update(
+                """
+                INSERT INTO charge_plan (id, name, type, status, proof_validation_mode, total_amount,
+                    due_tolerance_days, cycle_unit, cycle_interval, cycle_anchor_date, notifications_enabled,
+                    notification_time, notification_timezone, starts_at, created_at, updated_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                """,
+                planId.toString(),
+                "Plan " + proofValidationMode,
+                "SPLIT",
+                "ACTIVE",
+                proofValidationMode,
+                new BigDecimal("100.00"),
+                3,
+                "MONTHLY",
+                1,
+                Date.valueOf(LocalDate.now()),
+                true,
+                Time.valueOf(LocalTime.of(9, 0)),
+                "UTC",
+                now,
+                now,
+                now);
+
+        jdbcTemplate.update(
+                """
+                INSERT INTO charge_plan_member (id, charge_plan_id, debtor_id, status, credit_balance,
+                    joined_at, created_at, updated_at)
+                VALUES (?,?,?,?,?,?,?,?)
+                """,
+                memberId.toString(),
+                planId.toString(),
+                debtorId.toString(),
+                "ACTIVE",
+                BigDecimal.ZERO,
+                now,
+                now,
+                now);
+
+        return new UUID[] {planId, memberId};
     }
 
     @Nested
@@ -198,7 +254,7 @@ class PublicProofControllerIT extends IntegrationTestController {
     class UploadProof {
 
         @Test
-        @DisplayName("should return 202 with the stub body for a well-formed multipart request")
+        @DisplayName("should return 202 with proofId and pending-review message for a well-formed MANUAL request")
         void should_return_202_for_well_formed_request() {
             final var token = createInvoice("SENT", new BigDecimal("100.00"), BigDecimal.ZERO);
 
@@ -222,8 +278,121 @@ class PublicProofControllerIT extends IntegrationTestController {
                     .expectStatus()
                     .isEqualTo(202)
                     .expectBody()
+                    .jsonPath("$.proofId")
+                    .exists()
                     .jsonPath("$.message")
-                    .isEqualTo("Received. Proof handling is not implemented yet.");
+                    .isEqualTo("Your payment proof has been received and is being reviewed. "
+                            + "You will be notified of the result.");
+
+            final var proofCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM payment_proof WHERE status = 'PENDING_MANUAL_REVIEW'", Integer.class);
+            assertThat(proofCount).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("should return 422 when a proof is already pending review for the invoice")
+        void should_return_422_when_active_proof_already_exists() {
+            final var token = createInvoice("SENT", new BigDecimal("100.00"), BigDecimal.ZERO);
+
+            final var firstUpload = new MultipartBodyBuilder();
+            firstUpload
+                    .part("file", new ByteArrayResource("fake-image-bytes".getBytes()) {
+                        @Override
+                        public String getFilename() {
+                            return "proof.png";
+                        }
+                    })
+                    .contentType(MediaType.IMAGE_PNG);
+            firstUpload.part("paymentType", "TOTAL");
+
+            webTestClient
+                    .post()
+                    .uri(BASE_URL + "?token=" + token)
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(BodyInserters.fromMultipartData(firstUpload.build()))
+                    .exchange()
+                    .expectStatus()
+                    .isEqualTo(202);
+
+            final var secondUpload = new MultipartBodyBuilder();
+            secondUpload
+                    .part("file", new ByteArrayResource("fake-image-bytes".getBytes()) {
+                        @Override
+                        public String getFilename() {
+                            return "proof2.png";
+                        }
+                    })
+                    .contentType(MediaType.IMAGE_PNG);
+            secondUpload.part("paymentType", "TOTAL");
+
+            webTestClient
+                    .post()
+                    .uri(BASE_URL + "?token=" + token)
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(BodyInserters.fromMultipartData(secondUpload.build()))
+                    .exchange()
+                    .expectStatus()
+                    .isEqualTo(422)
+                    .expectBody()
+                    .jsonPath("$.errors[0].code")
+                    .isEqualTo("PAYMENT_002");
+        }
+
+        @Test
+        @DisplayName("should return 422 when the invoice is already paid")
+        void should_return_422_when_invoice_is_not_payable() {
+            final var token = createInvoice("PAID", new BigDecimal("100.00"), new BigDecimal("100.00"));
+
+            final var multipartBodyBuilder = new MultipartBodyBuilder();
+            multipartBodyBuilder
+                    .part("file", new ByteArrayResource("fake-image-bytes".getBytes()) {
+                        @Override
+                        public String getFilename() {
+                            return "proof.png";
+                        }
+                    })
+                    .contentType(MediaType.IMAGE_PNG);
+            multipartBodyBuilder.part("paymentType", "TOTAL");
+
+            webTestClient
+                    .post()
+                    .uri(BASE_URL + "?token=" + token)
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(BodyInserters.fromMultipartData(multipartBodyBuilder.build()))
+                    .exchange()
+                    .expectStatus()
+                    .isEqualTo(422)
+                    .expectBody()
+                    .jsonPath("$.errors[0].code")
+                    .isEqualTo("PAYMENT_003");
+        }
+
+        @Test
+        @DisplayName("should return 500 when the charge plan uses an unimplemented validation mode (AI_AUTO)")
+        void should_return_500_for_ai_auto_mode() {
+            final var planAndMember = createChargePlanWithMode("AI_AUTO");
+            final var token = createInvoice(
+                    "SENT", new BigDecimal("100.00"), BigDecimal.ZERO, planAndMember[0], planAndMember[1]);
+
+            final var multipartBodyBuilder = new MultipartBodyBuilder();
+            multipartBodyBuilder
+                    .part("file", new ByteArrayResource("fake-image-bytes".getBytes()) {
+                        @Override
+                        public String getFilename() {
+                            return "proof.png";
+                        }
+                    })
+                    .contentType(MediaType.IMAGE_PNG);
+            multipartBodyBuilder.part("paymentType", "TOTAL");
+
+            webTestClient
+                    .post()
+                    .uri(BASE_URL + "?token=" + token)
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(BodyInserters.fromMultipartData(multipartBodyBuilder.build()))
+                    .exchange()
+                    .expectStatus()
+                    .is5xxServerError();
         }
 
         @Test

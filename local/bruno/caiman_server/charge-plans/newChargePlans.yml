@@ -19,7 +19,7 @@ http:
         "dueToleranceDays": 2,
         "cycleUnit": "MONTHLY",
         "cycleInterval": 1,
-        "cycleAnchorDate": "2026-08-30",
+        "cycleAnchorDate": "2026-09-07",
         "notificationsEnabled": true,
         "notificationTime": "13:00:00",
         "notificationTimezone": "America/Sao_Paulo",
@@ -37,14 +37,14 @@ http:
         ],
         "members": [
           {
-            "debtorId": "0dc22383-9da8-42bb-8dac-54df599083bf",
+            "debtorId": "5aa3d752-9c3d-45f3-a945-3396d3314334",
             //       "rotationOrder": 1,
             // "amountOverride": 30,
             "status": "ACTIVE",
             "creditBalance": 0
           },
           {
-            "debtorId": "af81968c-cea7-4feb-968a-5b77ad0a5324",
+            "debtorId": "aa31a9bc-357c-4c74-9996-ec6b8c889017",
             //       "rotationOrder": 1,
             // "amountOverride": 50,
             "status": "ACTIVE",

@@ -32,6 +32,16 @@ caiman-app/build/libs/*-plain.jar
 # Local dev files
 local/
 Makefile
+proof_storage/
+sqlite_database/
+logs/
+.docker_volume/
+.tmp/
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+sbom.json
 
 # Docs and planning files
 docs/
